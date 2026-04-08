@@ -1,6 +1,6 @@
-import Groq from 'groq-sdk'
+import OpenAI from 'openai'
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
@@ -8,7 +8,11 @@ export default async function handler(req, res) {
   const { content, title } = req.body
 
   try {
-    const completion = await groq.chat.completions.create({
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      temperature: 0.3,
+      max_tokens: 400,
+      response_format: { type: 'json_object' },
       messages: [{
         role: 'user',
         content: `Summarise this migration lesson titled "${title}" into exactly 6 bullet points.
@@ -26,10 +30,6 @@ ${content}
 
 Return a JSON object with one field: "points" — array of exactly 6 short strings.`
       }],
-      model: 'llama-3.1-8b-instant',
-      temperature: 0.3,
-      max_tokens: 400,
-      response_format: { type: 'json_object' },
     })
 
     const result = JSON.parse(completion.choices[0]?.message?.content)

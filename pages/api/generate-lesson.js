@@ -1,7 +1,7 @@
-import Groq from 'groq-sdk'
+import OpenAI from 'openai'
 import { createClient } from '@supabase/supabase-js'
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
 // Vary the opening style so no two lessons start the same way
 const openingStyles = [
@@ -30,7 +30,10 @@ export default async function handler(req, res) {
   const openingStyle = openingStyles[(mIdx + lIdx) % openingStyles.length]
 
   // Step 1 — Generate rich formatted lesson content
-    const contentCompletion = await groq.chat.completions.create({
+    const contentCompletion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      temperature: 0.6,
+      max_tokens: 3000,
       messages: [{
         role: 'system',
         content: `You are a world-class migration education writer. You write for Nigerians who are intelligent and motivated but may have zero prior knowledge of immigration systems. You never assume the reader knows what a visa category, government body, or immigration term means — you always explain it first. You write like a brilliant, patient friend who has been through the process and is sitting across the table walking someone through it. You use rich markdown formatting to make content easy to scan and navigate. You embed real hyperlinks to official government sources inline.`
@@ -82,15 +85,16 @@ REAL DATA REQUIREMENTS:
 
 Write 900-1200 words minimum. Be thorough. Leave nothing out. This is the definitive resource.`
       }],
-      model: 'llama-3.3-70b-versatile',
-      temperature: 0.6,
-      max_tokens: 3000,
     })
 
     const content = contentCompletion.choices[0]?.message?.content?.trim()
 
     // Step 2 — Generate detailed takeaways, action step, and sources
-    const metaCompletion = await groq.chat.completions.create({
+    const metaCompletion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      temperature: 0.2,
+      max_tokens: 800,
+      response_format: { type: 'json_object' },
       messages: [{
         role: 'user',
         content: `For this migration lesson titled "${lessonTitle}" for a Nigerian ${segment} moving to ${destination}, provide detailed metadata.
@@ -103,10 +107,6 @@ Return a JSON object with:
 
 "sources": array of 3-4 objects each with "label" (the full official name of the source) and "url" (a real, working official government URL relevant to ${destination} immigration for this specific topic).`
       }],
-      model: 'llama-3.1-8b-instant',
-      temperature: 0.2,
-      max_tokens: 800,
-      response_format: { type: 'json_object' },
     })
 
     const meta = JSON.parse(metaCompletion.choices[0]?.message?.content)
