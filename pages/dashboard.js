@@ -3,7 +3,7 @@ import { useRouter } from 'next/router'
 import Head from 'next/head'
 import {
   LayoutDashboard, BookOpen, Map, FolderOpen, MessageSquare,
-  Users, ShoppingBag, Settings, LogOut,
+  Users, ShoppingBag, LogOut,
   Lock, ChevronRight, ChevronDown, ChevronUp, CheckCircle2,
   CircleCheck, PlayCircle, Sparkles, ArrowRight,
   Globe2, Briefcase, Clock, Wallet, TrendingUp,
@@ -200,13 +200,6 @@ function Sidebar({ activeTab, setActiveTab, onSignOut, isMobileOpen, onMobileClo
               <p className="text-xs font-semibold text-[#202020] truncate">{userDisplayName}</p>
               <p className="text-[10px] text-[#9E9E9E]">View profile</p>
             </div>
-          </button>
-          <button
-            onClick={() => { setActiveTab('settings'); onMobileClose() }}
-            className="flex items-center gap-3 py-1.5 text-[#202020] hover:text-[#3b75ff] text-sm font-medium transition-colors"
-          >
-            <Settings size={16} className="shrink-0" />
-            Settings
           </button>
         </div>
       </aside>
@@ -808,6 +801,15 @@ function ProfileTab({ user, profile, answers, onSignOut, router }) {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(false)
+  const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || null)
+  const [uploading, setUploading] = useState(false)
+  const [darkMode, setDarkMode] = useState(false)
+  const [emailNotifs, setEmailNotifs] = useState(true)
+  const [progressReminders, setProgressReminders] = useState(true)
+
+  useEffect(() => {
+    setDarkMode(document.documentElement.classList.contains('dark'))
+  }, [])
 
   const initials = (name || email).charAt(0).toUpperCase()
   const destinationFlag = COUNTRY_FLAGS[answers.destination] || '🌍'
@@ -819,6 +821,40 @@ function ProfileTab({ user, profile, answers, onSignOut, router }) {
     setTimeout(() => setSaved(false), 2000)
   }
 
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    const ext = file.name.split('.').pop().toLowerCase()
+    const path = `${user.id}/avatar.${ext}`
+    const { error } = await supabase.storage.from('avatars').upload(path, file, { upsert: true })
+    if (!error) {
+      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
+      await supabase.from('profiles').upsert({ id: user.id, avatar_url: publicUrl, updated_at: new Date().toISOString() })
+      setAvatarUrl(publicUrl + '?t=' + Date.now())
+    }
+    setUploading(false)
+  }
+
+  const removeAvatar = async () => {
+    const exts = ['jpg', 'jpeg', 'png', 'webp']
+    await supabase.storage.from('avatars').remove(exts.map(e => `${user.id}/avatar.${e}`))
+    await supabase.from('profiles').upsert({ id: user.id, avatar_url: null, updated_at: new Date().toISOString() })
+    setAvatarUrl(null)
+  }
+
+  const toggleDarkMode = () => {
+    const next = !darkMode
+    setDarkMode(next)
+    if (next) {
+      document.documentElement.classList.add('dark')
+      localStorage.setItem('darkMode', 'true')
+    } else {
+      document.documentElement.classList.remove('dark')
+      localStorage.setItem('darkMode', 'false')
+    }
+  }
+
   const deleteAccount = async () => {
     await supabase.auth.signOut()
     router.push('/')
@@ -828,29 +864,48 @@ function ProfileTab({ user, profile, answers, onSignOut, router }) {
     <div className="flex flex-col gap-5 pb-10 max-w-lg">
       <div>
         <h2 className="text-xl font-bold text-[#202020] mb-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>My Profile</h2>
-        <p className="text-sm text-[#9E9E9E]">Manage your account and migration details</p>
+        <p className="text-sm text-[#9E9E9E]">Manage your account, appearance, and migration details</p>
       </div>
 
-      {/* Avatar card */}
-      <div className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-6 flex items-center gap-5">
-        <div className="relative shrink-0">
-          <div className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-black text-white" style={{ background: 'linear-gradient(135deg, #3b75ff, #2452cc)' }}>
-            {initials}
+      {/* Avatar + name card */}
+      <div className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-6">
+        <div className="flex items-center gap-5">
+          <div className="relative shrink-0">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="Avatar" className="w-16 h-16 rounded-full object-cover" />
+            ) : (
+              <div className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-black text-white" style={{ background: 'linear-gradient(135deg, #3b75ff, #2452cc)' }}>
+                {initials}
+              </div>
+            )}
+            <label className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center cursor-pointer shadow-md" style={{ background: '#3b75ff' }}>
+              {uploading ? (
+                <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <Camera size={11} className="text-white" />
+              )}
+              <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={uploading} />
+            </label>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-[#202020] text-base" style={{ fontFamily: 'DM Sans, sans-serif' }}>{name || 'Your Name'}</p>
+            <p className="text-sm text-[#9E9E9E] truncate">{email}</p>
+            {answers.destination && (
+              <div className="flex items-center gap-1.5 mt-1.5">
+                <span className="text-sm">{destinationFlag}</span>
+                <span className="text-xs font-medium" style={{ color: '#3b75ff' }}>{answers.destination}</span>
+              </div>
+            )}
+            {avatarUrl && (
+              <button onClick={removeAvatar} className="text-[10px] text-rose-400 hover:text-rose-600 mt-1.5 transition-colors">
+                Remove photo
+              </button>
+            )}
           </div>
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-bold text-[#202020] text-base" style={{ fontFamily: 'DM Sans, sans-serif' }}>{name || 'Your Name'}</p>
-          <p className="text-sm text-[#9E9E9E] truncate">{email}</p>
-          {answers.destination && (
-            <div className="flex items-center gap-1.5 mt-1.5">
-              <span className="text-sm">{destinationFlag}</span>
-              <span className="text-xs font-medium text-[#3b75ff]">{answers.destination}</span>
-            </div>
-          )}
-        </div>
       </div>
 
-      {/* Edit name */}
+      {/* Account information */}
       <div className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-6">
         <h3 className="text-sm font-semibold text-[#202020] mb-4">Account Information</h3>
         <div className="space-y-4">
@@ -886,95 +941,12 @@ function ProfileTab({ user, profile, answers, onSignOut, router }) {
         </div>
       </div>
 
-      {/* Quiz profile summary */}
-      {answers.destination && (
-        <div className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-[#202020]">Migration Profile</h3>
-            <button
-              onClick={() => router.push('/quiz')}
-              className="text-[10px] font-semibold px-3 py-1.5 rounded-full transition-all hover:opacity-80"
-              style={{ background: 'rgba(59,117,255,0.1)', color: '#3b75ff' }}
-            >
-              Retake Quiz
-            </button>
-          </div>
-          {[
-            { label: 'Destination',    value: answers.destination, emoji: destinationFlag },
-            { label: 'Occupation',     value: answers.segment,     emoji: '💼' },
-            { label: 'Education',      value: answers.education,   emoji: '🎓' },
-            { label: 'Experience',     value: answers.experience,  emoji: '📅' },
-            { label: 'Language Test',  value: answers.language || 'Not taken', emoji: '🗣️' },
-            { label: 'Savings',        value: answers.savings,     emoji: '💰' },
-            { label: 'Age Range',      value: answers.age,         emoji: '👤' },
-          ].map(({ label, value, emoji }) => (
-            <div key={label} className="flex items-center justify-between py-2.5 border-b border-slate-50 last:border-0">
-              <span className="text-xs text-[#9E9E9E] flex items-center gap-1.5"><span>{emoji}</span>{label}</span>
-              <span className="text-xs font-semibold text-[#202020] text-right max-w-[55%] leading-snug">{value || '—'}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Danger zone */}
-      <div className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-6">
-        <h3 className="text-sm font-semibold text-[#202020] mb-1">Account Actions</h3>
-        <p className="text-xs text-[#9E9E9E] mb-4">Manage your session and account data</p>
-        <div className="flex flex-col gap-3">
-          <button
-            onClick={onSignOut}
-            className="flex items-center gap-3 text-sm font-medium text-[#202020] hover:text-[#3b75ff] transition-colors py-2"
-          >
-            <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
-              <LogOut size={14} className="text-[#5F5F5F]" />
-            </div>
-            Sign out
-          </button>
-          {!deleteConfirm ? (
-            <button
-              onClick={() => setDeleteConfirm(true)}
-              className="flex items-center gap-3 text-sm font-medium text-rose-500 hover:text-rose-600 transition-colors py-2"
-            >
-              <div className="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center shrink-0">
-                <Trash2 size={14} className="text-rose-500" />
-              </div>
-              Delete account
-            </button>
-          ) : (
-            <div className="bg-rose-50 border border-rose-200 rounded-xl p-4">
-              <p className="text-sm font-semibold text-rose-700 mb-1">Are you sure?</p>
-              <p className="text-xs text-rose-500 mb-3">This will sign you out. Account deletion requires contacting support.</p>
-              <div className="flex gap-2">
-                <button onClick={deleteAccount} className="text-xs font-semibold text-white px-4 py-2 rounded-lg bg-rose-500 hover:bg-rose-600 transition-colors">Yes, sign me out</button>
-                <button onClick={() => setDeleteConfirm(false)} className="text-xs font-semibold text-[#5F5F5F] px-4 py-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors">Cancel</button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ── SETTINGS TAB ──────────────────────────────────────────────────────────────
-function SettingsTab({ onSignOut }) {
-  const [darkMode, setDarkMode] = useState(false)
-  const [emailNotifs, setEmailNotifs] = useState(true)
-  const [progressReminders, setProgressReminders] = useState(true)
-
-  return (
-    <div className="flex flex-col gap-5 pb-10 max-w-lg">
-      <div>
-        <h2 className="text-xl font-bold text-[#202020] mb-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>Settings</h2>
-        <p className="text-sm text-[#9E9E9E]">Customise your JapaLearn experience</p>
-      </div>
-
       {/* Appearance */}
       <div className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-6">
         <h3 className="text-sm font-semibold text-[#202020] mb-4">Appearance</h3>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: darkMode ? '#1e293b' : '#F0F4FF' }}>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: darkMode ? '#1e293b' : '#EEF4FF' }}>
               {darkMode ? <Moon size={16} className="text-blue-300" /> : <Sun size={16} style={{ color: '#3b75ff' }} />}
             </div>
             <div>
@@ -983,7 +955,7 @@ function SettingsTab({ onSignOut }) {
             </div>
           </div>
           <button
-            onClick={() => setDarkMode(!darkMode)}
+            onClick={toggleDarkMode}
             className="relative w-11 h-6 rounded-full transition-all duration-300 shrink-0"
             style={{ background: darkMode ? '#3b75ff' : '#E2E8F0' }}
           >
@@ -991,9 +963,6 @@ function SettingsTab({ onSignOut }) {
               style={{ transform: darkMode ? 'translateX(20px)' : 'translateX(0)' }} />
           </button>
         </div>
-        {darkMode && (
-          <p className="text-xs text-[#9E9E9E] mt-3 bg-slate-50 rounded-lg px-3 py-2">Full dark mode coming soon — toggle saves your preference.</p>
-        )}
       </div>
 
       {/* Notifications */}
@@ -1022,6 +991,36 @@ function SettingsTab({ onSignOut }) {
         </div>
       </div>
 
+      {/* Migration Profile */}
+      {answers.destination && (
+        <div className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-[#202020]">Migration Profile</h3>
+            <button
+              onClick={() => router.push('/quiz')}
+              className="text-[10px] font-semibold px-3 py-1.5 rounded-full transition-all hover:opacity-80"
+              style={{ background: 'rgba(59,117,255,0.1)', color: '#3b75ff' }}
+            >
+              Retake Quiz
+            </button>
+          </div>
+          {[
+            { label: 'Destination',   value: answers.destination,            emoji: destinationFlag },
+            { label: 'Occupation',    value: answers.segment,                emoji: '💼' },
+            { label: 'Education',     value: answers.education,              emoji: '🎓' },
+            { label: 'Experience',    value: answers.experience,             emoji: '📅' },
+            { label: 'Language Test', value: answers.language || 'Not taken', emoji: '🗣️' },
+            { label: 'Savings',       value: answers.savings,               emoji: '💰' },
+            { label: 'Age Range',     value: answers.age,                   emoji: '👤' },
+          ].map(({ label, value, emoji }) => (
+            <div key={label} className="flex items-center justify-between py-2.5 border-b border-slate-50 last:border-0">
+              <span className="text-xs text-[#9E9E9E] flex items-center gap-1.5"><span>{emoji}</span>{label}</span>
+              <span className="text-xs font-semibold text-[#202020] text-right max-w-[55%] leading-snug">{value || '—'}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* About */}
       <div className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-6">
         <h3 className="text-sm font-semibold text-[#202020] mb-4">About</h3>
@@ -1032,14 +1031,42 @@ function SettingsTab({ onSignOut }) {
         </div>
       </div>
 
-      {/* Sign out */}
-      <button
-        onClick={onSignOut}
-        className="flex items-center gap-3 text-sm font-semibold text-rose-500 hover:text-rose-600 transition-colors py-2 px-1"
-      >
-        <LogOut size={16} />
-        Sign out of JapaLearn
-      </button>
+      {/* Account actions */}
+      <div className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-6">
+        <h3 className="text-sm font-semibold text-[#202020] mb-1">Account Actions</h3>
+        <p className="text-xs text-[#9E9E9E] mb-4">Manage your session and account data</p>
+        <div className="flex flex-col gap-3">
+          <button
+            onClick={onSignOut}
+            className="flex items-center gap-3 text-sm font-medium text-[#202020] hover:text-[#3b75ff] transition-colors py-2"
+          >
+            <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
+              <LogOut size={14} className="text-[#5F5F5F]" />
+            </div>
+            Sign out
+          </button>
+          {!deleteConfirm ? (
+            <button
+              onClick={() => setDeleteConfirm(true)}
+              className="flex items-center gap-3 text-sm font-medium text-rose-500 hover:text-rose-600 transition-colors py-2"
+            >
+              <div className="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center shrink-0">
+                <Trash2 size={14} className="text-rose-500" />
+              </div>
+              Delete account
+            </button>
+          ) : (
+            <div className="bg-rose-50 border border-rose-200 rounded-xl p-4">
+              <p className="text-sm font-semibold text-rose-700 mb-1">Are you sure?</p>
+              <p className="text-xs text-rose-500 mb-3">This will sign you out. To fully delete your account, contact support at hello@japalearn.ai.</p>
+              <div className="flex gap-2">
+                <button onClick={deleteAccount} className="text-xs font-semibold text-white px-4 py-2 rounded-lg bg-rose-500 hover:bg-rose-600 transition-colors">Yes, sign me out</button>
+                <button onClick={() => setDeleteConfirm(false)} className="text-xs font-semibold text-[#5F5F5F] px-4 py-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors">Cancel</button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
@@ -1138,9 +1165,7 @@ export default function Dashboard() {
             <span className="font-bold text-sm text-[#202020]" style={{ fontFamily: 'DM Sans, sans-serif' }}>
               JapaLearn <span style={{ color: '#3b75ff' }}>AI</span>
             </span>
-            <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold" style={{ background: '#3b75ff' }}>
-              {displayName[0]}
-            </div>
+            <div className="w-9 h-9" />
           </div>
 
           <AnimatePresence mode="wait">
@@ -1156,7 +1181,6 @@ export default function Dashboard() {
               {activeTab === 'roadmap'   && <RoadmapTab answers={answers} score={score} />}
               {activeTab === 'resources' && <ResourcesTab answers={answers} />}
               {activeTab === 'profile'   && <ProfileTab user={user} profile={profile} answers={answers} onSignOut={handleSignOut} router={router} />}
-              {activeTab === 'settings'  && <SettingsTab onSignOut={handleSignOut} />}
             </motion.div>
           </AnimatePresence>
         </main>
