@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import Link from 'next/link'
-import { Lock, FileText, MapPin, Shield, BookOpen, CheckCircle, AlertTriangle, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react'
+import { FileText, MapPin, BookOpen, CheckCircle, AlertTriangle, ArrowRight } from 'lucide-react'
 import Logo from '../lib/Logo'
 import { getScoreFlag, normaliseSegment } from '../lib/quizData'
 
@@ -124,10 +124,6 @@ export default function Report() {
   const [generating, setGenerating] = useState(true)
   const [stepIndex, setStepIndex] = useState(0)
   const [barWidth, setBarWidth] = useState(0)
-  const [showSignup, setShowSignup] = useState(false)
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
 
   useEffect(() => {
     if (!router.isReady) return
@@ -305,80 +301,8 @@ export default function Report() {
             </div>
           </div>
 
-          {/* LOCKED / SIGNUP GATE */}
-          {!showSignup ? (
-            <div className="rounded-2xl p-10 mb-4 text-center" style={{ background: '#f6f9ff', border: '1px solid #e3e9f3', boxShadow: '0 2px 16px rgba(59,117,255,0.04)' }}>
-              <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-5" style={{ background: '#e6efff' }}>
-                <Lock size={22} style={{ color: PRIMARY }} />
-              </div>
-              <h3 style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 700, fontSize: '28px', color: '#0f1720', marginBottom: '8px' }}>
-                Your Full Migration Report is Ready
-              </h3>
-              <p style={{ color: '#5f6776', fontSize: '15px', marginBottom: '32px' }}>Create your free account to unlock:</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-[540px] mx-auto mb-8">
-                {[
-                  [FileText, `Full Score Breakdown (why you scored ${score}%)`],
-                  [MapPin, `Estimated Cost Breakdown (${recommendation.cost})`],
-                  [Shield, 'Eligibility Requirements & Timeline'],
-                  [BookOpen, 'Your Personalised Roadmap'],
-                ].map(([Icon, label]) => (
-                  <div key={label} className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 text-left" style={{ border: '1px solid #e3e9f3' }}>
-                    <Icon size={16} style={{ color: PRIMARY, flexShrink: 0 }} />
-                    <span style={{ fontSize: '13px', color: '#0f1720' }}>{label}</span>
-                  </div>
-                ))}
-              </div>
-              <button
-                onClick={() => setShowSignup(true)}
-                className="transition-all hover:opacity-90"
-                style={{ padding: '16px 48px', borderRadius: '99px', background: PRIMARY, color: '#FFFFFF', fontSize: '16px', fontWeight: 600, fontFamily: 'DM Sans, sans-serif' }}
-              >
-                Create My Free Account
-              </button>
-            </div>
-          ) : (
-            <div className="rounded-2xl p-10 mb-4" style={{ background: '#f6f9ff', border: '1px solid #e3e9f3' }}>
-              <h3 style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 700, fontSize: '28px', color: '#0f1720', textAlign: 'center', marginBottom: '32px' }}>
-                Create Your Free Account
-              </h3>
-              <div className="max-w-[380px] mx-auto space-y-4">
-                {[
-                  { placeholder: 'Full Name', value: name, onChange: e => setName(e.target.value), type: 'text' },
-                  { placeholder: 'Email Address', value: email, onChange: e => setEmail(e.target.value), type: 'email' },
-                  { placeholder: 'Password (min 6 chars)', value: password, onChange: e => setPassword(e.target.value), type: 'password' },
-                ].map((field) => (
-                  <input
-                    key={field.placeholder}
-                    type={field.type}
-                    placeholder={field.placeholder}
-                    value={field.value}
-                    onChange={field.onChange}
-                    className="w-full px-4 py-3.5 rounded-xl text-sm outline-none transition-all"
-                    style={{ border: '1px solid #e3e9f3', background: 'white', color: '#0f1720', fontFamily: 'Inter, sans-serif' }}
-                    onFocus={e => e.target.style.borderColor = PRIMARY}
-                    onBlur={e => e.target.style.borderColor = '#e3e9f3'}
-                  />
-                ))}
-                <button
-                  onClick={() => router.push(`/signup?answers=${encodeURIComponent(JSON.stringify(answers))}&score=${score}&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}`)}
-                  className="w-full transition-all hover:opacity-90 flex items-center justify-center gap-2"
-                  style={{ padding: '16px', borderRadius: '99px', background: PRIMARY, color: '#FFFFFF', fontSize: '16px', fontWeight: 600, fontFamily: 'DM Sans, sans-serif', marginTop: '8px' }}
-                >
-                  Create Account & View Report <ArrowRight size={16} />
-                </button>
-                <button onClick={() => setShowSignup(false)} className="w-full text-center text-sm py-2 transition-colors" style={{ color: '#5f6776' }}
-                  onMouseEnter={e => e.target.style.color = '#0f1720'}
-                  onMouseLeave={e => e.target.style.color = '#5f6776'}
-                >
-                  ← Back
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Gated content — shown after signup intent */}
-          {showSignup && (
-            <>
+          {/* Eligibility + Cost + Timeline + Score Breakdown + Next Steps */}
+          <>
               {/* Eligibility + Cost + Timeline */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 {[
@@ -467,24 +391,17 @@ export default function Report() {
                 </div>
               </div>
 
-              {/* Bottom CTAs */}
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              {/* Bottom CTA */}
+              <div className="flex justify-center">
                 <button
                   onClick={() => router.push(`/signup?answers=${encodeURIComponent(JSON.stringify(answers))}&score=${score}`)}
                   className="transition-all hover:opacity-90 flex items-center justify-center gap-2"
-                  style={{ padding: '16px 40px', borderRadius: '99px', background: PRIMARY, color: '#FFFFFF', fontSize: '16px', fontWeight: 600, fontFamily: 'DM Sans, sans-serif' }}
+                  style={{ padding: '16px 48px', borderRadius: '99px', background: PRIMARY, color: '#FFFFFF', fontSize: '16px', fontWeight: 600, fontFamily: 'DM Sans, sans-serif' }}
                 >
-                  Open My Dashboard <ArrowRight size={16} />
-                </button>
-                <button
-                  className="transition-all hover:bg-slate-50 flex items-center justify-center"
-                  style={{ padding: '16px 40px', borderRadius: '99px', border: '2px solid #e3e9f3', color: '#0f1720', fontSize: '16px', fontWeight: 500 }}
-                >
-                  Share My Roadmap
+                  Create my free account <ArrowRight size={16} />
                 </button>
               </div>
             </>
-          )}
 
           <p className="text-center text-xs mt-8 pb-4" style={{ color: '#5f6776' }}>
             Not legal advice · Not a visa agency · JapaLearn AI is an educational tool
