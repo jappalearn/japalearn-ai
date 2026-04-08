@@ -12,8 +12,25 @@ import {
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { getScoreFlag } from '../lib/quizData'
+import Logo from '../lib/Logo'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
+
+// ── Visa route lookup ─────────────────────────────────────────────────────────
+const VISA_ROUTES = {
+  Canada:    { 'Tech Professional': 'Express Entry — Federal Skilled Worker', 'Healthcare Worker': 'Express Entry + Healthcare Streams', 'Student or Post-Grad': 'Study Permit → PGWP → PR', default: 'Express Entry — Federal Skilled Worker' },
+  UK:        { 'Tech Professional': 'Global Talent Visa / Skilled Worker', 'Healthcare Worker': 'Health & Care Worker Visa', 'Student or Post-Grad': 'UK Student Visa (Tier 4)', default: 'Skilled Worker Visa' },
+  Germany:   { 'Tech Professional': 'EU Blue Card / Skilled Immigration Act', 'Freelancer or Remote Worker': 'Germany Freelance Visa', default: 'EU Blue Card' },
+  Australia: { 'Student or Post-Grad': 'Student Visa → Graduate Visa (485)', default: 'Skilled Nominated Visa (190)' },
+  Ireland:   { 'Student or Post-Grad': 'Study → 2-Year Stay Back', default: 'Critical Skills Employment Permit' },
+  Portugal:  { 'Freelancer or Remote Worker': 'D8 Digital Nomad Visa', default: 'Job Seeker Visa' },
+  UAE:       { default: 'Employment Visa / Freelance Permit' },
+}
+function getVisaRoute(destination, segment) {
+  const r = VISA_ROUTES[destination]
+  if (!r) return 'Skilled Worker / Employment Visa'
+  return r[segment] || r['default'] || 'Skilled Worker / Employment Visa'
+}
 
 // ── Country flags ──────────────────────────────────────────────────────────────
 const COUNTRY_FLAGS = {
@@ -72,7 +89,7 @@ const NAV_ITEMS = [
 // ── Score Bar Chart ────────────────────────────────────────────────────────────
 function ScoreBarChart({ breakdown }) {
   if (!breakdown || breakdown.length === 0) return null
-  const barColors = ['#702DFF', '#9b72ff', '#702DFF', '#c4a8ff', '#702DFF', '#9b72ff']
+  const barColors = ['#3b75ff', '#6b9fff', '#3b75ff', '#93bbff', '#3b75ff', '#6b9fff']
   return (
     <div className="flex items-end gap-1.5 h-20">
       {breakdown.map((factor, i) => {
@@ -114,19 +131,9 @@ function Sidebar({ activeTab, setActiveTab, onSignOut, isMobileOpen, onMobileClo
         <div className="flex flex-col gap-12 px-8">
           {/* Logo */}
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: '#702DFF' }}>
-              <Sparkles size={18} className="text-white" />
-            </div>
-            <span
-              className="font-extrabold text-base uppercase tracking-wide"
-              style={{
-                background: 'linear-gradient(90deg, #702DFF -3.24%, #7550FB 29.22%, #4A3AFF 101.79%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
-            >
-              JapaLearn AI
+            <Logo size={32} />
+            <span className="font-bold text-sm text-[#202020]" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+              JapaLearn <span style={{ color: '#3b75ff' }}>AI</span>
             </span>
             <button className="ml-auto lg:hidden text-slate-400" onClick={onMobileClose}>
               <X size={16} />
@@ -145,7 +152,7 @@ function Sidebar({ activeTab, setActiveTab, onSignOut, isMobileOpen, onMobileClo
                   onClick={() => { setActiveTab(item.id); onMobileClose() }}
                   className={cn(
                     "w-full flex items-center gap-3 px-0 py-2 rounded-[40px] text-sm font-medium transition-all",
-                    isActive ? "text-[#702DFF]" : "text-[#202020] hover:text-[#702DFF]"
+                    isActive ? "text-[#3b75ff]" : "text-[#202020] hover:text-[#3b75ff]"
                   )}
                 >
                   <Icon size={16} className="shrink-0" />
@@ -174,7 +181,7 @@ function Sidebar({ activeTab, setActiveTab, onSignOut, isMobileOpen, onMobileClo
         {/* Bottom: Settings + Sign out */}
         <div className="flex flex-col gap-2.5 px-8">
           <p className="text-xs font-semibold text-[#3F3F3F] uppercase tracking-wider mb-2">Settings</p>
-          <button className="flex items-center gap-3 py-2 text-[#202020] hover:text-[#702DFF] text-sm font-medium transition-colors">
+          <button className="flex items-center gap-3 py-2 text-[#202020] hover:text-[#3b75ff] text-sm font-medium transition-colors">
             <Settings size={16} />
             Settings
           </button>
@@ -200,7 +207,7 @@ function RightPanel({ user, profile, score, breakdown, answers, quizResult, rout
   const flag = getScoreFlag(score)
   const flagConfig = {
     green:  { label: 'Strong',      color: '#10b981' },
-    yellow: { label: 'Developing',  color: '#702DFF' },
+    yellow: { label: 'Developing',  color: '#3b75ff' },
     red:    { label: 'Needs Work',  color: '#f43f5e' },
   }
   const fc = flagConfig[flag] || flagConfig.yellow
@@ -224,7 +231,7 @@ function RightPanel({ user, profile, score, breakdown, answers, quizResult, rout
 
       {/* Avatar + greeting */}
       <div className="flex flex-col items-center gap-3 text-center">
-        <div className="w-20 h-20 rounded-full bg-slate-200 flex items-center justify-center text-2xl font-bold text-slate-500 ring-4 ring-purple-100">
+        <div className="w-20 h-20 rounded-full bg-slate-200 flex items-center justify-center text-2xl font-bold text-slate-500 ring-4 ring-blue-100">
           {initials}
         </div>
         <div>
@@ -233,7 +240,7 @@ function RightPanel({ user, profile, score, breakdown, answers, quizResult, rout
         </div>
         <div className="flex gap-3">
           {[Bell, MessageSquare, Bookmark].map((Icon, i) => (
-            <button key={i} className="w-9 h-9 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:border-purple-300 hover:text-purple-600 transition-colors">
+            <button key={i} className="w-9 h-9 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:border-blue-300 hover:text-blue-600 transition-colors">
               <Icon size={14} />
             </button>
           ))}
@@ -264,7 +271,7 @@ function RightPanel({ user, profile, score, breakdown, answers, quizResult, rout
           <button
             onClick={() => router.push('/quiz')}
             className="mt-3 w-full text-xs font-semibold text-white py-2 rounded-full transition-all"
-            style={{ background: '#702DFF' }}
+            style={{ background: '#3b75ff' }}
           >
             Take Assessment
           </button>
@@ -275,14 +282,14 @@ function RightPanel({ user, profile, score, breakdown, answers, quizResult, rout
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-[#202020]">Your Mentor</h3>
-          <button className="w-6 h-6 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:border-purple-300 transition-colors">
+          <button className="w-6 h-6 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:border-blue-300 transition-colors">
             <Plus size={12} />
           </button>
         </div>
 
         {ADVISORS.map((advisor) => (
           <div key={advisor.name} className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-200 to-purple-100 flex items-center justify-center text-xs font-bold text-purple-700 shrink-0">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-200 to-blue-100 flex items-center justify-center text-xs font-bold text-blue-700 shrink-0">
               {advisor.name[0]}
             </div>
             <div className="flex-1 min-w-0">
@@ -291,14 +298,14 @@ function RightPanel({ user, profile, score, breakdown, answers, quizResult, rout
             </div>
             <button
               className="text-[10px] font-semibold text-white px-3 py-1 rounded-full shrink-0"
-              style={{ background: '#702DFF' }}
+              style={{ background: '#3b75ff' }}
             >
               Follow
             </button>
           </div>
         ))}
 
-        <button className="w-full text-xs text-[#9E9E9E] bg-purple-50 hover:bg-purple-100 py-3 rounded-xl transition-colors mt-1">
+        <button className="w-full text-xs text-[#9E9E9E] bg-blue-50 hover:bg-blue-100 py-3 rounded-xl transition-colors mt-1">
           See All
         </button>
       </div>
@@ -306,240 +313,214 @@ function RightPanel({ user, profile, score, breakdown, answers, quizResult, rout
   )
 }
 
-// ── OVERVIEW TAB ───────────────────────────────────────────────────────────────
+// ── OVERVIEW TAB ─────────────────────────────────────────────────────────────
 function OverviewTab({ answers, score, flag, displayName, isNewUser, router, quizResult, setActiveTab }) {
   const destinationFlag = COUNTRY_FLAGS[answers.destination] || '🌍'
   const breakdown = quizResult ? getScoreBreakdown(answers, score) : []
+  const visaRoute = answers.destination ? getVisaRoute(answers.destination, answers.segment) : null
 
   const flagConfig = {
-    green:  { label: 'Strong Profile',    bar: 'bg-emerald-500' },
-    yellow: { label: 'Developing',        bar: 'bg-purple-500'  },
-    red:    { label: 'Needs Improvement', bar: 'bg-rose-400'    },
+    green:  { label: 'Strong Profile',    color: '#10b981', bg: 'rgba(16,185,129,0.1)',  border: '1px solid rgba(16,185,129,0.25)' },
+    yellow: { label: 'Developing Profile', color: '#3b75ff', bg: 'rgba(59,117,255,0.1)', border: '1px solid rgba(59,117,255,0.25)' },
+    red:    { label: 'Needs Improvement',  color: '#f43f5e', bg: 'rgba(244,63,94,0.1)',  border: '1px solid rgba(244,63,94,0.25)'  },
   }
   const fc = flagConfig[flag] || flagConfig.yellow
 
-  const milestones = [
-    {
-      icon: CheckCircle2,
-      status: quizResult ? 'Completed' : 'Pending',
-      label: 'Migration Assessment',
-      done: !!quizResult,
-      cta: () => router.push('/quiz'),
-    },
-    {
-      icon: Globe2,
-      status: answers.language && answers.language !== 'Not taken' ? 'Registered' : 'Not yet',
-      label: 'Language Test',
-      done: !!(answers.language && answers.language !== 'Not taken'),
-      cta: null,
-    },
-    {
-      icon: FolderOpen,
-      status: 'In progress',
-      label: 'Core Documents',
-      done: false,
-      cta: null,
-    },
+  const aspirational = {
+    green:  `Your profile is strong, ${displayName}. You're closer to ${answers.destination || 'your dream'} than you think — preparation meets opportunity right here.`,
+    yellow: `You're building something real, ${displayName}. Every lesson completed brings ${answers.destination || 'your destination'} closer. Keep going.`,
+    red:    `Every great migration journey starts with a single step, ${displayName}. You've already taken yours — now let's build the profile that gets you there.`,
+  }
+
+  const [checklist, setChecklist] = useState([
+    { id: 'curriculum', label: 'Generate your AI learning path',  tab: 'learning'  },
+    { id: 'lesson1',    label: 'Complete your first lesson',      tab: 'learning'  },
+    { id: 'roadmap',    label: 'Review your migration roadmap',   tab: 'roadmap'   },
+    { id: 'resources',  label: 'Explore your document checklist', tab: 'resources' },
+    { id: 'docs',       label: 'Start collecting core documents', tab: null        },
+  ].map(i => ({ ...i, done: false })))
+
+  const profileRows = [
+    { label: 'Destination',   value: answers.destination,            emoji: destinationFlag },
+    { label: 'Occupation',    value: answers.segment,                emoji: '💼' },
+    { label: 'Education',     value: answers.education,              emoji: '🎓' },
+    { label: 'Experience',    value: answers.experience,             emoji: '📅' },
+    { label: 'Language Test', value: answers.language || 'Not taken', emoji: '🗣️' },
+    { label: 'Savings',       value: answers.savings,                emoji: '💰' },
+    { label: 'Age Range',     value: answers.age,                    emoji: '👤' },
   ]
 
-  const LEARNING_MODULES = [
-    { title: 'Immigration Pathways & Visa Routes', category: 'Foundation', progress: quizResult ? 51 : 0 },
-    { title: 'Language Test Preparation Guide', category: 'Skills', progress: 0 },
-    { title: 'Document Collection & Verification', category: 'Documents', progress: 0 },
-  ]
-
-  const ADVISORS_TABLE = [
-    { name: 'Amara Nwosu', date: '12/3/2025', type: 'UK Route', focus: 'Skilled Worker Visa' },
-    { name: 'Tunde Adeleke', date: '20/3/2025', type: 'Canada Route', focus: 'Express Entry' },
-  ]
-
-  const moduleGradients = [
-    'from-purple-100 to-indigo-50',
-    'from-blue-100 to-purple-50',
-    'from-indigo-100 to-blue-50',
-  ]
+  const scoreBarColor   = flag === 'green' ? '#10b981' : flag === 'red' ? '#f43f5e' : '#3b75ff'
+  const scoreBadgeGlow  = flag === 'green' ? '#86efac' : flag === 'red' ? '#fca5a5' : '#bfdbfe'
 
   return (
-    <div className="flex flex-col gap-6 pb-10">
+    <div className="flex flex-col gap-5 pb-10">
+
       {/* Search bar */}
       <div className="flex items-center gap-3">
         <div className="flex-1 flex items-center gap-3 bg-white border border-[rgba(204,204,204,0.8)] rounded-xl px-4 py-3.5">
           <Search size={16} className="text-[#9E9E9E] shrink-0" />
           <span className="text-xs font-medium text-[#9E9E9E] flex-1">Search your learning path...</span>
         </div>
-        <button className="w-14 h-14 rounded-full flex items-center justify-center text-[#5F5F5F] hover:text-[#702DFF] transition-colors shrink-0">
-          <SlidersHorizontal size={20} />
-        </button>
       </div>
 
-      {/* Hero banner */}
-      <div
-        className="relative rounded-[20px] overflow-hidden px-6 py-5"
-        style={{ background: '#702DFF', minHeight: 181 }}
-      >
-        {/* Decorative sparkle shapes */}
-        <div className="absolute right-[77px] top-[45px] w-20 h-20 bg-white opacity-25 rotate-45 rounded-lg pointer-events-none" />
-        <div className="absolute right-2 top-[93px] w-20 h-20 bg-white opacity-10 rotate-12 rounded-lg pointer-events-none" />
-        <div className="absolute right-[148px] top-[122px] w-20 h-20 bg-white opacity-10 -rotate-12 rounded-lg pointer-events-none" />
-        <div className="absolute right-[26px] -top-[20px] w-16 h-16 bg-white opacity-10 rotate-6 rounded-lg pointer-events-none" />
+      {/* Welcome Banner */}
+      <div className="relative rounded-[20px] overflow-hidden px-6 py-6" style={{ background: '#3b75ff', minHeight: 180 }}>
+        <div className="absolute inset-0 pointer-events-none" style={{
+          backgroundImage: 'linear-gradient(rgba(255,255,255,0.08) 1px,transparent 1px),linear-gradient(to right,rgba(255,255,255,0.08) 1px,transparent 1px)',
+          backgroundSize: '28px 28px',
+        }} />
+        <div className="absolute right-[60px] top-[30px] w-20 h-20 bg-white opacity-10 rotate-45 rounded-lg pointer-events-none" />
+        <div className="absolute right-4 top-[90px] w-16 h-16 bg-white opacity-10 rotate-12 rounded-lg pointer-events-none" />
 
-        <div className="relative z-10">
-          <p className="text-white/70 text-xs uppercase tracking-wider mb-2">Your Migration Journey</p>
-          <h2 className="text-white font-semibold text-2xl leading-snug mb-5 max-w-xs">
-            Prepare for Your Japa<br />with AI-Powered Learning
-          </h2>
-          <button
-            onClick={() => router.push(quizResult ? undefined : '/quiz')}
-            className="flex items-center gap-3 text-white text-xs font-medium px-3 py-2 rounded-full"
-            style={{ background: '#202020', width: 'fit-content' }}
-          >
-            {quizResult ? `${destinationFlag} ${answers.destination || 'My Journey'}` : 'Start Assessment'}
-            <span className="w-5 h-5 bg-white rounded-full flex items-center justify-center shrink-0">
-              <Play size={7} fill="#202020" className="text-[#202020] ml-0.5" />
-            </span>
-          </button>
+        <div className="relative z-10 flex flex-col sm:flex-row items-start justify-between gap-4">
+          <div className="flex-1">
+            <p className="text-white/60 text-[10px] uppercase tracking-widest mb-2">
+              {isNewUser ? 'Welcome to JapaLearn AI' : 'Welcome back'}
+            </p>
+            <h2 className="text-white font-bold text-xl sm:text-2xl leading-snug mb-2" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+              {isNewUser ? `Welcome, ${displayName}! 🎉` : `Welcome back, ${displayName}! 👋`}
+            </h2>
+            {answers.destination && (
+              <div className="flex items-center gap-2 mb-3 flex-wrap">
+                <span className="text-base">{destinationFlag}</span>
+                <span className="text-white/80 text-sm font-medium">{answers.destination}</span>
+                {visaRoute && (
+                  <>
+                    <span className="text-white/30">·</span>
+                    <span className="text-white/60 text-xs">{visaRoute}</span>
+                  </>
+                )}
+              </div>
+            )}
+            <p className="text-white/70 text-sm leading-relaxed max-w-sm">
+              {aspirational[flag] || aspirational.yellow}
+            </p>
+          </div>
+
+          {quizResult ? (
+            <div className="bg-white/15 backdrop-blur-sm rounded-2xl px-5 py-4 text-center shrink-0 border border-white/20 min-w-[100px]">
+              <p className="text-white/60 text-[9px] uppercase tracking-widest mb-1">Readiness</p>
+              <p className="text-white font-black text-4xl leading-none mb-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>{score}</p>
+              <p className="text-[10px] font-bold" style={{ color: scoreBadgeGlow }}>{fc.label}</p>
+            </div>
+          ) : (
+            <button onClick={() => router.push('/quiz')} className="text-white text-xs font-semibold px-4 py-2.5 rounded-full shrink-0 transition-all hover:opacity-90" style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)' }}>
+              Take Assessment →
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Milestone cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {milestones.map((m) => {
-          const Icon = m.icon
-          return (
-            <div
-              key={m.label}
-              onClick={!m.done && m.cta ? m.cta : undefined}
-              className={cn(
-                "bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-xl p-3 flex items-center gap-3",
-                !m.done && m.cta ? "cursor-pointer hover:shadow-md transition-shadow" : ""
-              )}
-            >
-              <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: 'rgba(112,45,255,0.15)' }}>
-                <Icon size={16} style={{ color: '#702DFF' }} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] text-[#5F5F5F]">{m.status}</p>
-                <p className="text-xs font-semibold text-[#202020] truncate">{m.label}</p>
-              </div>
-              <button className="w-6 h-6 flex items-center justify-center text-[#7E7E7E] hover:text-[#702DFF] transition-colors shrink-0">
-                <SlidersHorizontal size={14} />
-              </button>
-            </div>
-          )
-        })}
-      </div>
+      {/* Readiness Score + Action Checklist */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-      {/* Continue Learning */}
-      <div>
-        <div className="flex items-center justify-between mb-5">
-          <h3 className="text-base font-medium text-[#202020] capitalize">Continue Learning</h3>
-          <div className="flex gap-3">
-            <button className="w-6 h-6 rounded-full border border-[#9E9E9E] flex items-center justify-center text-[#9E9E9E] hover:border-[#702DFF] hover:text-[#702DFF] transition-colors">
-              <ChevronLeft size={12} />
-            </button>
-            <button className="w-6 h-6 rounded-full border border-[#9E9E9E] flex items-center justify-center text-[#9E9E9E] hover:border-[#702DFF] hover:text-[#702DFF] transition-colors">
-              <ChevronRight size={12} />
-            </button>
+        {/* Readiness Score Card */}
+        <div className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-5">
+          <p className="text-[9px] font-semibold text-[#9E9E9E] uppercase tracking-widest mb-4">Readiness Score</p>
+          {quizResult ? (
+            <>
+              <div className="flex items-end gap-2 mb-3">
+                <span className="font-black text-5xl text-[#202020]" style={{ fontFamily: 'DM Sans, sans-serif' }}>{score}</span>
+                <span className="text-[#9E9E9E] text-sm mb-2">/100</span>
+                <span className="mb-2 text-[10px] font-bold px-2.5 py-1 rounded-full" style={{ background: fc.bg, color: fc.color, border: fc.border }}>{fc.label}</span>
+              </div>
+              <div className="w-full rounded-full h-2 mb-4" style={{ background: '#F0F4FF' }}>
+                <div className="h-2 rounded-full transition-all duration-700" style={{ width: `${score}%`, background: scoreBarColor }} />
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-base">{destinationFlag}</span>
+                <span className="text-sm text-[#5F5F5F]">{answers.destination}</span>
+                {answers.segment && <><span className="text-[#D9D9D9]">·</span><span className="text-xs text-[#9E9E9E] truncate">{answers.segment}</span></>}
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-6">
+              <p className="text-[#9E9E9E] text-sm mb-4">Take the assessment to see your score</p>
+              <button onClick={() => router.push('/quiz')} className="text-sm font-semibold text-white px-5 py-2.5 rounded-full" style={{ background: '#3b75ff' }}>Start Assessment</button>
+            </div>
+          )}
+        </div>
+
+        {/* Action Checklist Card */}
+        <div className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-5">
+          <p className="text-[9px] font-semibold text-[#9E9E9E] uppercase tracking-widest mb-4">Your Next Actions</p>
+          <div className="flex flex-col gap-3">
+            {checklist.map((item) => (
+              <div key={item.id} className="flex items-center gap-3">
+                <button
+                  onClick={() => setChecklist(prev => prev.map(c => c.id === item.id ? { ...c, done: !c.done } : c))}
+                  className="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all"
+                  style={{ borderColor: item.done ? '#3b75ff' : '#D9D9D9', background: item.done ? '#3b75ff' : 'transparent' }}
+                >
+                  {item.done && <CheckCircle2 size={10} className="text-white" />}
+                </button>
+                <span
+                  className={cn('text-sm flex-1 transition-all', item.done ? 'line-through text-[#9E9E9E]' : 'text-[#202020]')}
+                  onClick={item.tab && !item.done ? () => setActiveTab(item.tab) : undefined}
+                  style={item.tab && !item.done ? { cursor: 'pointer' } : {}}
+                >
+                  {item.label}
+                </span>
+                {item.tab && !item.done && <ArrowRight size={12} className="text-[#9E9E9E] shrink-0" />}
+              </div>
+            ))}
           </div>
         </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {LEARNING_MODULES.map((mod, i) => (
-            <div
-              key={i}
-              className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-3 relative cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => setActiveTab('learning')}
-            >
-              {/* Thumbnail */}
-              <div className={`h-[113px] bg-gradient-to-br ${moduleGradients[i]} rounded-xl mb-3 flex items-center justify-center`}>
-                <BookOpen size={28} className="text-purple-300" />
-              </div>
-
-              {/* Category badge */}
-              <span
-                className="text-[8px] font-medium uppercase px-2 py-1 rounded-lg"
-                style={{ background: 'rgba(112,45,255,0.15)', color: '#702DFF' }}
-              >
-                {mod.category}
-              </span>
-
-              {/* Title */}
-              <h4 className="text-sm font-medium text-[#202020] mt-2 mb-2 leading-snug">{mod.title}</h4>
-
-              {/* Progress bar */}
-              <div className="h-1.5 bg-[#D9D9D9] rounded-full mb-3">
-                <div
-                  className="h-1.5 rounded-full transition-all duration-700"
-                  style={{ width: `${mod.progress}%`, background: '#702DFF' }}
-                />
-              </div>
-
-              {/* Author */}
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full flex items-center justify-center text-[8px] font-bold text-white shrink-0" style={{ background: '#702DFF' }}>
-                  J
-                </div>
-                <div>
-                  <p className="text-[10px] font-medium text-[#202020]">JapaLearn AI</p>
-                  <p className="text-[8px] text-[#9E9E9E]">Migration Specialist</p>
-                </div>
-              </div>
-
-              {/* Heart */}
-              <button className="absolute top-5 right-5 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: 'rgba(204,204,204,0.5)' }}>
-                <Heart size={8} className="text-white" />
-              </button>
-            </div>
-          ))}
-        </div>
       </div>
 
-      {/* Advisors table */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-medium text-[#202020]">Your Mentor</h3>
-          <button className="text-xs font-medium" style={{ color: '#702DFF' }}>See All</button>
+      {/* Profile Card + Score Breakdown */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+        {/* Profile Card */}
+        <div className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-5">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-[9px] font-semibold text-[#9E9E9E] uppercase tracking-widest">Your Profile</p>
+            <button onClick={() => router.push('/quiz')} className="text-[10px] font-semibold px-3 py-1.5 rounded-full transition-all hover:opacity-80" style={{ background: 'rgba(59,117,255,0.1)', color: '#3b75ff' }}>Retake Quiz</button>
+          </div>
+          {quizResult ? (
+            <div className="flex flex-col">
+              {profileRows.map(({ label, value, emoji }) => (
+                <div key={label} className="flex items-center justify-between py-2 border-b border-[#F5F5F5] last:border-0">
+                  <span className="text-xs text-[#9E9E9E] flex items-center gap-1.5 shrink-0"><span>{emoji}</span> {label}</span>
+                  <span className="text-xs font-semibold text-[#202020] text-right max-w-[55%] leading-snug">{value || '—'}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <p className="text-[#9E9E9E] text-sm mb-4">Complete the quiz to build your profile</p>
+              <button onClick={() => router.push('/quiz')} className="text-sm font-semibold text-white px-5 py-2.5 rounded-full" style={{ background: '#3b75ff' }}>Take Quiz</button>
+            </div>
+          )}
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr>
-                <th className="text-left text-[9px] font-semibold uppercase text-[#9E9E9E] tracking-wider pb-3">Advisor Name & Date</th>
-                <th className="text-left text-[9px] font-semibold uppercase text-[#9E9E9E] tracking-wider pb-3">Route Type</th>
-                <th className="text-left text-[9px] font-semibold uppercase text-[#9E9E9E] tracking-wider pb-3">Focus Area</th>
-                <th className="text-right text-[9px] font-semibold uppercase text-[#9E9E9E] tracking-wider pb-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {ADVISORS_TABLE.map((a) => (
-                <tr key={a.name}>
-                  <td className="py-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-purple-700 shrink-0" style={{ background: 'rgba(112,45,255,0.15)' }}>
-                        {a.name[0]}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-[#202020]">{a.name}</p>
-                        <p className="text-[10px] text-[#9E9E9E]">{a.date}</p>
-                      </div>
+        {/* Score Breakdown Card */}
+        <div className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-5">
+          <p className="text-[9px] font-semibold text-[#9E9E9E] uppercase tracking-widest mb-4">Score Breakdown</p>
+          {quizResult ? (
+            <div className="flex flex-col gap-3">
+              {breakdown.map((item) => {
+                const pct = Math.round((item.score / item.max) * 100)
+                const barColor = pct >= 70 ? '#10b981' : pct < 40 ? '#f43f5e' : '#3b75ff'
+                return (
+                  <div key={item.label}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-medium text-[#202020]">{item.label}</span>
+                      <span className="text-[10px] font-semibold" style={{ color: barColor }}>{item.score}/{item.max}</span>
                     </div>
-                  </td>
-                  <td>
-                    <span className="text-[8px] font-medium uppercase px-2 py-1 rounded-lg" style={{ background: 'rgba(112,45,255,0.15)', color: '#702DFF' }}>
-                      {a.type}
-                    </span>
-                  </td>
-                  <td className="text-sm text-[#5F5F5F]">{a.focus}</td>
-                  <td className="text-right">
-                    <button className="text-[10px] font-semibold px-3 py-1.5 rounded-lg" style={{ background: 'rgba(112,45,255,0.15)', color: '#702DFF' }}>
-                      Show Details
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    <div className="w-full h-1.5 rounded-full" style={{ background: '#F0F0F0' }}>
+                      <div className="h-1.5 rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: barColor }} />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <p className="text-[#9E9E9E] text-sm">Complete the quiz to see your breakdown</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -611,8 +592,8 @@ function LearningTab({ answers, userId }) {
           <p className="text-sm text-[#5F5F5F]">Your AI-generated, structured learning path</p>
         </div>
         <div className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-10 text-center">
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ background: 'rgba(112,45,255,0.12)' }}>
-            <BookOpen size={24} style={{ color: '#702DFF' }} />
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ background: 'rgba(59,117,255,0.12)' }}>
+            <BookOpen size={24} style={{ color: '#3b75ff' }} />
           </div>
           <h3 className="text-[#202020] font-bold text-xl mb-2">Generate Your Learning Path</h3>
           <p className="text-[#5F5F5F] text-sm mb-7 max-w-sm mx-auto leading-relaxed">
@@ -622,7 +603,7 @@ function LearningTab({ answers, userId }) {
             onClick={generateCurriculum}
             disabled={loading || !answers.destination}
             className="inline-flex items-center gap-2.5 text-white font-semibold py-3.5 px-8 rounded-full transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ background: '#702DFF' }}
+            style={{ background: '#3b75ff' }}
           >
             {loading ? (
               <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Generating your curriculum...</>
@@ -655,12 +636,12 @@ function LearningTab({ answers, userId }) {
             <h3 className="text-[#202020] font-bold text-base">{curriculum.title}</h3>
           </div>
           <div className="text-right shrink-0">
-            <div className="text-2xl font-black" style={{ color: '#702DFF' }}>{progressPct}%</div>
+            <div className="text-2xl font-black" style={{ color: '#3b75ff' }}>{progressPct}%</div>
             <div className="text-[#9E9E9E] text-xs">{completedCount}/{totalLessons} lessons</div>
           </div>
         </div>
         <div className="w-full bg-[#D9D9D9] rounded-full h-2">
-          <div className="h-2 rounded-full transition-all duration-700" style={{ width: `${progressPct}%`, background: '#702DFF' }} />
+          <div className="h-2 rounded-full transition-all duration-700" style={{ width: `${progressPct}%`, background: '#3b75ff' }} />
         </div>
       </div>
 
@@ -681,7 +662,7 @@ function LearningTab({ answers, userId }) {
                   "w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold shrink-0",
                   moduleDone    ? "bg-emerald-100 text-emerald-600" :
                   moduleStarted ? "text-white" : "bg-slate-100 text-slate-500"
-                )} style={moduleStarted && !moduleDone ? { background: '#702DFF' } : {}}>
+                )} style={moduleStarted && !moduleDone ? { background: '#3b75ff' } : {}}>
                   {moduleDone ? <CircleCheck size={16} /> : mi + 1}
                 </div>
                 <div className="text-left">
@@ -712,7 +693,7 @@ function LearningTab({ answers, userId }) {
                       disabled={!unlocked}
                       className={cn(
                         "w-full px-5 py-3.5 flex items-center gap-4 text-left transition-all",
-                        unlocked && !done ? "hover:bg-purple-50 cursor-pointer" :
+                        unlocked && !done ? "hover:bg-blue-50 cursor-pointer" :
                         done             ? "hover:bg-slate-50 cursor-pointer" :
                                            "opacity-40 cursor-not-allowed"
                       )}
@@ -722,8 +703,8 @@ function LearningTab({ answers, userId }) {
                         done     ? "bg-emerald-100 border-emerald-200 text-emerald-600" :
                         unlocked ? "border-purple-200 text-white" :
                                    "bg-slate-100 border-slate-200 text-slate-400"
-                      )} style={unlocked && !done ? { background: 'rgba(112,45,255,0.12)', borderColor: '#702DFF' } : {}}>
-                        {done ? <CircleCheck size={14} /> : unlocked ? <PlayCircle size={14} style={{ color: '#702DFF' }} /> : <Lock size={11} />}
+                      )} style={unlocked && !done ? { background: 'rgba(59,117,255,0.12)', borderColor: '#3b75ff' } : {}}>
+                        {done ? <CircleCheck size={14} /> : unlocked ? <PlayCircle size={14} style={{ color: '#3b75ff' }} /> : <Lock size={11} />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className={cn("font-medium text-sm", done ? "text-[#9E9E9E] line-through" : "text-[#202020]")}>{lesson.title}</div>
@@ -751,7 +732,7 @@ function RoadmapTab({ answers, score }) {
   const phases = [
     {
       icon: BookOpen, phase: 'Phase 1', title: 'Foundation', duration: 'Month 1–2',
-      color: '#702DFF', bg: 'rgba(112,45,255,0.08)', border: 'rgba(112,45,255,0.2)',
+      color: '#3b75ff', bg: 'rgba(59,117,255,0.08)', border: 'rgba(59,117,255,0.2)',
       tasks: [
         `Complete full JapaLearn learning path for ${destination}`,
         'Register for and pass language test (IELTS / OET / TOEFL)',
@@ -801,8 +782,8 @@ function RoadmapTab({ answers, score }) {
         <p className="text-sm text-[#5F5F5F]">Your 12–24 month personalised migration roadmap</p>
       </div>
 
-      <div className="flex items-center gap-3 rounded-xl px-4 py-3" style={{ background: 'rgba(112,45,255,0.08)', border: '1px solid rgba(112,45,255,0.2)' }}>
-        <Clock size={15} style={{ color: '#702DFF' }} className="shrink-0" />
+      <div className="flex items-center gap-3 rounded-xl px-4 py-3" style={{ background: 'rgba(59,117,255,0.08)', border: '1px solid rgba(59,117,255,0.2)' }}>
+        <Clock size={15} style={{ color: '#3b75ff' }} className="shrink-0" />
         <p className="text-[#202020] text-sm">
           Estimated timeline to visa: <strong>{months} months</strong>
           <span className="text-[#9E9E9E]"> · Based on your readiness score of {score}/100</span>
@@ -857,7 +838,7 @@ function ResourcesTab({ answers }) {
     },
     {
       title: 'CV & Career Templates', icon: Briefcase,
-      color: '#702DFF', bg: 'rgba(112,45,255,0.08)', border: 'rgba(112,45,255,0.2)',
+      color: '#3b75ff', bg: 'rgba(59,117,255,0.08)', border: 'rgba(59,117,255,0.2)',
       items: [
         'International CV Template (ATS-Optimised)',
         'Cover Letter Template — Skilled Worker Visa Jobs',
@@ -922,8 +903,8 @@ function ResourcesTab({ answers }) {
         })}
       </div>
 
-      <div className="rounded-[20px] p-6 text-center" style={{ background: 'rgba(112,45,255,0.05)', border: '1px solid rgba(112,45,255,0.15)' }}>
-        <Star size={20} style={{ color: '#702DFF' }} className="mx-auto mb-3" />
+      <div className="rounded-[20px] p-6 text-center" style={{ background: 'rgba(59,117,255,0.05)', border: '1px solid rgba(59,117,255,0.15)' }}>
+        <Star size={20} style={{ color: '#3b75ff' }} className="mx-auto mb-3" />
         <h3 className="font-bold text-[#202020] mb-1">More resources being added weekly</h3>
         <p className="text-[#5F5F5F] text-sm">Country-specific templates, expert guides, and downloadable checklists are being curated for each migration route.</p>
       </div>
@@ -981,7 +962,7 @@ export default function Dashboard() {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#702DFF', borderTopColor: 'transparent' }} />
+          <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#3b75ff', borderTopColor: 'transparent' }} />
           <p className="text-[#9E9E9E] text-sm">Loading your dashboard...</p>
         </div>
       </div>
