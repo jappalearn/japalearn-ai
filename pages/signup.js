@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
-import { Globe2, Mail, Lock, User, ArrowRight, AlertCircle, Star } from 'lucide-react'
+import Link from 'next/link'
+import { Mail, Lock, User, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react'
+import Logo from '../lib/Logo'
 import { supabase } from '../lib/supabase'
 
 const GoogleSVG = () => (
@@ -60,30 +62,34 @@ export default function Signup() {
   return (
     <>
       <Head><title>Create Account — JapaLearn AI</title></Head>
-      <div className="min-h-screen bg-slate-50 flex">
+      <div className="min-h-screen flex" style={{ fontFamily: 'Inter, sans-serif' }}>
 
         {/* Left panel */}
-        <div className="hidden lg:flex lg:w-[45%] bg-indigo-600 flex-col justify-between p-12 relative overflow-hidden">
-          <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 70% 30%, white 0%, transparent 60%)' }} />
+        <div className="hidden lg:flex lg:w-[45%] flex-col justify-between p-12 relative overflow-hidden" style={{ background: '#3b75ff' }}>
+          <div className="absolute inset-0 pointer-events-none" style={{
+            backgroundImage: 'linear-gradient(#ffffff18 1px, transparent 1px), linear-gradient(to right, #ffffff18 1px, transparent 1px)',
+            backgroundSize: '28px 28px',
+          }} />
+
           <div className="relative">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
-                <Globe2 size={17} className="text-white" />
-              </div>
-              <span className="font-bold text-base text-white tracking-tight">JapaLearn AI</span>
+              <Logo size={32} />
+              <span className="font-bold text-base text-white tracking-tight" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                JapaLearn <span className="text-white/80">AI</span>
+              </span>
             </div>
           </div>
 
           {score && (
-            <div className="relative bg-white/10 border border-white/20 rounded-2xl p-5">
-              <div className="text-indigo-200 text-xs uppercase tracking-widest mb-1">Your Readiness Score</div>
-              <div className="text-5xl font-black text-white mb-1">{score}</div>
-              <div className="text-indigo-200 text-sm">out of 100 — saved when you sign up</div>
+            <div className="relative bg-white/10 border border-white/20 rounded-2xl p-5 backdrop-blur-sm">
+              <div className="text-xs uppercase tracking-widest mb-1 font-medium" style={{ color: 'rgba(255,255,255,0.7)' }}>Your Readiness Score</div>
+              <div className="text-5xl font-black text-white mb-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>{score}</div>
+              <div className="text-sm" style={{ color: 'rgba(255,255,255,0.7)' }}>out of 100 — saved when you sign up</div>
             </div>
           )}
 
           <div className="relative space-y-4">
-            <h2 className="text-2xl font-bold text-white leading-snug tracking-tight">
+            <h2 className="text-2xl font-bold text-white leading-snug tracking-tight" style={{ fontFamily: 'DM Sans, sans-serif' }}>
               Your curriculum is<br />waiting for you
             </h2>
             <div className="space-y-3">
@@ -92,34 +98,35 @@ export default function Signup() {
                 'Track your progress lesson by lesson',
                 'Access your report from any device',
               ].map((item) => (
-                <div key={item} className="flex items-center gap-3 text-indigo-100 text-sm">
-                  <Star size={12} className="text-white/60 shrink-0" fill="currentColor" />
+                <div key={item} className="flex items-center gap-3 text-sm" style={{ color: 'rgba(255,255,255,0.8)' }}>
+                  <CheckCircle2 size={14} className="shrink-0 text-white/70" />
                   {item}
                 </div>
               ))}
             </div>
           </div>
-          <p className="relative text-indigo-300 text-xs">© 2026 JapaLearn AI · NDPR Protected</p>
+
+          <p className="relative text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>© 2026 JapaLearn AI · NDPR Protected</p>
         </div>
 
         {/* Right panel */}
         <div className="flex-1 flex items-center justify-center px-5 py-12 bg-white">
           <div className="w-full max-w-sm">
-            <div className="lg:hidden flex items-center gap-2 mb-10">
-              <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center">
-                <Globe2 size={15} className="text-white" />
-              </div>
-              <span className="font-bold text-slate-900">JapaLearn AI</span>
+            <div className="lg:hidden flex items-center gap-2.5 mb-10">
+              <Logo size={28} />
+              <span className="font-bold text-slate-900" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                JapaLearn <span style={{ color: '#3b75ff' }}>AI</span>
+              </span>
             </div>
 
             <div className="mb-8">
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Create your free account</h1>
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight" style={{ fontFamily: 'DM Sans, sans-serif' }}>Create your free account</h1>
               <p className="text-slate-500 mt-1.5 text-sm">Save your report and start your AI curriculum</p>
             </div>
 
             {score && (
-              <div className="flex items-center gap-3 bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3 mb-5">
-                <div className="text-2xl font-black text-indigo-600 shrink-0">{score}</div>
+              <div className="flex items-center gap-3 rounded-xl px-4 py-3 mb-5 border" style={{ background: 'rgba(59,117,255,0.05)', borderColor: 'rgba(59,117,255,0.2)' }}>
+                <div className="text-2xl font-black shrink-0" style={{ color: '#3b75ff', fontFamily: 'DM Sans, sans-serif' }}>{score}</div>
                 <p className="text-slate-600 text-sm">Your readiness score will be saved to your account</p>
               </div>
             )}
@@ -127,7 +134,7 @@ export default function Signup() {
             <button
               onClick={handleGoogle}
               disabled={googleLoading}
-              className="w-full flex items-center justify-center gap-3 bg-white hover:bg-slate-50 disabled:opacity-60 text-slate-700 font-semibold py-3 px-5 rounded-xl transition-all text-sm mb-5 border border-slate-200 shadow-card hover:shadow-card-md"
+              className="w-full flex items-center justify-center gap-3 bg-white hover:bg-slate-50 disabled:opacity-60 text-slate-700 font-semibold py-3 px-5 rounded-xl transition-all text-sm mb-5 border border-slate-200 hover:shadow-sm"
             >
               <GoogleSVG />
               {googleLoading ? 'Redirecting...' : 'Continue with Google'}
@@ -140,42 +147,26 @@ export default function Signup() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-slate-700 text-sm font-medium mb-1.5">Full Name</label>
-                <div className="relative">
-                  <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="text" name="full_name" required
-                    value={form.full_name} onChange={handleChange}
-                    placeholder="Amara Okonkwo"
-                    className="w-full bg-white border border-slate-200 hover:border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 text-slate-900 rounded-xl pl-10 pr-4 py-3 text-sm outline-none transition-all placeholder-slate-400"
-                  />
+              {[
+                { name: 'full_name', label: 'Full Name', type: 'text', icon: User, placeholder: 'Amara Okonkwo' },
+                { name: 'email', label: 'Email address', type: 'email', icon: Mail, placeholder: 'amara@example.com' },
+                { name: 'password', label: 'Password', type: 'password', icon: Lock, placeholder: 'Minimum 6 characters', min: 6 },
+              ].map(({ name, label, type, icon: Icon, placeholder, min }) => (
+                <div key={name}>
+                  <label className="block text-slate-700 text-sm font-medium mb-1.5">{label}</label>
+                  <div className="relative">
+                    <Icon size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type={type} name={name} required minLength={min}
+                      value={form[name]} onChange={handleChange}
+                      placeholder={placeholder}
+                      className="w-full bg-white border border-slate-200 hover:border-slate-300 text-slate-900 rounded-xl pl-10 pr-4 py-3 text-sm outline-none transition-all placeholder-slate-400"
+                      onFocus={e => e.target.style.borderColor = '#3b75ff'}
+                      onBlur={e => e.target.style.borderColor = ''}
+                    />
+                  </div>
                 </div>
-              </div>
-              <div>
-                <label className="block text-slate-700 text-sm font-medium mb-1.5">Email address</label>
-                <div className="relative">
-                  <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="email" name="email" required
-                    value={form.email} onChange={handleChange}
-                    placeholder="amara@example.com"
-                    className="w-full bg-white border border-slate-200 hover:border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 text-slate-900 rounded-xl pl-10 pr-4 py-3 text-sm outline-none transition-all placeholder-slate-400"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-slate-700 text-sm font-medium mb-1.5">Password</label>
-                <div className="relative">
-                  <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="password" name="password" required minLength={6}
-                    value={form.password} onChange={handleChange}
-                    placeholder="Minimum 6 characters"
-                    className="w-full bg-white border border-slate-200 hover:border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10 text-slate-900 rounded-xl pl-10 pr-4 py-3 text-sm outline-none transition-all placeholder-slate-400"
-                  />
-                </div>
-              </div>
+              ))}
 
               {error && (
                 <div className="flex items-start gap-2.5 bg-rose-50 border border-rose-200 rounded-xl px-4 py-3">
@@ -186,7 +177,8 @@ export default function Signup() {
 
               <button
                 type="submit" disabled={loading}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-all text-sm flex items-center justify-center gap-2 shadow-btn"
+                className="w-full disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-full transition-all text-sm flex items-center justify-center gap-2 hover:opacity-90"
+                style={{ background: '#3b75ff' }}
               >
                 {loading ? (
                   <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Creating account...</>
@@ -198,9 +190,9 @@ export default function Signup() {
 
             <p className="text-center text-slate-500 text-sm mt-7">
               Already have an account?{' '}
-              <button onClick={() => router.push('/login')} className="text-indigo-600 hover:text-indigo-700 font-semibold transition-colors">
+              <Link href="/login" className="font-semibold transition-colors" style={{ color: '#3b75ff' }}>
                 Sign in
-              </button>
+              </Link>
             </p>
             <p className="text-center text-slate-400 text-xs mt-3">
               By signing up you agree to our terms. Your data is protected under NDPR.

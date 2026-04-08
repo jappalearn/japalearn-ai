@@ -284,7 +284,7 @@ export default function Dashboard() {
 function OverviewTab({ answers, score, flag, displayName, isNewUser, router, quizResult }) {
   const flagConfig = {
     green:  { label: 'Strong Profile',      color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200', bar: 'bg-emerald-500', ring: 'ring-emerald-200' },
-    yellow: { label: 'Developing Profile',  color: 'text-amber-600',   bg: 'bg-amber-50',   border: 'border-amber-200',  bar: 'bg-amber-500',   ring: 'ring-amber-200'   },
+    yellow: { label: 'Developing Profile',  color: 'text-blue-600',    bg: 'bg-blue-50',    border: 'border-blue-200',   bar: 'bg-blue-500',    ring: 'ring-blue-200'    },
     red:    { label: 'Needs Improvement',   color: 'text-rose-600',    bg: 'bg-rose-50',    border: 'border-rose-200',   bar: 'bg-rose-500',    ring: 'ring-rose-200'    },
   }
   const fc = flagConfig[flag]
@@ -469,7 +469,7 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
                 </div>
                 <div className="w-full bg-slate-100 rounded-full h-1.5">
                   <div
-                    className={cn("h-1.5 rounded-full transition-all duration-700", isStrength ? "bg-emerald-500" : isWeak ? "bg-rose-400" : "bg-amber-400")}
+                    className={cn("h-1.5 rounded-full transition-all duration-700", isStrength ? "bg-emerald-500" : isWeak ? "bg-rose-400" : "bg-blue-400")}
                     style={{ width: `${pct}%` }}
                   />
                 </div>
@@ -699,7 +699,7 @@ function RoadmapTab({ answers, score }) {
     },
     {
       icon: Briefcase, phase: 'Phase 2', title: 'Preparation', duration: 'Month 3–6',
-      color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-200',
+      color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200',
       tasks: [
         'Get degree evaluation (WES for Canada, NARIC for UK)',
         'Request employment reference letters from employers',
@@ -721,7 +721,7 @@ function RoadmapTab({ answers, score }) {
     },
     {
       icon: TrendingUp, phase: 'Phase 4', title: 'Pre-Departure', duration: `Month 11–${months}`,
-      color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200',
+      color: 'text-sky-600', bg: 'bg-sky-50', border: 'border-sky-200',
       tasks: [
         'Receive visa decision — appeal or proceed',
         'Book flights and arrange temporary accommodation',
@@ -813,9 +813,9 @@ function ResourcesTab({ answers }) {
     {
       title: 'SOP & Personal Statement',
       icon: FolderOpen,
-      color: 'text-violet-600',
-      bg: 'bg-violet-50',
-      border: 'border-violet-200',
+      color: 'text-blue-600',
+      bg: 'bg-blue-50',
+      border: 'border-blue-200',
       items: [
         'Statement of Purpose (SOP) — Study Visa Template',
         'Personal Statement Guide — Skilled Worker',
@@ -827,9 +827,9 @@ function ResourcesTab({ answers }) {
     {
       title: 'Financial Planning',
       icon: Wallet,
-      color: 'text-amber-600',
-      bg: 'bg-amber-50',
-      border: 'border-amber-200',
+      color: 'text-sky-600',
+      bg: 'bg-sky-50',
+      border: 'border-sky-200',
       items: [
         'Migration Budget Calculator — NGN to GBP/CAD/USD',
         `Proof of Funds Requirements — ${destination || 'UK / Canada / USA'}`,

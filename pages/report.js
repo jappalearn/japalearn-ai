@@ -1,92 +1,121 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
-import {
-  Globe2, TrendingUp, Map, BarChart3, CheckCircle2,
-  AlertTriangle, ArrowRight, RotateCcw, ChevronRight,
-  Briefcase, GraduationCap, Languages, Clock, Wallet, Award,
-} from 'lucide-react'
+import Link from 'next/link'
+import { Lock, FileText, MapPin, Shield, BookOpen, CheckCircle, AlertTriangle, ArrowRight, ChevronDown, ChevronUp } from 'lucide-react'
+import Logo from '../lib/Logo'
 import { getScoreFlag, normaliseSegment } from '../lib/quizData'
+
+const PRIMARY = '#3b75ff'
+const PRIMARY_DARK = '#2452cc'
 
 const ROUTE_RECOMMENDATIONS = {
   Canada: {
-    'Tech Professional':          { route: 'Express Entry — Federal Skilled Worker', cost: '₦8M–₦14M' },
-    'Career Professional':        { route: 'Express Entry — Federal Skilled Worker', cost: '₦8M–₦14M' },
-    'Healthcare Worker':          { route: 'Express Entry + Healthcare Streams',     cost: '₦9M–₦16M' },
-    'Student or Post-Grad':       { route: 'Study Permit → PGWP → PR',              cost: '₦12M–₦25M' },
-    'Freelancer or Remote Worker':{ route: 'Express Entry — Federal Skilled Worker', cost: '₦8M–₦14M' },
-    'Parent':                     { route: 'Express Entry — Family PR',              cost: '₦10M–₦18M' },
-    default:                      { route: 'Express Entry — Federal Skilled Worker', cost: '₦8M–₦14M' },
+    'Tech Professional':           { route: 'Express Entry — Federal Skilled Worker', cost: '₦8M – ₦14M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']] },
+    'Career Professional':         { route: 'Express Entry — Federal Skilled Worker', cost: '₦8M – ₦14M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']] },
+    'Healthcare Worker':           { route: 'Express Entry + Healthcare Streams',     cost: '₦9M – ₦16M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']] },
+    'Student or Post-Grad':        { route: 'Study Permit → PGWP → PR',              cost: '₦12M – ₦25M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']] },
+    'Freelancer or Remote Worker': { route: 'Express Entry — Federal Skilled Worker', cost: '₦8M – ₦14M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']] },
+    default:                       { route: 'Express Entry — Federal Skilled Worker', cost: '₦8M – ₦14M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']] },
   },
   UK: {
-    'Tech Professional':    { route: 'Global Talent Visa / Skilled Worker', cost: '₦5M–₦10M' },
-    'Healthcare Worker':    { route: 'Health & Care Worker Visa',           cost: '₦4M–₦8M'  },
-    'Student or Post-Grad': { route: 'Student Visa → Graduate Route',       cost: '₦10M–₦20M' },
-    'Career Professional':  { route: 'Skilled Worker Visa',                 cost: '₦5M–₦10M' },
-    default:                { route: 'Skilled Worker Visa',                 cost: '₦5M–₦10M' },
+    'Tech Professional':    { route: 'Global Talent Visa / Skilled Worker', cost: '₦5M – ₦10M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–9'],['Settlement','Month 9–12']] },
+    'Healthcare Worker':    { route: 'Health & Care Worker Visa',           cost: '₦4M – ₦8M',  timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–9'],['Settlement','Month 9–12']] },
+    'Student or Post-Grad': { route: 'UK Student Visa (Tier 4)',            cost: '₦4M – ₦12M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']] },
+    'Career Professional':  { route: 'Skilled Worker Visa',                 cost: '₦5M – ₦10M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–9'],['Settlement','Month 9–12']] },
+    default:                { route: 'Skilled Worker Visa',                 cost: '₦5M – ₦10M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–9'],['Settlement','Month 9–12']] },
   },
   Germany: {
-    'Tech Professional':          { route: 'EU Blue Card / Skilled Immigration Act', cost: '₦7M–₦12M' },
-    'Career Professional':        { route: 'EU Blue Card',                           cost: '₦7M–₦12M' },
-    'Student or Post-Grad':       { route: 'Student Visa → Job Seeker',              cost: '₦8M–₦15M' },
-    'Freelancer or Remote Worker':{ route: 'Germany Freelance Visa',                 cost: '₦5M–₦9M'  },
-    default:                      { route: 'EU Blue Card',                           cost: '₦7M–₦12M' },
+    'Tech Professional':           { route: 'EU Blue Card / Skilled Immigration Act', cost: '₦7M – ₦12M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']] },
+    'Career Professional':         { route: 'EU Blue Card',                           cost: '₦7M – ₦12M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']] },
+    'Student or Post-Grad':        { route: 'Student Visa → Job Seeker',              cost: '₦8M – ₦15M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']] },
+    'Freelancer or Remote Worker': { route: 'Germany Freelance Visa',                 cost: '₦5M – ₦9M',  timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–9'],['Settlement','Month 9–12']] },
+    default:                       { route: 'EU Blue Card',                           cost: '₦7M – ₦12M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']] },
   },
   Australia: {
-    default:                { route: 'Skilled Nominated Visa (190)',         cost: '₦10M–₦18M' },
-    'Student or Post-Grad': { route: 'Student Visa → Graduate Visa (485)',   cost: '₦12M–₦22M' },
+    'Student or Post-Grad': { route: 'Student Visa → Graduate Visa (485)', cost: '₦12M – ₦22M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']] },
+    default:                { route: 'Skilled Nominated Visa (190)',        cost: '₦10M – ₦18M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']] },
   },
   Ireland: {
-    default:                { route: 'Critical Skills Employment Permit',    cost: '₦6M–₦11M' },
-    'Student or Post-Grad': { route: 'Study → 2-Year Stay Back',             cost: '₦10M–₦18M' },
+    'Student or Post-Grad': { route: 'Study → 2-Year Stay Back',         cost: '₦10M – ₦18M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']] },
+    default:                { route: 'Critical Skills Employment Permit', cost: '₦6M – ₦11M',  timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–9'],['Settlement','Month 9–12']] },
   },
   Portugal: {
-    'Freelancer or Remote Worker': { route: 'D8 Digital Nomad Visa', cost: '₦3M–₦6M' },
-    default:                       { route: 'Job Seeker Visa',       cost: '₦4M–₦8M' },
+    'Freelancer or Remote Worker': { route: 'D8 Digital Nomad Visa', cost: '₦3M – ₦6M', timeline: [['Preparation','Month 1–2'],['Testing & Docs','Month 2–4'],['Application','Month 4–6'],['Settlement','Month 6–9']] },
+    default:                       { route: 'Job Seeker Visa',       cost: '₦4M – ₦8M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–5'],['Application','Month 5–8'],['Settlement','Month 8–12']] },
   },
-  UAE: { default: { route: 'Employment Visa / Freelance Permit', cost: '₦2M–₦5M' } },
+  UAE: { default: { route: 'Employment Visa / Freelance Permit', cost: '₦2M – ₦5M', timeline: [['Preparation','Month 1–2'],['Testing & Docs','Month 2–3'],['Application','Month 3–5'],['Settlement','Month 5–8']] } },
 }
 
 function getRecommendation(destination, segment) {
   const routes = ROUTE_RECOMMENDATIONS[destination]
-  if (!routes) return { route: 'Skilled Worker / Employment Visa', cost: '₦5M–₦12M' }
-  return routes[segment] || routes['default'] || { route: 'Skilled Worker / Employment Visa', cost: '₦5M–₦12M' }
+  if (!routes) return { route: 'Skilled Worker / Employment Visa', cost: '₦5M – ₦12M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']] }
+  return routes[segment] || routes['default'] || { route: 'Skilled Worker / Employment Visa', cost: '₦5M – ₦12M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']] }
+}
+
+function getScoreBreakdown(answers) {
+  return [
+    { label: 'Work Experience', score: ({'0–1':4,'2–3':10,'4–6':18,'7–10':25,'10+':30,'0 – 1 year':4,'2 – 3 years':10,'4 – 6 years':18,'7 – 10 years':25,'10+ years':30})[answers.experience]||0, max:30, note: 'Limited experience means you may benefit more from a study pathway first.' },
+    { label: 'Education',       score: ({'High School':4,'Diploma':8,"Bachelor's":14,"Master's":18,'PhD':20,"Bachelor's Degree (BSc / BA / MBBS / BPharm / LLB etc.)":14,"Master's Degree (MSc / MBA / MA / LLM etc.)":18,'PhD / Doctorate':20,'High School / WAEC / NECO':4,'Diploma / OND / NCE':8})[answers.education]||0, max:20, note: 'Higher education levels unlock more immigration pathways.' },
+    { label: 'Language Test',   score: ({'Not taken':0,'Scheduled':2,'IELTS <6.0':4,'IELTS 6.0–6.5':10,'IELTS 7.0–8.0':16,'IELTS 8.0+':20,'CELPIP':16,'TOEFL':14,'IELTS Academic — below 6.0':4,'IELTS Academic — 6.0 to 6.5':10,'IELTS Academic — 7.0 to 7.5':16,'IELTS Academic — 8.0+':20,'OET (Occupational English Test) — for healthcare':18,'CELPIP — for Canada':16,'Registered / scheduled':2})[answers.language]||0, max:20, note: 'IELTS 6.0–6.5 meets minimum thresholds but improving to 7.0+ significantly boosts eligibility.' },
+    { label: 'Age Factor',      score: ({'Under 20':2,'20–24':6,'25–30':10,'31–35':10,'36–40':7,'41–45':4,'46+':2,'20 – 24':6,'25 – 30':10,'31 – 35':10,'36 – 40':7,'41 – 45':4})[answers.age]||0, max:10, note: 'Age factor is fixed based on your profile.' },
+    { label: 'Financial Readiness', score: ({'< ₦1M':0,'₦1M–5M':3,'₦5M–10M':6,'₦10M–20M':8,'₦20M+':10,'Less than ₦1M':0,'₦1M – ₦5M':3,'₦5M – ₦10M':6,'₦10M – ₦20M':8,'₦20M+':10})[answers.savings]||0, max:10, note: '₦5M–10M covers some routes but you may need more depending on your destination.' },
+    { label: 'Skills & Certs',  score: 0, max:10, note: 'Certifications, job offers, and licensing progress add valuable points.' },
+  ]
+}
+
+function getStrengthsAndGaps(breakdown) {
+  const strengths = breakdown.filter(b => b.score >= b.max * 0.6).map(b => b.label)
+  const gaps = breakdown.filter(b => b.score < b.max * 0.4).map(b => b.label)
+  return { strengths, gaps }
 }
 
 function getNextSteps(answers, score) {
   const steps = []
   const flag = getScoreFlag(score)
-  if (!answers.language || answers.language === 'Not taken') {
-    steps.push({ priority: 'Urgent', text: `Register for an IELTS or relevant language test — this is your biggest gap (0/20 pts currently).` })
-  }
-  if (answers.savings === '< ₦1M' || answers.savings === 'Less than ₦1M') {
-    steps.push({ priority: 'Urgent', text: `Start a dedicated migration savings plan. Most routes require minimum ₦3M–₦8M in proof of funds.` })
-  }
-  if (answers.experience === '0–1' || answers.experience === '0 – 1 year') {
-    steps.push({ priority: 'High', text: `Focus on building 2+ years of documented work experience — the highest-weighted factor (30%).` })
-  }
-  if (flag === 'green') {
-    steps.push({ priority: 'High', text: `Your profile is strong. Start gathering documents: passport, degree certificates, NYSC discharge, work references.` })
-  }
-  steps.push({ priority: 'Next', text: `Create your free JapaLearn account to access your personalised ${answers.destination} curriculum.` })
-  steps.push({ priority: 'Next', text: `Bookmark the official immigration portal for ${answers.destination || 'your target country'} and check current processing times.` })
-  return steps.slice(0, 5)
+  if (!answers.language || answers.language === 'Not taken')
+    steps.push('Book your IELTS test at an approved British Council centre — aim for 7.0+')
+  if (answers.savings === '< ₦1M' || answers.savings === 'Less than ₦1M')
+    steps.push('Start a dedicated migration savings plan. Most routes require minimum ₦3M–₦8M proof of funds.')
+  steps.push('Request reference letters from current and past employers')
+  steps.push('Gather all required documents: passport, transcripts, certificates')
+  if (flag === 'green')
+    steps.push('Your profile is strong. Start your application process now.')
+  else
+    steps.push('Create your JapaLearn account to access your personalised curriculum')
+  return steps.slice(0, 4)
 }
 
-const priorityConfig = {
-  Urgent: { color: 'text-rose-600',   bg: 'bg-rose-50',   border: 'border-rose-200',   icon: AlertTriangle },
-  High:   { color: 'text-amber-600',  bg: 'bg-amber-50',  border: 'border-amber-200',  icon: TrendingUp    },
-  Next:   { color: 'text-indigo-600', bg: 'bg-indigo-50', border: 'border-indigo-200', icon: ArrowRight    },
+function DonutChart({ score, color }) {
+  const radius = 60
+  const circumference = 2 * Math.PI * radius
+  const offset = circumference - (score / 100) * circumference
+  return (
+    <svg width="160" height="160" viewBox="0 0 160 160">
+      <circle cx="80" cy="80" r={radius} fill="none" stroke="#E3E9F3" strokeWidth="14" />
+      <circle
+        cx="80" cy="80" r={radius} fill="none"
+        stroke={color} strokeWidth="14"
+        strokeDasharray={circumference}
+        strokeDashoffset={offset}
+        strokeLinecap="round"
+        transform="rotate(-90 80 80)"
+        style={{ transition: 'stroke-dashoffset 1s ease' }}
+      />
+      <text x="80" y="74" textAnchor="middle" style={{ fontSize: '26px', fontWeight: 700, fill: '#0f1720', fontFamily: 'DM Sans, sans-serif' }}>{score}%</text>
+      <text x="80" y="96" textAnchor="middle" style={{ fontSize: '12px', fill: color, fontFamily: 'Inter, sans-serif', fontWeight: 600 }}>
+        {score >= 70 ? 'Strong' : score >= 45 ? 'Moderate' : 'Early Stage'}
+      </text>
+    </svg>
+  )
 }
-
-const breakdownIcons = [Briefcase, GraduationCap, Languages, Clock, Wallet, Award]
 
 const LOADING_STEPS = [
-  { text: 'Analysing your profile...',          sub: 'Reviewing your experience, education and background'               },
-  { text: 'Checking visa route eligibility...',  sub: 'Matching your profile against 40+ immigration pathways'           },
-  { text: 'Calculating your readiness score...', sub: 'Weighing language, savings, age and qualification factors'        },
-  { text: 'Building your action plan...',        sub: 'Identifying your strongest gaps and quick wins'                   },
-  { text: 'Finalising your report...',           sub: 'Almost ready — pulling it all together for you'                   },
+  { text: 'Analysing your profile…',            sub: 'Reviewing your experience, education and background' },
+  { text: 'Matching you with the best pathway…', sub: 'Comparing your profile against 40+ immigration routes' },
+  { text: 'Calculating your readiness score…',   sub: 'Weighing language, savings, age and qualification factors' },
+  { text: 'Building your action plan…',          sub: 'Identifying your strongest gaps and quick wins' },
+  { text: 'Finalising your report…',             sub: 'Almost ready — pulling it all together for you' },
 ]
 
 export default function Report() {
@@ -95,6 +124,10 @@ export default function Report() {
   const [generating, setGenerating] = useState(true)
   const [stepIndex, setStepIndex] = useState(0)
   const [barWidth, setBarWidth] = useState(0)
+  const [showSignup, setShowSignup] = useState(false)
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
 
   useEffect(() => {
     if (!router.isReady) return
@@ -125,36 +158,33 @@ export default function Report() {
   if (generating) {
     const step = LOADING_STEPS[stepIndex]
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center px-5">
-        <div className="flex items-center gap-2 mb-16">
-          <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center">
-            <Globe2 size={15} className="text-white" />
-          </div>
-          <span className="font-bold text-slate-900 text-sm">JapaLearn <span className="text-indigo-600">AI</span></span>
-        </div>
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center px-5" style={{ fontFamily: 'Inter, sans-serif' }}>
+        <Link href="/" className="flex items-center gap-2.5 mb-16 hover:opacity-80 transition-opacity">
+          <Logo size={32} />
+          <span className="font-bold text-[#0f1720] text-base" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+            JapaLearn <span style={{ color: PRIMARY }}>AI</span>
+          </span>
+        </Link>
 
         <div className="relative mb-10">
-          <div className="w-24 h-24 rounded-full bg-indigo-50 border-2 border-indigo-100 flex items-center justify-center">
-            <div className="w-14 h-14 rounded-full bg-indigo-100 border-2 border-indigo-200 flex items-center justify-center">
-              <div className="w-7 h-7 rounded-full bg-indigo-600" />
+          <div className="w-24 h-24 rounded-full flex items-center justify-center" style={{ border: `4px solid #e6efff` }}>
+            <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ border: `2px solid #c8d9ff` }}>
+              <div className="w-6 h-6 rounded-full" style={{ background: PRIMARY }} />
             </div>
           </div>
-          <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-indigo-600 animate-spin" />
+          <div className="absolute inset-0 rounded-full border-4 border-transparent animate-spin" style={{ borderTopColor: PRIMARY }} />
         </div>
 
         <div className="text-center mb-10 max-w-sm">
-          <p className="text-slate-900 font-semibold text-lg mb-2">{step.text}</p>
-          <p className="text-slate-500 text-sm leading-relaxed">{step.sub}</p>
+          <p className="font-semibold text-lg text-[#0f1720] mb-2" style={{ fontFamily: 'DM Sans, sans-serif' }}>{step.text}</p>
+          <p className="text-[#5f6776] text-sm leading-relaxed">{step.sub}</p>
         </div>
 
         <div className="w-full max-w-xs">
-          <div className="w-full bg-slate-100 rounded-full h-1.5 mb-3">
-            <div
-              className="bg-indigo-600 h-1.5 rounded-full transition-all duration-300"
-              style={{ width: `${barWidth}%` }}
-            />
+          <div className="w-full rounded-full h-1.5 mb-3" style={{ background: '#e3e9f3' }}>
+            <div className="h-1.5 rounded-full transition-all duration-300" style={{ width: `${barWidth}%`, background: PRIMARY }} />
           </div>
-          <div className="flex justify-between text-xs text-slate-400">
+          <div className="flex justify-between text-xs text-[#5f6776]">
             <span>Personalising your report</span>
             <span>{Math.round(barWidth)}%</span>
           </div>
@@ -162,9 +192,10 @@ export default function Report() {
 
         <div className="flex items-center gap-2 mt-8">
           {LOADING_STEPS.map((_, i) => (
-            <div key={i} className={`rounded-full transition-all duration-300 ${
-              i === stepIndex ? 'w-6 h-1.5 bg-indigo-600' : i < stepIndex ? 'w-1.5 h-1.5 bg-indigo-300' : 'w-1.5 h-1.5 bg-slate-200'
-            }`} />
+            <div key={i} className="rounded-full transition-all duration-300" style={{
+              width: i === stepIndex ? '24px' : '6px', height: '6px',
+              background: i === stepIndex ? PRIMARY : i < stepIndex ? '#c8d9ff' : '#e3e9f3',
+            }} />
           ))}
         </div>
       </div>
@@ -176,181 +207,286 @@ export default function Report() {
   const { score, answers } = data
   const flag = getScoreFlag(score)
   const recommendation = getRecommendation(answers.destination, normaliseSegment(answers.segment))
+  const breakdown = getScoreBreakdown(answers)
+  const { strengths, gaps } = getStrengthsAndGaps(breakdown)
   const nextSteps = getNextSteps(answers, score)
 
-  const flagConfig = {
-    green:  { label: 'Strong Profile',   color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200', bar: 'bg-emerald-500' },
-    yellow: { label: 'Building Profile', color: 'text-amber-600',   bg: 'bg-amber-50',   border: 'border-amber-200',  bar: 'bg-amber-500'   },
-    red:    { label: 'Early Stage',      color: 'text-rose-600',    bg: 'bg-rose-50',    border: 'border-rose-200',   bar: 'bg-rose-500'    },
-  }
-  const fc = flagConfig[flag]
+  const scoreColor = flag === 'green' ? '#22C55E' : flag === 'yellow' ? '#3b75ff' : '#3b75ff'
+  const candidateLabel = flag === 'green' ? 'Strong Candidate' : flag === 'yellow' ? 'Moderate Candidate' : 'Early Stage Candidate'
+  const flagBg = flag === 'green' ? '#dcfce7' : '#e6efff'
+  const flagText = flag === 'green' ? '#15803d' : PRIMARY
 
-  const scoreBreakdown = [
-    { label: 'Work Experience',    score: ({ '0–1': 4, '2–3': 10, '4–6': 18, '7–10': 25, '10+': 30, '0 – 1 year': 4, '2 – 3 years': 10, '4 – 6 years': 18, '7 – 10 years': 25, '10+ years': 30 })[answers.experience] || 0, max: 30 },
-    { label: 'Education',          score: ({ 'High School': 4, 'Diploma': 8, "Bachelor's": 14, "Master's": 18, 'PhD': 20, "Bachelor's Degree (BSc / BA / MBBS / BPharm / LLB etc.)": 14, "Master's Degree (MSc / MBA / MA / LLM etc.)": 18, 'PhD / Doctorate': 20 })[answers.education] || 0, max: 20 },
-    { label: 'Language Test',      score: ({ 'Not taken': 0, 'Scheduled': 2, 'IELTS <6.0': 4, 'IELTS 6.0–6.5': 10, 'IELTS 7.0–8.0': 16, 'IELTS 8.0+': 20, 'CELPIP': 16, 'TOEFL': 14, 'IELTS Academic — below 6.0': 4, 'IELTS Academic — 6.0 to 6.5': 10, 'IELTS Academic — 7.0 to 7.5': 16, 'IELTS Academic — 8.0+': 20, 'OET (Occupational English Test) — for healthcare': 18, 'CELPIP — for Canada': 16 })[answers.language] || 0, max: 20 },
-    { label: 'Age Factor',         score: ({ 'Under 20': 2, '20–24': 6, '25–30': 10, '31–35': 10, '36–40': 7, '41–45': 4, '46+': 2, '20 – 24': 6, '25 – 30': 10, '31 – 35': 10, '36 – 40': 7, '41 – 45': 4 })[answers.age] || 0, max: 10 },
-    { label: 'Financial Readiness',score: ({ '< ₦1M': 0, '₦1M–5M': 3, '₦5M–10M': 6, '₦10M–20M': 8, '₦20M+': 10, 'Less than ₦1M': 0, '₦1M – ₦5M': 3, '₦5M – ₦10M': 6, '₦10M – ₦20M': 8 })[answers.savings] || 0, max: 10 },
-    { label: 'Skills & Certs',     score: 0, max: 10 },
+  const eligibilityRows = [
+    ['Language', answers.language && answers.language !== 'Not taken' ? answers.language : 'IELTS 6.5+ minimum (CLB 7 for Canada)'],
+    ['Education', answers.education || "Bachelor's degree or equivalent (ECA required)"],
+    ['Docs', '8 documents required'],
   ]
 
   return (
     <>
       <Head><title>Your Migration Report — JapaLearn AI</title></Head>
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-white" style={{ fontFamily: 'Inter, sans-serif' }}>
 
-        {/* Top bar */}
-        <div className="border-b border-slate-200 bg-white sticky top-0 z-10">
-          <div className="max-w-2xl mx-auto px-5 h-14 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center">
-                <Globe2 size={13} className="text-white" />
-              </div>
-              <span className="font-bold text-sm text-slate-900">JapaLearn AI</span>
+        {/* Navbar */}
+        <div className="px-6 pt-6 sticky top-4 z-50">
+          <nav className="max-w-[1107px] mx-auto h-16 bg-white rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.12)] flex items-center justify-between px-8" style={{ border: '1px solid #e3e9f3' }}>
+            <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
+              <Logo size={32} />
+              <span className="font-bold text-base text-[#0f1720]" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                JapaLearn <span style={{ color: PRIMARY }}>AI</span>
+              </span>
+            </Link>
+            <div className="hidden md:flex items-center gap-7">
+              {['Features','Pricing','Learn','Blogs','FAQs'].map(item => (
+                <button key={item} className="text-[#0f1720] font-medium text-sm hover:opacity-60 transition-opacity">{item}</button>
+              ))}
             </div>
-            <button
-              onClick={() => router.push('/')}
-              className="flex items-center gap-1.5 text-slate-500 hover:text-slate-700 text-sm font-medium transition-colors"
-            >
-              <RotateCcw size={13} /> Retake quiz
-            </button>
-          </div>
+            <div className="flex items-center gap-3">
+              <Link href="/login" className="text-[#0f1720] font-medium text-sm hover:opacity-60 transition-opacity">Sign in</Link>
+              <Link href="/quiz" className="px-6 py-2.5 rounded-full text-sm font-medium text-white transition-all hover:opacity-90" style={{ background: PRIMARY }}>
+                Get Started
+              </Link>
+            </div>
+          </nav>
         </div>
 
-        <div className="max-w-2xl mx-auto px-5 py-10 space-y-4">
+        <div className="max-w-[800px] mx-auto px-6 py-12">
 
-          <div>
-            <p className="text-indigo-600 text-xs font-semibold uppercase tracking-widest mb-1">Migration Readiness Report</p>
-            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Your personalised assessment</h1>
+          {/* Page title */}
+          <div className="text-center mb-10">
+            <h1 style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 700, fontSize: 'clamp(28px, 4vw, 44px)', color: '#0f1720', marginBottom: '8px', letterSpacing: '-0.5px' }}>
+              Your Migration Report Is Ready
+            </h1>
+            <p style={{ color: '#5f6776', fontSize: '16px' }}>Here&apos;s what our AI assessment found about your profile</p>
           </div>
 
           {/* Score card */}
-          <div className={`rounded-2xl border ${fc.border} ${fc.bg} overflow-hidden shadow-card`}>
-            <div className="px-6 py-6 flex items-center justify-between">
-              <div>
-                <p className="text-slate-500 text-xs uppercase tracking-widest mb-2">Readiness Score</p>
-                <div className={`text-6xl font-black ${fc.color} leading-none`}>{score}</div>
-                <div className="text-slate-400 text-sm mt-1">out of 100</div>
+          <div className="bg-white rounded-2xl p-8 mb-4" style={{ border: '1px solid #e3e9f3', boxShadow: '0 2px 16px rgba(59,117,255,0.06)' }}>
+            <div className="flex flex-col sm:flex-row gap-8 items-start">
+              <div className="shrink-0">
+                <DonutChart score={score} color={scoreColor} />
               </div>
-              <div className="text-right">
-                <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold border ${fc.border} ${fc.bg} ${fc.color} mb-3`}>
-                  <TrendingUp size={13} /> {fc.label}
+              <div className="flex-1">
+                <div className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 mb-3 text-xs font-semibold" style={{ background: flagBg, color: flagText }}>
+                  {candidateLabel}
                 </div>
-                <p className="text-slate-500 text-xs max-w-[160px] leading-relaxed">
-                  {flag === 'green' && 'You meet the baseline for your target route.'}
-                  {flag === 'yellow' && '1–2 key gaps to close before applying.'}
-                  {flag === 'red' && 'Focus on urgent gaps — fixable in 12–18 months.'}
+                <h2 style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 700, fontSize: 'clamp(20px, 3vw, 30px)', color: '#0f1720', marginBottom: '8px', letterSpacing: '-0.3px' }}>
+                  {answers.destination} — {recommendation.route}
+                </h2>
+                <p style={{ color: '#5f6776', fontSize: '14px', lineHeight: '22px' }}>
+                  Based on your quiz profile, this is your best-fit migration pathway.
                 </p>
               </div>
             </div>
-            <div className="px-6 py-3 border-t border-slate-200 bg-white">
-              <div className="w-full bg-slate-100 rounded-full h-2">
-                <div className={`h-2 rounded-full transition-all duration-700 ${fc.bar}`} style={{ width: `${score}%` }} />
+
+            <div className="mt-6 pt-6 flex flex-col sm:flex-row gap-8" style={{ borderTop: '1px solid #e3e9f3' }}>
+              <div>
+                <p style={{ fontSize: '11px', fontWeight: 600, color: '#5f6776', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '10px' }}>STRENGTHS</p>
+                <div className="flex flex-wrap gap-2">
+                  {strengths.length > 0 ? strengths.map(s => (
+                    <span key={s} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium" style={{ background: '#dcfce7', color: '#15803d', border: '1px solid #bbf7d0' }}>
+                      <CheckCircle size={11} /> {s}
+                    </span>
+                  )) : (
+                    <span className="text-xs" style={{ color: '#5f6776' }}>Complete more steps to earn strengths</span>
+                  )}
+                </div>
+              </div>
+              <div>
+                <p style={{ fontSize: '11px', fontWeight: 600, color: '#5f6776', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '10px' }}>AREAS TO IMPROVE</p>
+                <div className="flex flex-wrap gap-2">
+                  {gaps.map(g => (
+                    <span key={g} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium" style={{ background: '#e6efff', color: PRIMARY, border: '1px solid #c8d9ff' }}>
+                      <AlertTriangle size={11} /> {g}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Recommended Route */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-card">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center">
-                <Map size={14} className="text-indigo-600" />
+          {/* LOCKED / SIGNUP GATE */}
+          {!showSignup ? (
+            <div className="rounded-2xl p-10 mb-4 text-center" style={{ background: '#f6f9ff', border: '1px solid #e3e9f3', boxShadow: '0 2px 16px rgba(59,117,255,0.04)' }}>
+              <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-5" style={{ background: '#e6efff' }}>
+                <Lock size={22} style={{ color: PRIMARY }} />
               </div>
-              <span className="text-slate-500 text-xs font-semibold uppercase tracking-widest">Recommended Route</span>
-            </div>
-            <div className="text-slate-900 font-bold text-lg mb-1">{answers.destination} — {recommendation.route}</div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-indigo-600 font-semibold text-sm">Est. Cost: {recommendation.cost}</span>
-              <span className="text-slate-300">·</span>
-              <span className="text-slate-500 text-sm">{answers.segment}</span>
-              {answers.education && <><span className="text-slate-300">·</span><span className="text-slate-500 text-sm">{answers.education}</span></>}
-            </div>
-          </div>
-
-          {/* Score Breakdown */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-card">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center">
-                <BarChart3 size={14} className="text-indigo-600" />
-              </div>
-              <span className="text-slate-500 text-xs font-semibold uppercase tracking-widest">Score Breakdown</span>
-            </div>
-            <div className="space-y-4">
-              {scoreBreakdown.map((item, i) => {
-                const Icon = breakdownIcons[i]
-                const pct = Math.round((item.score / item.max) * 100)
-                return (
-                  <div key={item.label}>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <div className="flex items-center gap-2">
-                        <Icon size={13} className="text-slate-400 shrink-0" />
-                        <span className="text-slate-700 text-sm font-medium">{item.label}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-xs font-semibold ${item.score === 0 ? 'text-rose-500' : 'text-slate-500'}`}>{item.score}/{item.max}</span>
-                        {item.score === 0 && <span className="text-xs text-rose-600 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded font-semibold">Gap</span>}
-                      </div>
-                    </div>
-                    <div className="w-full bg-slate-100 rounded-full h-1.5">
-                      <div
-                        className={`h-1.5 rounded-full transition-all duration-500 ${item.score === 0 ? 'bg-rose-200' : fc.bar}`}
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
+              <h3 style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 700, fontSize: '28px', color: '#0f1720', marginBottom: '8px' }}>
+                Your Full Migration Report is Ready
+              </h3>
+              <p style={{ color: '#5f6776', fontSize: '15px', marginBottom: '32px' }}>Create your free account to unlock:</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-[540px] mx-auto mb-8">
+                {[
+                  [FileText, `Full Score Breakdown (why you scored ${score}%)`],
+                  [MapPin, `Estimated Cost Breakdown (${recommendation.cost})`],
+                  [Shield, 'Eligibility Requirements & Timeline'],
+                  [BookOpen, 'Your Personalised Roadmap'],
+                ].map(([Icon, label]) => (
+                  <div key={label} className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 text-left" style={{ border: '1px solid #e3e9f3' }}>
+                    <Icon size={16} style={{ color: PRIMARY, flexShrink: 0 }} />
+                    <span style={{ fontSize: '13px', color: '#0f1720' }}>{label}</span>
                   </div>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Action Plan */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-card">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center">
-                <CheckCircle2 size={14} className="text-indigo-600" />
+                ))}
               </div>
-              <span className="text-slate-500 text-xs font-semibold uppercase tracking-widest">Your Action Plan</span>
-            </div>
-            <div className="space-y-3">
-              {nextSteps.map((step, i) => {
-                const pc = priorityConfig[step.priority]
-                const Icon = pc.icon
-                return (
-                  <div key={i} className={`flex items-start gap-3 rounded-xl p-3.5 border ${pc.bg} ${pc.border}`}>
-                    <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
-                      <Icon size={12} className={pc.color} />
-                      <span className={`text-xs font-bold ${pc.color}`}>{step.priority}</span>
-                    </div>
-                    <p className="text-slate-700 text-sm leading-relaxed">{step.text}</p>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* CTA */}
-          <div className="bg-indigo-600 rounded-2xl p-6">
-            <h2 className="text-lg font-bold text-white mb-1.5">Save your report. Start your curriculum.</h2>
-            <p className="text-indigo-200 text-sm mb-5 leading-relaxed">
-              Create a free account to access your personalised {answers.destination} step-by-step curriculum and track your progress.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3">
               <button
-                onClick={() => router.push(`/signup?answers=${encodeURIComponent(JSON.stringify(answers))}&score=${score}`)}
-                className="flex-1 flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-indigo-600 font-semibold py-3 px-5 rounded-xl transition-all text-sm shadow-card"
+                onClick={() => setShowSignup(true)}
+                className="transition-all hover:opacity-90"
+                style={{ padding: '16px 48px', borderRadius: '99px', background: PRIMARY, color: '#FFFFFF', fontSize: '16px', fontWeight: 600, fontFamily: 'DM Sans, sans-serif' }}
               >
-                Create Free Account <ArrowRight size={15} />
-              </button>
-              <button
-                onClick={() => router.push('/')}
-                className="flex items-center justify-center gap-2 text-indigo-200 hover:text-white text-sm font-medium px-5 py-3 rounded-xl border border-white/20 hover:border-white/40 transition-all"
-              >
-                <RotateCcw size={13} /> Retake quiz
+                Create My Free Account
               </button>
             </div>
-          </div>
+          ) : (
+            <div className="rounded-2xl p-10 mb-4" style={{ background: '#f6f9ff', border: '1px solid #e3e9f3' }}>
+              <h3 style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 700, fontSize: '28px', color: '#0f1720', textAlign: 'center', marginBottom: '32px' }}>
+                Create Your Free Account
+              </h3>
+              <div className="max-w-[380px] mx-auto space-y-4">
+                {[
+                  { placeholder: 'Full Name', value: name, onChange: e => setName(e.target.value), type: 'text' },
+                  { placeholder: 'Email Address', value: email, onChange: e => setEmail(e.target.value), type: 'email' },
+                  { placeholder: 'Password (min 6 chars)', value: password, onChange: e => setPassword(e.target.value), type: 'password' },
+                ].map((field) => (
+                  <input
+                    key={field.placeholder}
+                    type={field.type}
+                    placeholder={field.placeholder}
+                    value={field.value}
+                    onChange={field.onChange}
+                    className="w-full px-4 py-3.5 rounded-xl text-sm outline-none transition-all"
+                    style={{ border: '1px solid #e3e9f3', background: 'white', color: '#0f1720', fontFamily: 'Inter, sans-serif' }}
+                    onFocus={e => e.target.style.borderColor = PRIMARY}
+                    onBlur={e => e.target.style.borderColor = '#e3e9f3'}
+                  />
+                ))}
+                <button
+                  onClick={() => router.push(`/signup?answers=${encodeURIComponent(JSON.stringify(answers))}&score=${score}&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}`)}
+                  className="w-full transition-all hover:opacity-90 flex items-center justify-center gap-2"
+                  style={{ padding: '16px', borderRadius: '99px', background: PRIMARY, color: '#FFFFFF', fontSize: '16px', fontWeight: 600, fontFamily: 'DM Sans, sans-serif', marginTop: '8px' }}
+                >
+                  Create Account & View Report <ArrowRight size={16} />
+                </button>
+                <button onClick={() => setShowSignup(false)} className="w-full text-center text-sm py-2 transition-colors" style={{ color: '#5f6776' }}
+                  onMouseEnter={e => e.target.style.color = '#0f1720'}
+                  onMouseLeave={e => e.target.style.color = '#5f6776'}
+                >
+                  ← Back
+                </button>
+              </div>
+            </div>
+          )}
 
-          <p className="text-center text-slate-400 text-xs pb-4">
+          {/* Gated content — shown after signup intent */}
+          {showSignup && (
+            <>
+              {/* Eligibility + Cost + Timeline */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                {[
+                  {
+                    icon: FileText, label: 'Eligibility',
+                    content: (
+                      <div className="space-y-3">
+                        {eligibilityRows.map(([l, v]) => (
+                          <div key={l}>
+                            <p style={{ fontSize: '11px', color: '#5f6776', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '2px' }}>{l}</p>
+                            <p style={{ fontSize: '13px', fontWeight: 600, color: '#0f1720' }}>{v}</p>
+                          </div>
+                        ))}
+                      </div>
+                    ),
+                  },
+                  {
+                    icon: MapPin, label: 'Estimated Cost',
+                    content: (
+                      <>
+                        <p style={{ fontSize: '28px', fontWeight: 700, color: PRIMARY, marginBottom: '8px', fontFamily: 'DM Sans, sans-serif' }}>{recommendation.cost}</p>
+                        <p style={{ fontSize: '12px', color: '#5f6776', lineHeight: '18px' }}>Includes visa fees, proof of funds, and first-year living costs.</p>
+                      </>
+                    ),
+                  },
+                  {
+                    icon: BookOpen, label: 'Timeline',
+                    content: (
+                      <div className="space-y-2">
+                        {recommendation.timeline.map(([phase, period]) => (
+                          <div key={phase} className="flex justify-between items-center">
+                            <span style={{ fontSize: '13px', color: '#0f1720' }}>{phase}</span>
+                            <span style={{ fontSize: '12px', color: '#5f6776' }}>{period}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ),
+                  },
+                ].map(({ icon: Icon, label, content }) => (
+                  <div key={label} className="bg-white rounded-2xl p-5" style={{ border: '1px solid #e3e9f3', boxShadow: '0 2px 8px rgba(59,117,255,0.04)' }}>
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: '#e6efff' }}>
+                        <Icon size={15} style={{ color: PRIMARY }} />
+                      </div>
+                      <span style={{ fontWeight: 600, fontSize: '15px', color: '#0f1720' }}>{label}</span>
+                    </div>
+                    {content}
+                  </div>
+                ))}
+              </div>
+
+              {/* Full Score Breakdown */}
+              <div className="bg-white rounded-2xl p-6 mb-4" style={{ border: '1px solid #e3e9f3', boxShadow: '0 2px 8px rgba(59,117,255,0.04)' }}>
+                <h3 style={{ fontWeight: 700, fontSize: '18px', color: '#0f1720', marginBottom: '20px', fontFamily: 'DM Sans, sans-serif' }}>Full Score Breakdown</h3>
+                <div className="space-y-5">
+                  {breakdown.map(item => {
+                    const pct = Math.round((item.score / item.max) * 100)
+                    return (
+                      <div key={item.label}>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span style={{ fontWeight: 600, fontSize: '14px', color: '#0f1720' }}>{item.label}</span>
+                          <span style={{ fontSize: '13px', color: '#5f6776' }}>{item.score}/{item.max}</span>
+                        </div>
+                        <div className="w-full rounded-full h-2 mb-1.5" style={{ background: '#e3e9f3' }}>
+                          <div className="h-2 rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: pct >= 70 ? '#22c55e' : PRIMARY }} />
+                        </div>
+                        <p style={{ fontSize: '12px', color: '#5f6776' }}>{item.note}</p>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Next Steps */}
+              <div className="bg-white rounded-2xl p-6 mb-6" style={{ border: '1px solid #e3e9f3', boxShadow: '0 2px 8px rgba(59,117,255,0.04)' }}>
+                <h3 style={{ fontWeight: 700, fontSize: '18px', color: '#0f1720', marginBottom: '20px', fontFamily: 'DM Sans, sans-serif' }}>Your Next Steps</h3>
+                <div className="space-y-4">
+                  {nextSteps.map((step, i) => (
+                    <div key={i} className="flex items-start gap-4">
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5" style={{ background: PRIMARY }}>
+                        <span style={{ fontSize: '13px', fontWeight: 700, color: '#FFFFFF' }}>{i + 1}</span>
+                      </div>
+                      <p style={{ fontSize: '14px', color: '#0f1720', lineHeight: '22px', paddingTop: '2px' }}>{step}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Bottom CTAs */}
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <button
+                  onClick={() => router.push(`/signup?answers=${encodeURIComponent(JSON.stringify(answers))}&score=${score}`)}
+                  className="transition-all hover:opacity-90 flex items-center justify-center gap-2"
+                  style={{ padding: '16px 40px', borderRadius: '99px', background: PRIMARY, color: '#FFFFFF', fontSize: '16px', fontWeight: 600, fontFamily: 'DM Sans, sans-serif' }}
+                >
+                  Open My Dashboard <ArrowRight size={16} />
+                </button>
+                <button
+                  className="transition-all hover:bg-slate-50 flex items-center justify-center"
+                  style={{ padding: '16px 40px', borderRadius: '99px', border: '2px solid #e3e9f3', color: '#0f1720', fontSize: '16px', fontWeight: 500 }}
+                >
+                  Share My Roadmap
+                </button>
+              </div>
+            </>
+          )}
+
+          <p className="text-center text-xs mt-8 pb-4" style={{ color: '#5f6776' }}>
             Not legal advice · Not a visa agency · JapaLearn AI is an educational tool
           </p>
         </div>
