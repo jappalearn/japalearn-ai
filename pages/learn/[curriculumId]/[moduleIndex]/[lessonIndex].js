@@ -117,7 +117,7 @@ export default function LessonPage() {
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-4">
         <div className="relative">
           <div className="w-12 h-12 border-2 border-slate-200 rounded-full" />
-          <div className="w-12 h-12 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin absolute inset-0" />
+          <div className="w-12 h-12 border-2 border-blue-500 border-t-transparent rounded-full animate-spin absolute inset-0" />
         </div>
         <div className="text-center">
           <p className="text-slate-900 font-medium text-sm">{generating ? 'Generating lesson content...' : 'Loading...'}</p>
@@ -137,7 +137,7 @@ export default function LessonPage() {
           <p className="text-slate-900 font-semibold mb-1">Failed to generate lesson</p>
           <p className="text-slate-500 text-sm max-w-xs">{genError}</p>
         </div>
-        <button onClick={() => { setGenError(''); loadLesson() }} className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-xl transition-all text-sm shadow-btn">
+        <button onClick={() => { setGenError(''); loadLesson() }} className="bg-[#3b75ff] hover:bg-[#2452cc] text-white font-semibold py-3 px-6 rounded-xl transition-all text-sm shadow-sm">
           Try Again
         </button>
         <button onClick={() => router.push('/dashboard')} className="flex items-center gap-1.5 text-slate-400 hover:text-slate-600 text-sm transition-colors">
@@ -169,13 +169,13 @@ export default function LessonPage() {
             <div className="flex-1">
               <div className="w-full bg-slate-100 rounded-full h-1.5">
                 <div
-                  className="bg-indigo-600 h-1.5 rounded-full transition-all duration-500"
+                  className="h-1.5 rounded-full transition-all duration-500" style={{ background: '#3b75ff' }}
                   style={{ width: `${(lessonNumber / totalLessons) * 100}%` }}
                 />
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <div className="w-6 h-6 rounded-lg bg-indigo-600 flex items-center justify-center">
+              <div className="w-6 h-6 rounded-lg bg-[#3b75ff] flex items-center justify-center">
                 <Globe2 size={11} className="text-white" />
               </div>
               <span className="text-slate-400 text-xs font-medium">{lessonNumber} / {totalLessons}</span>
@@ -187,9 +187,9 @@ export default function LessonPage() {
 
           {/* Module tag */}
           <div className="flex items-center gap-2 mb-4">
-            <div className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-100 rounded-full px-3 py-1">
-              <BookOpen size={11} className="text-indigo-600" />
-              <span className="text-indigo-600 text-xs font-semibold">{currentModule?.title}</span>
+            <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-100 rounded-full px-3 py-1">
+              <BookOpen size={11} className="text-[#3b75ff]" />
+              <span className="text-[#3b75ff] text-xs font-semibold">{currentModule?.title}</span>
             </div>
             {currentModule?.urgent && (
               <span className="bg-rose-50 text-rose-600 border border-rose-200 text-xs px-2.5 py-1 rounded-full font-semibold">Urgent</span>
@@ -203,8 +203,8 @@ export default function LessonPage() {
           <div className="bg-white border border-slate-200 rounded-2xl p-5 mb-8 shadow-card">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center">
-                  <Sparkles size={13} className="text-indigo-600" />
+                <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
+                  <Sparkles size={13} className="text-[#3b75ff]" />
                 </div>
                 <span className="text-slate-900 font-semibold text-sm">AI Key Points</span>
               </div>
@@ -223,7 +223,7 @@ export default function LessonPage() {
                     setSummarising(false)
                   }}
                   disabled={summarising}
-                  className="flex items-center gap-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg transition-all font-medium shadow-btn"
+                  className="flex items-center gap-1.5 text-xs bg-[#3b75ff] hover:bg-[#2452cc] disabled:opacity-50 text-white px-3 py-1.5 rounded-lg transition-all font-medium shadow-sm"
                 >
                   {summarising ? <><span className="w-3 h-3 border border-white/30 border-t-white rounded-full animate-spin" /> Generating...</> : <><Sparkles size={11} /> Generate Summary</>}
                 </button>
@@ -235,7 +235,7 @@ export default function LessonPage() {
               <ul className="space-y-2.5">
                 {summary.map((point, i) => (
                   <li key={i} className="flex items-start gap-2.5 text-slate-700 text-sm">
-                    <span className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold text-indigo-600">{i + 1}</span>
+                    <span className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold text-[#3b75ff]">{i + 1}</span>
                     {point}
                   </li>
                 ))}
@@ -265,17 +265,17 @@ export default function LessonPage() {
 
           {/* Key takeaways */}
           {takeaways?.length > 0 && (
-            <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-5 mb-4">
+            <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5 mb-4">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-7 h-7 rounded-lg bg-indigo-100 flex items-center justify-center">
-                  <Lightbulb size={14} className="text-indigo-600" />
+                <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
+                  <Lightbulb size={14} className="text-[#3b75ff]" />
                 </div>
                 <h3 className="text-slate-900 font-semibold text-sm">Key Takeaways</h3>
               </div>
               <ul className="space-y-3">
                 {takeaways.map((t, i) => (
                   <li key={i} className="flex items-start gap-3 text-slate-700 text-sm">
-                    <span className="w-5 h-5 rounded-full bg-indigo-200 flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold text-indigo-700">{i + 1}</span>
+                    <span className="w-5 h-5 rounded-full bg-blue-200 flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold text-blue-700">{i + 1}</span>
                     {t}
                   </li>
                 ))}
@@ -309,7 +309,7 @@ export default function LessonPage() {
                 {sources.map((s, i) => (
                   <li key={i}>
                     <a href={s.url || s} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 text-sm transition-colors group font-medium">
+                      className="flex items-center gap-2 text-[#3b75ff] hover:text-blue-700 text-sm transition-colors group font-medium">
                       <ExternalLink size={12} className="shrink-0 opacity-50 group-hover:opacity-100" />
                       {s.label || s.url || s}
                     </a>
@@ -328,7 +328,7 @@ export default function LessonPage() {
               </div>
               <button
                 onClick={markComplete}
-                className="shrink-0 flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-5 rounded-xl transition-all text-sm shadow-btn"
+                className="shrink-0 flex items-center gap-2 bg-[#3b75ff] hover:bg-[#2452cc] text-white font-semibold py-2.5 px-5 rounded-xl transition-all text-sm shadow-sm"
               >
                 <CheckCircle2 size={15} /> Mark Complete
               </button>
@@ -357,7 +357,7 @@ export default function LessonPage() {
               onClick={goNext} disabled={!completed}
               className={`flex items-center justify-center gap-2 flex-1 font-semibold py-3.5 rounded-2xl transition-all text-sm ${
                 completed
-                  ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-card-md'
+                  ? 'bg-[#3b75ff] hover:bg-[#2452cc] text-white shadow-card-md'
                   : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
               }`}
             >

@@ -114,7 +114,7 @@ export default function Quiz() {
   }
 
   const handleBack = () => {
-    if (phase === 'category') { router.push('/'); return }
+    if (phase === 'category') { router.replace('/'); return }
     if (phase === 'subcategory') {
       advance(() => { setPhase('category'); setCategory(null) })
       return

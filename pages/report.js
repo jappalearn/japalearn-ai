@@ -224,11 +224,11 @@ export default function Report() {
       <div className="min-h-screen bg-white" style={{ fontFamily: 'Inter, sans-serif' }}>
 
         {/* Navbar */}
-        <div className="px-6 pt-6 sticky top-4 z-50">
-          <nav className="max-w-[1107px] mx-auto h-16 bg-white rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.12)] flex items-center justify-between px-8" style={{ border: '1px solid #e3e9f3' }}>
-            <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-              <Logo size={32} />
-              <span className="font-bold text-base text-[#0f1720]" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+        <div className="px-3 sm:px-6 pt-4 sm:pt-6 sticky top-2 sm:top-4 z-50">
+          <nav className="mx-auto h-14 sm:h-16 bg-white rounded-[16px] sm:rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.12)] flex items-center justify-between px-4 sm:px-8" style={{ border: '1px solid #e3e9f3' }}>
+            <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity shrink-0">
+              <Logo size={28} />
+              <span className="font-bold text-sm sm:text-base text-[#0f1720]" style={{ fontFamily: 'DM Sans, sans-serif' }}>
                 JapaLearn <span style={{ color: PRIMARY }}>AI</span>
               </span>
             </Link>
@@ -237,16 +237,16 @@ export default function Report() {
                 <button key={item} className="text-[#0f1720] font-medium text-sm hover:opacity-60 transition-opacity">{item}</button>
               ))}
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <Link href="/login" className="text-[#0f1720] font-medium text-sm hover:opacity-60 transition-opacity">Sign in</Link>
-              <Link href="/quiz" className="px-6 py-2.5 rounded-full text-sm font-medium text-white transition-all hover:opacity-90" style={{ background: PRIMARY }}>
+              <Link href="/signup" className="hidden sm:inline-flex px-5 py-2 rounded-full text-sm font-medium text-white transition-all hover:opacity-90" style={{ background: PRIMARY }}>
                 Get Started
               </Link>
             </div>
           </nav>
         </div>
 
-        <div className="max-w-[800px] mx-auto px-6 py-12">
+        <div className="max-w-[800px] mx-auto px-4 sm:px-6 py-8 sm:py-12">
 
           {/* Page title */}
           <div className="text-center mb-10">
@@ -257,8 +257,8 @@ export default function Report() {
           </div>
 
           {/* Score card */}
-          <div className="bg-white rounded-2xl p-8 mb-4" style={{ border: '1px solid #e3e9f3', boxShadow: '0 2px 16px rgba(59,117,255,0.06)' }}>
-            <div className="flex flex-col sm:flex-row gap-8 items-start">
+          <div className="bg-white rounded-2xl p-5 sm:p-8 mb-4" style={{ border: '1px solid #e3e9f3', boxShadow: '0 2px 16px rgba(59,117,255,0.06)' }}>
+            <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 items-center sm:items-start">
               <div className="shrink-0">
                 <DonutChart score={score} color={scoreColor} />
               </div>
