@@ -3,12 +3,13 @@ import { useRouter } from 'next/router'
 import Head from 'next/head'
 import {
   LayoutDashboard, BookOpen, Map, FolderOpen, MessageSquare,
-  Upload, Users, ShoppingBag, CreditCard, Settings, LogOut,
+  Users, ShoppingBag, Settings, LogOut,
   Lock, ChevronRight, ChevronDown, ChevronUp, CheckCircle2,
   CircleCheck, PlayCircle, Sparkles, ArrowRight,
-  RotateCcw, Globe2, Briefcase, Clock, Wallet, TrendingUp,
-  X, Shield, Star, AlertCircle, Bell, Bookmark, Heart,
+  Globe2, Briefcase, Clock, Wallet, TrendingUp,
+  X, Star, Heart,
   Search, SlidersHorizontal, Play, ChevronLeft, Plus,
+  Moon, Sun, User, Trash2, Camera, Save, Edit3,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { getScoreFlag } from '../lib/quizData'
@@ -85,6 +86,13 @@ const NAV_ITEMS = [
   { id: 'peers',         label: 'Peers',           icon: Users,           locked: true },
   { id: 'marketplace',   label: 'Marketplace',     icon: ShoppingBag,     locked: true },
 ]
+const BOTTOM_NAV = [
+  { id: 'overview', label: 'Home',      icon: LayoutDashboard },
+  { id: 'learning', label: 'Learning',  icon: BookOpen },
+  { id: 'roadmap',  label: 'Roadmap',   icon: Map },
+  { id: 'resources',label: 'Resources', icon: FolderOpen },
+  { id: 'profile',  label: 'Profile',   icon: User },
+]
 
 // ── Score Bar Chart ────────────────────────────────────────────────────────────
 function ScoreBarChart({ breakdown }) {
@@ -108,14 +116,14 @@ function ScoreBarChart({ breakdown }) {
 }
 
 // ── Sidebar ────────────────────────────────────────────────────────────────────
-function Sidebar({ activeTab, setActiveTab, onSignOut, isMobileOpen, onMobileClose }) {
+function Sidebar({ activeTab, setActiveTab, onSignOut, isMobileOpen, onMobileClose, userInitials, userDisplayName }) {
   return (
     <>
       <AnimatePresence>
         {isMobileOpen && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/30 z-40 xl:hidden"
+            className="fixed inset-0 bg-black/30 z-40 lg:hidden"
             onClick={onMobileClose}
           />
         )}
@@ -178,19 +186,27 @@ function Sidebar({ activeTab, setActiveTab, onSignOut, isMobileOpen, onMobileClo
           </div>
         </div>
 
-        {/* Bottom: Settings + Sign out */}
-        <div className="flex flex-col gap-2.5 px-8">
-          <p className="text-xs font-semibold text-[#3F3F3F] uppercase tracking-wider mb-2">Settings</p>
-          <button className="flex items-center gap-3 py-2 text-[#202020] hover:text-[#3b75ff] text-sm font-medium transition-colors">
-            <Settings size={16} />
-            Settings
+        {/* Bottom: user avatar + settings icon */}
+        <div className="flex flex-col gap-3 px-8">
+          <div className="h-px bg-slate-100" />
+          <button
+            onClick={() => { setActiveTab('profile'); onMobileClose() }}
+            className="flex items-center gap-3 py-2 group"
+          >
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 transition-all group-hover:opacity-80" style={{ background: '#3b75ff' }}>
+              {userInitials}
+            </div>
+            <div className="flex-1 text-left min-w-0">
+              <p className="text-xs font-semibold text-[#202020] truncate">{userDisplayName}</p>
+              <p className="text-[10px] text-[#9E9E9E]">View profile</p>
+            </div>
           </button>
           <button
-            onClick={onSignOut}
-            className="flex items-center gap-3 py-2 text-[#F13E3E] hover:text-red-700 text-sm font-medium transition-colors"
+            onClick={() => { setActiveTab('settings'); onMobileClose() }}
+            className="flex items-center gap-3 py-1.5 text-[#202020] hover:text-[#3b75ff] text-sm font-medium transition-colors"
           >
-            <LogOut size={16} />
-            Sign out
+            <Settings size={16} className="shrink-0" />
+            Settings
           </button>
         </div>
       </aside>
@@ -198,184 +214,84 @@ function Sidebar({ activeTab, setActiveTab, onSignOut, isMobileOpen, onMobileClo
   )
 }
 
-// ── Right Panel ────────────────────────────────────────────────────────────────
-function RightPanel({ user, profile, score, breakdown, answers, quizResult, router }) {
-  const fullName = profile?.full_name || user?.email || ''
-  const firstName = (fullName.split(/[\s@]/)[0] || 'You').charAt(0).toUpperCase() + (fullName.split(/[\s@]/)[0] || 'You').slice(1)
-  const initials = firstName[0]?.toUpperCase() || 'U'
-
-  const flag = getScoreFlag(score)
-  const flagConfig = {
-    green:  { label: 'Strong',      color: '#10b981' },
-    yellow: { label: 'Developing',  color: '#3b75ff' },
-    red:    { label: 'Needs Work',  color: '#f43f5e' },
-  }
-  const fc = flagConfig[flag] || flagConfig.yellow
-
-  const ADVISORS = [
-    { name: 'Amara Nwosu', specialty: 'UK Skilled Worker Visa' },
-    { name: 'Tunde Adeleke', specialty: 'Canada Express Entry' },
-    { name: 'Chisom Eze', specialty: 'Germany Job Seeker' },
-    { name: 'Kemi Fashola', specialty: 'Australia Skilled Migrant' },
-  ]
-
-  return (
-    <aside className="hidden xl:flex flex-col gap-6 w-[280px] shrink-0 h-screen overflow-y-auto py-8 px-6 border-l border-slate-100">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-sm text-[#202020]">Your Profile</h3>
-        <button className="text-slate-400 hover:text-slate-600">
-          <SlidersHorizontal size={16} />
-        </button>
-      </div>
-
-      {/* Avatar + greeting */}
-      <div className="flex flex-col items-center gap-3 text-center">
-        <div className="w-20 h-20 rounded-full bg-slate-200 flex items-center justify-center text-2xl font-bold text-slate-500 ring-4 ring-blue-100">
-          {initials}
-        </div>
-        <div>
-          <p className="text-sm font-semibold text-[#202020]">Good day, {firstName}</p>
-          <p className="text-xs text-[#9E9E9E] mt-0.5 leading-tight max-w-[180px]">Continue Your Journey And Achieve Your Goal</p>
-        </div>
-        <div className="flex gap-3">
-          {[Bell, MessageSquare, Bookmark].map((Icon, i) => (
-            <button key={i} className="w-9 h-9 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:border-blue-300 hover:text-blue-600 transition-colors">
-              <Icon size={14} />
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Score summary */}
-      <div className="bg-slate-50 rounded-2xl p-4">
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Readiness Score</p>
-          <span className="text-lg font-black" style={{ color: fc.color }}>{score}<span className="text-xs font-normal text-slate-400">/100</span></span>
-        </div>
-        {quizResult ? (
-          <ScoreBarChart breakdown={breakdown} />
-        ) : (
-          <div className="text-center py-3">
-            <p className="text-xs text-slate-400">Take the quiz to see your score breakdown</p>
-          </div>
-        )}
-        {quizResult && (
-          <div className="flex gap-1 mt-2 overflow-hidden">
-            {breakdown.map((f, i) => (
-              <p key={i} className="text-[8px] text-slate-400 flex-1 text-center truncate">{f.label}</p>
-            ))}
-          </div>
-        )}
-        {!quizResult && (
-          <button
-            onClick={() => router.push('/quiz')}
-            className="mt-3 w-full text-xs font-semibold text-white py-2 rounded-full transition-all"
-            style={{ background: '#3b75ff' }}
-          >
-            Take Assessment
-          </button>
-        )}
-      </div>
-
-      {/* Advisors */}
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-[#202020]">Your Mentor</h3>
-          <button className="w-6 h-6 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:border-blue-300 transition-colors">
-            <Plus size={12} />
-          </button>
-        </div>
-
-        {ADVISORS.map((advisor) => (
-          <div key={advisor.name} className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-200 to-blue-100 flex items-center justify-center text-xs font-bold text-blue-700 shrink-0">
-              {advisor.name[0]}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-[#202020] truncate">{advisor.name}</p>
-              <p className="text-[10px] text-[#9E9E9E] truncate">{advisor.specialty}</p>
-            </div>
-            <button
-              className="text-[10px] font-semibold text-white px-3 py-1 rounded-full shrink-0"
-              style={{ background: '#3b75ff' }}
-            >
-              Follow
-            </button>
-          </div>
-        ))}
-
-        <button className="w-full text-xs text-[#9E9E9E] bg-blue-50 hover:bg-blue-100 py-3 rounded-xl transition-colors mt-1">
-          See All
-        </button>
-      </div>
-    </aside>
-  )
-}
-
 // ── OVERVIEW TAB ─────────────────────────────────────────────────────────────
 function OverviewTab({ answers, score, flag, displayName, isNewUser, router, quizResult, setActiveTab }) {
   const destinationFlag = COUNTRY_FLAGS[answers.destination] || '🌍'
-  const breakdown = quizResult ? getScoreBreakdown(answers, score) : []
   const visaRoute = answers.destination ? getVisaRoute(answers.destination, answers.segment) : null
 
   const flagConfig = {
-    green:  { label: 'Strong Profile',    color: '#10b981', bg: 'rgba(16,185,129,0.1)',  border: '1px solid rgba(16,185,129,0.25)' },
-    yellow: { label: 'Developing Profile', color: '#3b75ff', bg: 'rgba(59,117,255,0.1)', border: '1px solid rgba(59,117,255,0.25)' },
-    red:    { label: 'Needs Improvement',  color: '#f43f5e', bg: 'rgba(244,63,94,0.1)',  border: '1px solid rgba(244,63,94,0.25)'  },
+    green:  { label: 'Strong Profile',    color: '#10b981', bg: 'rgba(16,185,129,0.12)'  },
+    yellow: { label: 'Developing Profile', color: '#3b75ff', bg: 'rgba(59,117,255,0.12)' },
+    red:    { label: 'Needs Improvement',  color: '#f43f5e', bg: 'rgba(244,63,94,0.12)'  },
   }
   const fc = flagConfig[flag] || flagConfig.yellow
 
   const aspirational = {
-    green:  `Your profile is strong, ${displayName}. You're closer to ${answers.destination || 'your dream'} than you think — preparation meets opportunity right here.`,
-    yellow: `You're building something real, ${displayName}. Every lesson completed brings ${answers.destination || 'your destination'} closer. Keep going.`,
-    red:    `Every great migration journey starts with a single step, ${displayName}. You've already taken yours — now let's build the profile that gets you there.`,
+    green:  `Strong profile, ${displayName}. You're closer to ${answers.destination || 'your destination'} than you think — keep the momentum.`,
+    yellow: `You're building something real, ${displayName}. Every lesson brings ${answers.destination || 'your destination'} closer.`,
+    red:    `Great journeys start here, ${displayName}. Let's build the profile that gets you to ${answers.destination || 'your destination'}.`,
   }
 
-  const [checklist, setChecklist] = useState([
-    { id: 'curriculum', label: 'Generate your AI learning path',  tab: 'learning'  },
-    { id: 'lesson1',    label: 'Complete your first lesson',      tab: 'learning'  },
-    { id: 'roadmap',    label: 'Review your migration roadmap',   tab: 'roadmap'   },
-    { id: 'resources',  label: 'Explore your document checklist', tab: 'resources' },
-    { id: 'docs',       label: 'Start collecting core documents', tab: null        },
-  ].map(i => ({ ...i, done: false })))
-
-  const profileRows = [
-    { label: 'Destination',   value: answers.destination,            emoji: destinationFlag },
-    { label: 'Occupation',    value: answers.segment,                emoji: '💼' },
-    { label: 'Education',     value: answers.education,              emoji: '🎓' },
-    { label: 'Experience',    value: answers.experience,             emoji: '📅' },
-    { label: 'Language Test', value: answers.language || 'Not taken', emoji: '🗣️' },
-    { label: 'Savings',       value: answers.savings,                emoji: '💰' },
-    { label: 'Age Range',     value: answers.age,                    emoji: '👤' },
+  const milestones = [
+    {
+      icon: CheckCircle2,
+      status: quizResult ? 'Completed' : 'Pending',
+      label: 'Migration Assessment',
+      done: !!quizResult,
+      cta: () => router.push('/quiz'),
+    },
+    {
+      icon: Globe2,
+      status: answers.language && answers.language !== 'Not taken' ? 'Registered' : 'Not yet started',
+      label: 'Language Test',
+      done: !!(answers.language && answers.language !== 'Not taken'),
+      cta: null,
+    },
+    {
+      icon: FolderOpen,
+      status: 'In progress',
+      label: 'Core Documents',
+      done: false,
+      cta: null,
+    },
   ]
 
-  const scoreBarColor   = flag === 'green' ? '#10b981' : flag === 'red' ? '#f43f5e' : '#3b75ff'
-  const scoreBadgeGlow  = flag === 'green' ? '#86efac' : flag === 'red' ? '#fca5a5' : '#bfdbfe'
+  const LEARNING_MODULES = [
+    { title: 'Immigration Pathways & Visa Routes', category: 'Foundation', progress: quizResult ? 15 : 0 },
+    { title: 'Language Test Preparation Guide',    category: 'Skills',     progress: 0 },
+    { title: 'Document Collection & Verification', category: 'Documents',  progress: 0 },
+  ]
+
+  const moduleGradients = ['from-blue-100 to-blue-50', 'from-sky-100 to-blue-50', 'from-blue-50 to-sky-50']
 
   return (
-    <div className="flex flex-col gap-5 pb-10">
+    <div className="flex flex-col gap-6 pb-10">
 
-      {/* Search bar */}
+      {/* Search */}
       <div className="flex items-center gap-3">
         <div className="flex-1 flex items-center gap-3 bg-white border border-[rgba(204,204,204,0.8)] rounded-xl px-4 py-3.5">
           <Search size={16} className="text-[#9E9E9E] shrink-0" />
           <span className="text-xs font-medium text-[#9E9E9E] flex-1">Search your learning path...</span>
         </div>
+        <button className="w-12 h-12 rounded-full flex items-center justify-center text-[#5F5F5F] hover:text-[#3b75ff] transition-colors shrink-0">
+          <SlidersHorizontal size={18} />
+        </button>
       </div>
 
-      {/* Welcome Banner */}
-      <div className="relative rounded-[20px] overflow-hidden px-6 py-6" style={{ background: '#3b75ff', minHeight: 180 }}>
+      {/* Hero banner */}
+      <div className="relative rounded-[20px] overflow-hidden px-6 py-5" style={{ background: '#3b75ff', minHeight: 181 }}>
         <div className="absolute inset-0 pointer-events-none" style={{
           backgroundImage: 'linear-gradient(rgba(255,255,255,0.08) 1px,transparent 1px),linear-gradient(to right,rgba(255,255,255,0.08) 1px,transparent 1px)',
           backgroundSize: '28px 28px',
         }} />
-        <div className="absolute right-[60px] top-[30px] w-20 h-20 bg-white opacity-10 rotate-45 rounded-lg pointer-events-none" />
-        <div className="absolute right-4 top-[90px] w-16 h-16 bg-white opacity-10 rotate-12 rounded-lg pointer-events-none" />
+        <div className="absolute right-[77px] top-[45px] w-20 h-20 bg-white opacity-20 rotate-45 rounded-lg pointer-events-none" />
+        <div className="absolute right-2 top-[93px] w-20 h-20 bg-white opacity-10 rotate-12 rounded-lg pointer-events-none" />
+        <div className="absolute right-[148px] top-[122px] w-20 h-20 bg-white opacity-10 -rotate-12 rounded-lg pointer-events-none" />
+        <div className="absolute right-[26px] -top-[20px] w-16 h-16 bg-white opacity-10 rotate-6 rounded-lg pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col sm:flex-row items-start justify-between gap-4">
+        <div className="relative z-10 flex items-start justify-between gap-4">
           <div className="flex-1">
-            <p className="text-white/60 text-[10px] uppercase tracking-widest mb-2">
+            <p className="text-white/60 text-[10px] uppercase tracking-widest mb-1">
               {isNewUser ? 'Welcome to JapaLearn AI' : 'Welcome back'}
             </p>
             <h2 className="text-white font-bold text-xl sm:text-2xl leading-snug mb-2" style={{ fontFamily: 'DM Sans, sans-serif' }}>
@@ -383,146 +299,118 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
             </h2>
             {answers.destination && (
               <div className="flex items-center gap-2 mb-3 flex-wrap">
-                <span className="text-base">{destinationFlag}</span>
-                <span className="text-white/80 text-sm font-medium">{answers.destination}</span>
-                {visaRoute && (
-                  <>
-                    <span className="text-white/30">·</span>
-                    <span className="text-white/60 text-xs">{visaRoute}</span>
-                  </>
-                )}
+                <span>{destinationFlag}</span>
+                <span className="text-white/90 text-sm font-medium">{answers.destination}</span>
+                {visaRoute && <><span className="text-white/30">·</span><span className="text-white/60 text-xs truncate max-w-[160px]">{visaRoute}</span></>}
               </div>
             )}
-            <p className="text-white/70 text-sm leading-relaxed max-w-sm">
+            <p className="text-white/70 text-sm leading-relaxed max-w-xs">
               {aspirational[flag] || aspirational.yellow}
             </p>
           </div>
-
           {quizResult ? (
-            <div className="bg-white/15 backdrop-blur-sm rounded-2xl px-5 py-4 text-center shrink-0 border border-white/20 min-w-[100px]">
-              <p className="text-white/60 text-[9px] uppercase tracking-widest mb-1">Readiness</p>
-              <p className="text-white font-black text-4xl leading-none mb-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>{score}</p>
-              <p className="text-[10px] font-bold" style={{ color: scoreBadgeGlow }}>{fc.label}</p>
+            <div className="bg-white/15 border border-white/20 rounded-2xl px-4 py-3 text-center shrink-0 min-w-[90px]">
+              <p className="text-white/60 text-[9px] uppercase tracking-widest mb-0.5">Score</p>
+              <p className="text-white font-black text-3xl leading-none mb-0.5" style={{ fontFamily: 'DM Sans, sans-serif' }}>{score}</p>
+              <p className="text-[9px] font-bold" style={{ color: fc.bg === 'rgba(16,185,129,0.12)' ? '#86efac' : fc.bg === 'rgba(244,63,94,0.12)' ? '#fca5a5' : '#bfdbfe' }}>{fc.label}</p>
             </div>
           ) : (
-            <button onClick={() => router.push('/quiz')} className="text-white text-xs font-semibold px-4 py-2.5 rounded-full shrink-0 transition-all hover:opacity-90" style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)' }}>
-              Take Assessment →
+            <button onClick={() => router.push('/quiz')} className="text-white text-xs font-semibold px-4 py-2.5 rounded-full shrink-0" style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)' }}>
+              Take Quiz →
             </button>
           )}
         </div>
       </div>
 
-      {/* Readiness Score + Action Checklist */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-        {/* Readiness Score Card */}
-        <div className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-5">
-          <p className="text-[9px] font-semibold text-[#9E9E9E] uppercase tracking-widest mb-4">Readiness Score</p>
-          {quizResult ? (
-            <>
-              <div className="flex items-end gap-2 mb-3">
-                <span className="font-black text-5xl text-[#202020]" style={{ fontFamily: 'DM Sans, sans-serif' }}>{score}</span>
-                <span className="text-[#9E9E9E] text-sm mb-2">/100</span>
-                <span className="mb-2 text-[10px] font-bold px-2.5 py-1 rounded-full" style={{ background: fc.bg, color: fc.color, border: fc.border }}>{fc.label}</span>
+      {/* Milestone cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {milestones.map((m) => {
+          const Icon = m.icon
+          return (
+            <div
+              key={m.label}
+              onClick={!m.done && m.cta ? m.cta : undefined}
+              className={cn(
+                "bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-xl p-3 flex items-center gap-3",
+                !m.done && m.cta ? "cursor-pointer hover:shadow-md transition-shadow" : ""
+              )}
+            >
+              <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: m.done ? 'rgba(16,185,129,0.12)' : 'rgba(59,117,255,0.12)' }}>
+                <Icon size={16} style={{ color: m.done ? '#10b981' : '#3b75ff' }} />
               </div>
-              <div className="w-full rounded-full h-2 mb-4" style={{ background: '#F0F4FF' }}>
-                <div className="h-2 rounded-full transition-all duration-700" style={{ width: `${score}%`, background: scoreBarColor }} />
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] text-[#9E9E9E]">{m.status}</p>
+                <p className="text-xs font-semibold text-[#202020] truncate">{m.label}</p>
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-base">{destinationFlag}</span>
-                <span className="text-sm text-[#5F5F5F]">{answers.destination}</span>
-                {answers.segment && <><span className="text-[#D9D9D9]">·</span><span className="text-xs text-[#9E9E9E] truncate">{answers.segment}</span></>}
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-6">
-              <p className="text-[#9E9E9E] text-sm mb-4">Take the assessment to see your score</p>
-              <button onClick={() => router.push('/quiz')} className="text-sm font-semibold text-white px-5 py-2.5 rounded-full" style={{ background: '#3b75ff' }}>Start Assessment</button>
+              {m.done && <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />}
+              {!m.done && m.cta && <ChevronRight size={14} className="text-[#9E9E9E] shrink-0" />}
             </div>
-          )}
-        </div>
+          )
+        })}
+      </div>
 
-        {/* Action Checklist Card */}
-        <div className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-5">
-          <p className="text-[9px] font-semibold text-[#9E9E9E] uppercase tracking-widest mb-4">Your Next Actions</p>
-          <div className="flex flex-col gap-3">
-            {checklist.map((item) => (
-              <div key={item.id} className="flex items-center gap-3">
-                <button
-                  onClick={() => setChecklist(prev => prev.map(c => c.id === item.id ? { ...c, done: !c.done } : c))}
-                  className="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all"
-                  style={{ borderColor: item.done ? '#3b75ff' : '#D9D9D9', background: item.done ? '#3b75ff' : 'transparent' }}
-                >
-                  {item.done && <CheckCircle2 size={10} className="text-white" />}
-                </button>
-                <span
-                  className={cn('text-sm flex-1 transition-all', item.done ? 'line-through text-[#9E9E9E]' : 'text-[#202020]')}
-                  onClick={item.tab && !item.done ? () => setActiveTab(item.tab) : undefined}
-                  style={item.tab && !item.done ? { cursor: 'pointer' } : {}}
-                >
-                  {item.label}
-                </span>
-                {item.tab && !item.done && <ArrowRight size={12} className="text-[#9E9E9E] shrink-0" />}
+      {/* Continue Learning */}
+      <div>
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="text-base font-semibold text-[#202020]">Continue Learning</h3>
+          <button onClick={() => setActiveTab('learning')} className="text-xs font-medium hover:opacity-70 transition-opacity" style={{ color: '#3b75ff' }}>See all →</button>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {LEARNING_MODULES.map((mod, i) => (
+            <div
+              key={i}
+              className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-3 relative cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={() => setActiveTab('learning')}
+            >
+              <div className={`h-[100px] bg-gradient-to-br ${moduleGradients[i]} rounded-xl mb-3 flex items-center justify-center`}>
+                <BookOpen size={26} className="text-blue-300" />
               </div>
-            ))}
-          </div>
+              <span className="text-[8px] font-semibold uppercase px-2 py-1 rounded-lg" style={{ background: 'rgba(59,117,255,0.1)', color: '#3b75ff' }}>{mod.category}</span>
+              <h4 className="text-sm font-medium text-[#202020] mt-2 mb-2 leading-snug">{mod.title}</h4>
+              <div className="h-1.5 bg-[#F0F0F0] rounded-full mb-3">
+                <div className="h-1.5 rounded-full transition-all duration-700" style={{ width: `${mod.progress}%`, background: '#3b75ff' }} />
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full flex items-center justify-center text-[8px] font-bold text-white shrink-0" style={{ background: '#3b75ff' }}>J</div>
+                <div>
+                  <p className="text-[10px] font-medium text-[#202020]">JapaLearn AI</p>
+                  <p className="text-[8px] text-[#9E9E9E]">Migration Specialist</p>
+                </div>
+              </div>
+              <button className="absolute top-5 right-5 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: 'rgba(59,117,255,0.15)' }}>
+                <Heart size={8} style={{ color: '#3b75ff' }} />
+              </button>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Profile Card + Score Breakdown */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-        {/* Profile Card */}
+      {/* Readiness score breakdown row */}
+      {quizResult && (
         <div className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-5">
           <div className="flex items-center justify-between mb-4">
-            <p className="text-[9px] font-semibold text-[#9E9E9E] uppercase tracking-widest">Your Profile</p>
-            <button onClick={() => router.push('/quiz')} className="text-[10px] font-semibold px-3 py-1.5 rounded-full transition-all hover:opacity-80" style={{ background: 'rgba(59,117,255,0.1)', color: '#3b75ff' }}>Retake Quiz</button>
+            <h3 className="text-sm font-semibold text-[#202020]">Score Breakdown</h3>
+            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full" style={{ background: fc.bg, color: fc.color }}>{fc.label}</span>
           </div>
-          {quizResult ? (
-            <div className="flex flex-col">
-              {profileRows.map(({ label, value, emoji }) => (
-                <div key={label} className="flex items-center justify-between py-2 border-b border-[#F5F5F5] last:border-0">
-                  <span className="text-xs text-[#9E9E9E] flex items-center gap-1.5 shrink-0"><span>{emoji}</span> {label}</span>
-                  <span className="text-xs font-semibold text-[#202020] text-right max-w-[55%] leading-snug">{value || '—'}</span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-6">
-              <p className="text-[#9E9E9E] text-sm mb-4">Complete the quiz to build your profile</p>
-              <button onClick={() => router.push('/quiz')} className="text-sm font-semibold text-white px-5 py-2.5 rounded-full" style={{ background: '#3b75ff' }}>Take Quiz</button>
-            </div>
-          )}
-        </div>
-
-        {/* Score Breakdown Card */}
-        <div className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-5">
-          <p className="text-[9px] font-semibold text-[#9E9E9E] uppercase tracking-widest mb-4">Score Breakdown</p>
-          {quizResult ? (
-            <div className="flex flex-col gap-3">
-              {breakdown.map((item) => {
-                const pct = Math.round((item.score / item.max) * 100)
-                const barColor = pct >= 70 ? '#10b981' : pct < 40 ? '#f43f5e' : '#3b75ff'
-                return (
-                  <div key={item.label}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-medium text-[#202020]">{item.label}</span>
-                      <span className="text-[10px] font-semibold" style={{ color: barColor }}>{item.score}/{item.max}</span>
-                    </div>
-                    <div className="w-full h-1.5 rounded-full" style={{ background: '#F0F0F0' }}>
-                      <div className="h-1.5 rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: barColor }} />
-                    </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {getScoreBreakdown(answers, score).map((item) => {
+              const pct = Math.round((item.score / item.max) * 100)
+              const barColor = pct >= 70 ? '#10b981' : pct < 40 ? '#f43f5e' : '#3b75ff'
+              return (
+                <div key={item.label} className="bg-slate-50 rounded-xl p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[10px] font-semibold text-[#5F5F5F]">{item.label}</p>
+                    <p className="text-[10px] font-bold" style={{ color: barColor }}>{item.score}/{item.max}</p>
                   </div>
-                )
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-6">
-              <p className="text-[#9E9E9E] text-sm">Complete the quiz to see your breakdown</p>
-            </div>
-          )}
+                  <div className="w-full h-1.5 rounded-full bg-[#E8E8E8]">
+                    <div className="h-1.5 rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: barColor }} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
@@ -912,6 +800,250 @@ function ResourcesTab({ answers }) {
   )
 }
 
+// ── PROFILE TAB ──────────────────────────────────────────────────────────────
+function ProfileTab({ user, profile, answers, onSignOut, router }) {
+  const fullName = profile?.full_name || user?.user_metadata?.full_name || ''
+  const email = user?.email || ''
+  const [name, setName] = useState(fullName)
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState(false)
+
+  const initials = (name || email).charAt(0).toUpperCase()
+  const destinationFlag = COUNTRY_FLAGS[answers.destination] || '🌍'
+
+  const saveProfile = async () => {
+    setSaving(true)
+    await supabase.from('profiles').upsert({ id: user.id, full_name: name, updated_at: new Date().toISOString() })
+    setSaving(false); setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
+
+  const deleteAccount = async () => {
+    await supabase.auth.signOut()
+    router.push('/')
+  }
+
+  return (
+    <div className="flex flex-col gap-5 pb-10 max-w-lg">
+      <div>
+        <h2 className="text-xl font-bold text-[#202020] mb-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>My Profile</h2>
+        <p className="text-sm text-[#9E9E9E]">Manage your account and migration details</p>
+      </div>
+
+      {/* Avatar card */}
+      <div className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-6 flex items-center gap-5">
+        <div className="relative shrink-0">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-black text-white" style={{ background: 'linear-gradient(135deg, #3b75ff, #2452cc)' }}>
+            {initials}
+          </div>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-bold text-[#202020] text-base" style={{ fontFamily: 'DM Sans, sans-serif' }}>{name || 'Your Name'}</p>
+          <p className="text-sm text-[#9E9E9E] truncate">{email}</p>
+          {answers.destination && (
+            <div className="flex items-center gap-1.5 mt-1.5">
+              <span className="text-sm">{destinationFlag}</span>
+              <span className="text-xs font-medium text-[#3b75ff]">{answers.destination}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Edit name */}
+      <div className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-6">
+        <h3 className="text-sm font-semibold text-[#202020] mb-4">Account Information</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="text-xs font-semibold text-[#9E9E9E] uppercase tracking-wider block mb-1.5">Full Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-[#202020] outline-none transition-all"
+              onFocus={e => e.target.style.borderColor = '#3b75ff'}
+              onBlur={e => e.target.style.borderColor = ''}
+              placeholder="Your full name"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-[#9E9E9E] uppercase tracking-wider block mb-1.5">Email Address</label>
+            <input
+              type="email"
+              value={email}
+              disabled
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-[#9E9E9E] outline-none cursor-not-allowed"
+            />
+          </div>
+          <button
+            onClick={saveProfile}
+            disabled={saving}
+            className="flex items-center gap-2 text-sm font-semibold text-white px-5 py-2.5 rounded-full transition-all hover:opacity-90 disabled:opacity-50"
+            style={{ background: '#3b75ff' }}
+          >
+            {saving ? <><span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Saving...</> : saved ? <>✓ Saved!</> : <><Save size={14} /> Save Changes</>}
+          </button>
+        </div>
+      </div>
+
+      {/* Quiz profile summary */}
+      {answers.destination && (
+        <div className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-[#202020]">Migration Profile</h3>
+            <button
+              onClick={() => router.push('/quiz')}
+              className="text-[10px] font-semibold px-3 py-1.5 rounded-full transition-all hover:opacity-80"
+              style={{ background: 'rgba(59,117,255,0.1)', color: '#3b75ff' }}
+            >
+              Retake Quiz
+            </button>
+          </div>
+          {[
+            { label: 'Destination',    value: answers.destination, emoji: destinationFlag },
+            { label: 'Occupation',     value: answers.segment,     emoji: '💼' },
+            { label: 'Education',      value: answers.education,   emoji: '🎓' },
+            { label: 'Experience',     value: answers.experience,  emoji: '📅' },
+            { label: 'Language Test',  value: answers.language || 'Not taken', emoji: '🗣️' },
+            { label: 'Savings',        value: answers.savings,     emoji: '💰' },
+            { label: 'Age Range',      value: answers.age,         emoji: '👤' },
+          ].map(({ label, value, emoji }) => (
+            <div key={label} className="flex items-center justify-between py-2.5 border-b border-slate-50 last:border-0">
+              <span className="text-xs text-[#9E9E9E] flex items-center gap-1.5"><span>{emoji}</span>{label}</span>
+              <span className="text-xs font-semibold text-[#202020] text-right max-w-[55%] leading-snug">{value || '—'}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Danger zone */}
+      <div className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-6">
+        <h3 className="text-sm font-semibold text-[#202020] mb-1">Account Actions</h3>
+        <p className="text-xs text-[#9E9E9E] mb-4">Manage your session and account data</p>
+        <div className="flex flex-col gap-3">
+          <button
+            onClick={onSignOut}
+            className="flex items-center gap-3 text-sm font-medium text-[#202020] hover:text-[#3b75ff] transition-colors py-2"
+          >
+            <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
+              <LogOut size={14} className="text-[#5F5F5F]" />
+            </div>
+            Sign out
+          </button>
+          {!deleteConfirm ? (
+            <button
+              onClick={() => setDeleteConfirm(true)}
+              className="flex items-center gap-3 text-sm font-medium text-rose-500 hover:text-rose-600 transition-colors py-2"
+            >
+              <div className="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center shrink-0">
+                <Trash2 size={14} className="text-rose-500" />
+              </div>
+              Delete account
+            </button>
+          ) : (
+            <div className="bg-rose-50 border border-rose-200 rounded-xl p-4">
+              <p className="text-sm font-semibold text-rose-700 mb-1">Are you sure?</p>
+              <p className="text-xs text-rose-500 mb-3">This will sign you out. Account deletion requires contacting support.</p>
+              <div className="flex gap-2">
+                <button onClick={deleteAccount} className="text-xs font-semibold text-white px-4 py-2 rounded-lg bg-rose-500 hover:bg-rose-600 transition-colors">Yes, sign me out</button>
+                <button onClick={() => setDeleteConfirm(false)} className="text-xs font-semibold text-[#5F5F5F] px-4 py-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 transition-colors">Cancel</button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── SETTINGS TAB ──────────────────────────────────────────────────────────────
+function SettingsTab({ onSignOut }) {
+  const [darkMode, setDarkMode] = useState(false)
+  const [emailNotifs, setEmailNotifs] = useState(true)
+  const [progressReminders, setProgressReminders] = useState(true)
+
+  return (
+    <div className="flex flex-col gap-5 pb-10 max-w-lg">
+      <div>
+        <h2 className="text-xl font-bold text-[#202020] mb-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>Settings</h2>
+        <p className="text-sm text-[#9E9E9E]">Customise your JapaLearn experience</p>
+      </div>
+
+      {/* Appearance */}
+      <div className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-6">
+        <h3 className="text-sm font-semibold text-[#202020] mb-4">Appearance</h3>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: darkMode ? '#1e293b' : '#F0F4FF' }}>
+              {darkMode ? <Moon size={16} className="text-blue-300" /> : <Sun size={16} style={{ color: '#3b75ff' }} />}
+            </div>
+            <div>
+              <p className="text-sm font-medium text-[#202020]">{darkMode ? 'Dark Mode' : 'Light Mode'}</p>
+              <p className="text-xs text-[#9E9E9E]">{darkMode ? 'Easy on the eyes at night' : 'Clean and bright interface'}</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className="relative w-11 h-6 rounded-full transition-all duration-300 shrink-0"
+            style={{ background: darkMode ? '#3b75ff' : '#E2E8F0' }}
+          >
+            <div className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-all duration-300"
+              style={{ transform: darkMode ? 'translateX(20px)' : 'translateX(0)' }} />
+          </button>
+        </div>
+        {darkMode && (
+          <p className="text-xs text-[#9E9E9E] mt-3 bg-slate-50 rounded-lg px-3 py-2">Full dark mode coming soon — toggle saves your preference.</p>
+        )}
+      </div>
+
+      {/* Notifications */}
+      <div className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-6">
+        <h3 className="text-sm font-semibold text-[#202020] mb-4">Notifications</h3>
+        <div className="flex flex-col gap-4">
+          {[
+            { label: 'Email Updates', sub: 'New features and announcements', value: emailNotifs, set: setEmailNotifs },
+            { label: 'Progress Reminders', sub: 'Weekly learning check-ins', value: progressReminders, set: setProgressReminders },
+          ].map(({ label, sub, value, set }) => (
+            <div key={label} className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-[#202020]">{label}</p>
+                <p className="text-xs text-[#9E9E9E]">{sub}</p>
+              </div>
+              <button
+                onClick={() => set(!value)}
+                className="relative w-11 h-6 rounded-full transition-all duration-300 shrink-0"
+                style={{ background: value ? '#3b75ff' : '#E2E8F0' }}
+              >
+                <div className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-all duration-300"
+                  style={{ transform: value ? 'translateX(20px)' : 'translateX(0)' }} />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* About */}
+      <div className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-6">
+        <h3 className="text-sm font-semibold text-[#202020] mb-4">About</h3>
+        <div className="flex flex-col gap-3 text-sm text-[#5F5F5F]">
+          <div className="flex justify-between"><span>Version</span><span className="font-medium text-[#202020]">1.0.0</span></div>
+          <div className="flex justify-between"><span>Platform</span><span className="font-medium text-[#202020]">JapaLearn AI Web</span></div>
+          <div className="flex justify-between"><span>Data Protection</span><span className="font-medium text-[#202020]">NDPR Compliant</span></div>
+        </div>
+      </div>
+
+      {/* Sign out */}
+      <button
+        onClick={onSignOut}
+        className="flex items-center gap-3 text-sm font-semibold text-rose-500 hover:text-rose-600 transition-colors py-2 px-1"
+      >
+        <LogOut size={16} />
+        Sign out of JapaLearn
+      </button>
+    </div>
+  )
+}
+
 // ── Main Dashboard ─────────────────────────────────────────────────────────────
 export default function Dashboard() {
   const router = useRouter()
@@ -987,6 +1119,8 @@ export default function Dashboard() {
           onSignOut={handleSignOut}
           isMobileOpen={isMobileOpen}
           onMobileClose={() => setIsMobileOpen(false)}
+          userInitials={displayName[0]?.toUpperCase() || 'U'}
+          userDisplayName={displayName}
         />
 
         {/* Main content */}
@@ -1021,38 +1155,29 @@ export default function Dashboard() {
               {activeTab === 'learning'  && <LearningTab answers={answers} userId={user?.id} />}
               {activeTab === 'roadmap'   && <RoadmapTab answers={answers} score={score} />}
               {activeTab === 'resources' && <ResourcesTab answers={answers} />}
+              {activeTab === 'profile'   && <ProfileTab user={user} profile={profile} answers={answers} onSignOut={handleSignOut} router={router} />}
+              {activeTab === 'settings'  && <SettingsTab onSignOut={handleSignOut} />}
             </motion.div>
           </AnimatePresence>
         </main>
 
-        {/* Right panel — only on overview */}
-        {activeTab === 'overview' && (
-          <RightPanel
-            user={user}
-            profile={profile}
-            score={score}
-            breakdown={breakdown}
-            answers={answers}
-            quizResult={quizResult}
-            router={router}
-          />
-        )}
+
 
         {/* Mobile bottom navigation */}
         <nav className="fixed bottom-0 left-0 right-0 lg:hidden bg-white border-t border-slate-100 z-40 px-2 py-2">
           <div className="flex items-center justify-around">
-            {NAV_ITEMS.filter(i => !i.locked).map(item => {
+            {BOTTOM_NAV.map(item => {
               const Icon = item.icon
               const isActive = activeTab === item.id
               return (
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-all"
+                  className="flex flex-col items-center gap-0.5 py-1 px-2 rounded-xl transition-all"
                   style={{ color: isActive ? '#3b75ff' : '#9E9E9E' }}
                 >
-                  <Icon size={20} />
-                  <span style={{ fontSize: '10px', fontWeight: isActive ? 600 : 400 }}>{item.label}</span>
+                  <Icon size={19} />
+                  <span style={{ fontSize: '9px', fontWeight: isActive ? 600 : 400 }}>{item.label}</span>
                 </button>
               )
             })}
