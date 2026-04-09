@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import {
@@ -207,6 +207,150 @@ function Sidebar({ activeTab, setActiveTab, onSignOut, isMobileOpen, onMobileClo
   )
 }
 
+// ── SEARCH BAR ───────────────────────────────────────────────────────────────
+function buildSearchIndex(answers) {
+  const dest = answers.destination || 'your destination'
+  const seg  = answers.segment || ''
+  return [
+    // Navigation
+    { label: 'Home',        category: 'Navigation', tab: 'overview'  },
+    { label: 'Learning',    category: 'Navigation', tab: 'learning'  },
+    { label: 'My Roadmap',  category: 'Navigation', tab: 'roadmap'   },
+    { label: 'Resources',   category: 'Navigation', tab: 'resources' },
+    { label: 'Profile',     category: 'Navigation', tab: 'profile'   },
+
+    // Learning
+    { label: 'Immigration Pathways & Visa Routes',   category: 'Learning', tab: 'learning' },
+    { label: 'Language Test Preparation Guide',      category: 'Learning', tab: 'learning' },
+    { label: 'Document Collection & Verification',   category: 'Learning', tab: 'learning' },
+    { label: 'Generate My Learning Path',            category: 'Learning', tab: 'learning' },
+    { label: 'IELTS preparation',                    category: 'Learning', tab: 'learning' },
+    { label: 'Visa application guide',               category: 'Learning', tab: 'learning' },
+    { label: 'NYSC discharge letter',                category: 'Learning', tab: 'learning' },
+    { label: 'Degree evaluation WES NARIC',          category: 'Learning', tab: 'learning' },
+
+    // Roadmap
+    { label: 'Phase 1 — Foundation',                 category: 'Roadmap', tab: 'roadmap' },
+    { label: 'Phase 2 — Preparation',               category: 'Roadmap', tab: 'roadmap' },
+    { label: 'Phase 3 — Application',               category: 'Roadmap', tab: 'roadmap' },
+    { label: 'Phase 4 — Pre-Departure',             category: 'Roadmap', tab: 'roadmap' },
+    { label: 'Language test IELTS OET TOEFL',        category: 'Roadmap', tab: 'roadmap' },
+    { label: 'Passport and degree certificates',     category: 'Roadmap', tab: 'roadmap' },
+    { label: 'Expression of Interest application',  category: 'Roadmap', tab: 'roadmap' },
+    { label: 'Biometrics appointment',              category: 'Roadmap', tab: 'roadmap' },
+    { label: 'Visa decision and appeal',            category: 'Roadmap', tab: 'roadmap' },
+    { label: `${dest} migration timeline`,           category: 'Roadmap', tab: 'roadmap' },
+    { label: 'Book flights accommodation',          category: 'Roadmap', tab: 'roadmap' },
+    { label: 'Migration savings proof of funds',    category: 'Roadmap', tab: 'roadmap' },
+    { label: 'LinkedIn CV international format',    category: 'Roadmap', tab: 'roadmap' },
+    seg.includes('Tech') ? { label: 'Cloud certifications AWS GCP Azure', category: 'Roadmap', tab: 'roadmap' } : null,
+
+    // Resources
+    { label: 'Core Document Checklist',             category: 'Resources', tab: 'resources' },
+    { label: `${dest} Visa Application Documents`,  category: 'Resources', tab: 'resources' },
+    { label: 'Police Clearance Certificate',        category: 'Resources', tab: 'resources' },
+    { label: 'Degree Certificate Apostille Guide',  category: 'Resources', tab: 'resources' },
+    { label: 'International CV Template ATS',       category: 'Resources', tab: 'resources' },
+    { label: 'Cover Letter Skilled Worker Visa',    category: 'Resources', tab: 'resources' },
+    { label: 'LinkedIn Profile Optimisation',       category: 'Resources', tab: 'resources' },
+    { label: 'Statement of Purpose SOP template',   category: 'Resources', tab: 'resources' },
+    { label: 'Personal Statement guide',            category: 'Resources', tab: 'resources' },
+    { label: 'Migration Budget Calculator NGN',     category: 'Resources', tab: 'resources' },
+    { label: 'Proof of Funds Requirements',         category: 'Resources', tab: 'resources' },
+    { label: 'Bank Statement Preparation',          category: 'Resources', tab: 'resources' },
+    { label: 'Migration Savings Plan',              category: 'Resources', tab: 'resources' },
+
+    // Profile / settings
+    { label: 'Edit my profile',                     category: 'Profile', tab: 'profile' },
+    { label: 'Upload profile picture',              category: 'Profile', tab: 'profile' },
+    { label: 'Dark mode light mode theme',          category: 'Profile', tab: 'profile' },
+    { label: 'Sign out',                            category: 'Profile', tab: 'profile' },
+    { label: 'Delete account',                      category: 'Profile', tab: 'profile' },
+    { label: 'Retake quiz migration assessment',    category: 'Profile', tab: 'profile' },
+    { label: 'Notifications preferences',           category: 'Profile', tab: 'profile' },
+  ].filter(Boolean)
+}
+
+const CATEGORY_COLORS = {
+  Navigation: { bg: 'rgba(59,117,255,0.1)',  text: '#3b75ff'  },
+  Learning:   { bg: 'rgba(16,185,129,0.1)',  text: '#10b981'  },
+  Roadmap:    { bg: 'rgba(14,165,233,0.1)',  text: '#0ea5e9'  },
+  Resources:  { bg: 'rgba(245,158,11,0.1)',  text: '#f59e0b'  },
+  Profile:    { bg: 'rgba(139,92,246,0.1)',  text: '#8b5cf6'  },
+}
+
+function SearchBar({ answers, setActiveTab }) {
+  const [query, setQuery] = useState('')
+  const [open, setOpen] = useState(false)
+  const [index] = useState(() => buildSearchIndex(answers))
+  const ref = useRef(null)
+
+  const results = query.trim().length < 2 ? [] : index.filter(item =>
+    item.label.toLowerCase().includes(query.toLowerCase())
+  ).slice(0, 8)
+
+  // close on outside click
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const go = (item) => {
+    setActiveTab(item.tab)
+    setQuery('')
+    setOpen(false)
+  }
+
+  return (
+    <div ref={ref} className="relative flex-1">
+      <div className="flex items-center gap-3 bg-white dark:bg-[#1e293b] border border-[rgba(204,204,204,0.8)] dark:border-slate-600 rounded-xl px-4 py-3.5">
+        <Search size={16} className="text-[#9E9E9E] shrink-0" />
+        <input
+          type="text"
+          value={query}
+          onChange={e => { setQuery(e.target.value); setOpen(true) }}
+          onFocus={() => setOpen(true)}
+          placeholder="Search learning, roadmap, resources..."
+          className="flex-1 text-xs font-medium text-[#202020] dark:text-[#f1f5f9] bg-transparent outline-none placeholder-[#9E9E9E]"
+        />
+        {query && (
+          <button onClick={() => { setQuery(''); setOpen(false) }} className="text-[#9E9E9E] hover:text-[#202020] transition-colors shrink-0">
+            <X size={14} />
+          </button>
+        )}
+      </div>
+
+      {open && results.length > 0 && (
+        <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-[#1e293b] border border-slate-100 dark:border-slate-700 rounded-2xl shadow-[0px_14px_42px_rgba(8,15,52,0.12)] z-50 overflow-hidden">
+          {results.map((item, i) => {
+            const cc = CATEGORY_COLORS[item.category] || CATEGORY_COLORS.Navigation
+            return (
+              <button
+                key={i}
+                onClick={() => go(item)}
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left border-b border-slate-50 dark:border-slate-700/50 last:border-0"
+              >
+                <Search size={13} className="text-[#9E9E9E] shrink-0" />
+                <span className="flex-1 text-sm text-[#202020] dark:text-[#f1f5f9] truncate">{item.label}</span>
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0" style={{ background: cc.bg, color: cc.text }}>
+                  {item.category}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {open && query.trim().length >= 2 && results.length === 0 && (
+        <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-[#1e293b] border border-slate-100 dark:border-slate-700 rounded-2xl shadow-[0px_14px_42px_rgba(8,15,52,0.12)] z-50 px-4 py-5 text-center">
+          <p className="text-sm text-[#9E9E9E]">No results for "<span className="text-[#202020] dark:text-[#f1f5f9] font-medium">{query}</span>"</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── OVERVIEW TAB ─────────────────────────────────────────────────────────────
 function OverviewTab({ answers, score, flag, displayName, isNewUser, router, quizResult, setActiveTab }) {
   const destinationFlag = COUNTRY_FLAGS[answers.destination] || '🌍'
@@ -262,11 +406,8 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
 
       {/* Search */}
       <div className="flex items-center gap-3">
-        <div className="flex-1 flex items-center gap-3 bg-white border border-[rgba(204,204,204,0.8)] rounded-xl px-4 py-3.5">
-          <Search size={16} className="text-[#9E9E9E] shrink-0" />
-          <span className="text-xs font-medium text-[#9E9E9E] flex-1">Search your learning path...</span>
-        </div>
-        <button className="w-12 h-12 rounded-full flex items-center justify-center text-[#5F5F5F] hover:text-[#3b75ff] transition-colors shrink-0">
+        <SearchBar answers={answers} setActiveTab={setActiveTab} />
+        <button className="w-12 h-12 rounded-full flex items-center justify-center text-[#5F5F5F] dark:text-slate-400 hover:text-[#3b75ff] transition-colors shrink-0">
           <SlidersHorizontal size={18} />
         </button>
       </div>
