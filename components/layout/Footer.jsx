@@ -20,22 +20,22 @@ export const Footer = () => {
           >
             Ready To Start Your Journey <br className="hidden sm:block" /> the Right Way?
           </motion.h2>
-          <p className="text-white/70 mb-8 sm:mb-10 max-w-md mx-auto text-sm leading-relaxed px-2">
+          <p className="text-white mb-8 sm:mb-10 max-w-md mx-auto text-sm leading-relaxed px-2">
             Join thousands of Nigerians who have transformed their migration
             dreams into reality with JapaLearn AI.
           </p>
           <Button
             asChild
             size="lg"
-            className="bg-white hover:bg-white/95 rounded-full px-8 sm:px-12 py-5 sm:py-6 text-sm sm:text-base font-semibold shadow-lg w-full sm:w-auto max-w-xs sm:max-w-none mx-auto" style={{ color: '#702DFF' }}
+            className="bg-white hover:bg-white/95 rounded-full px-8 sm:px-12 py-5 sm:py-6 text-sm sm:text-base font-semibold shadow-lg w-full sm:w-auto max-w-xs sm:max-w-none mx-auto" style={{ color: '#3b75ff' }}
           >
             <Link href="/quiz">Take The Free AI Quiz</Link>
           </Button>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 mt-10 sm:mt-14 text-xs sm:text-sm text-white/70">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 mt-10 sm:mt-14 text-xs sm:text-sm text-white">
             {["AI-Powered Analysis", "Expert Curated Content", "87% Success Rate"].map((item) => (
               <div key={item} className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-white/80 shrink-0" />
+                <CheckCircle2 className="w-4 h-4 text-white shrink-0" />
                 <span>{item}</span>
               </div>
             ))}

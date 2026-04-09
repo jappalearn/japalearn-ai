@@ -82,7 +82,7 @@ body {
 
 /* CTA grid background */
 .cta-grid {
-  background-color: #702DFF;
+  background-color: #3b75ff;
   background-image: linear-gradient(#ffffff22 1px, transparent 1px),
     linear-gradient(to right, #ffffff22 1px, transparent 1px);
   background-size: 28px 28px;
