@@ -794,6 +794,21 @@ function ResourcesTab({ answers }) {
 }
 
 // ── PROFILE TAB ──────────────────────────────────────────────────────────────
+function Toggle({ value, onChange }) {
+  return (
+    <button
+      onClick={() => onChange(!value)}
+      className="relative w-12 h-6 rounded-full transition-all duration-300 shrink-0 focus:outline-none"
+      style={{ background: value ? '#3b75ff' : '#CBD5E1' }}
+    >
+      <div
+        className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-all duration-300"
+        style={{ transform: value ? 'translateX(24px)' : 'translateX(0)' }}
+      />
+    </button>
+  )
+}
+
 function ProfileTab({ user, profile, answers, onSignOut, router }) {
   const fullName = profile?.full_name || user?.user_metadata?.full_name || ''
   const email = user?.email || ''
@@ -861,35 +876,41 @@ function ProfileTab({ user, profile, answers, onSignOut, router }) {
     router.push('/')
   }
 
-  const fieldClass = (active) =>
-    `w-full rounded-xl px-4 py-3 text-sm outline-none transition-all border ${
-      active
-        ? 'bg-white border-slate-200 text-[#202020]'
-        : 'bg-[#F7F8FA] border-transparent text-[#202020] cursor-not-allowed'
-    }`
+  // card + text helper classes
+  const card = "bg-white dark:bg-[#1e293b] shadow-[0px_14px_42px_rgba(8,15,52,0.06)] dark:shadow-[0px_14px_42px_rgba(0,0,0,0.35)] rounded-[20px]"
+  const heading = "text-sm font-semibold text-[#202020] dark:text-[#f1f5f9]"
+  const sub = "text-xs text-[#9E9E9E] dark:text-slate-400"
+  const labelClass = "block text-xs font-semibold text-[#9E9E9E] dark:text-slate-500 uppercase tracking-wider mb-1.5"
+  const inputClass = (active) => `w-full rounded-xl px-4 py-3 text-sm outline-none transition-all border ${
+    active
+      ? 'bg-white dark:bg-[#0f172a] border-[#3b75ff] text-[#202020] dark:text-[#f1f5f9]'
+      : 'bg-slate-50 dark:bg-[#0f172a] border-transparent text-[#9E9E9E] dark:text-slate-500 cursor-not-allowed'
+  }`
 
   return (
     <div className="flex flex-col gap-0 pb-16 max-w-2xl w-full">
 
       {/* Banner */}
       <div className="rounded-[20px] overflow-hidden mb-6" style={{
-        background: 'linear-gradient(120deg, #3b75ff 0%, #93bbff 50%, #ffe4b5 100%)',
+        background: darkMode
+          ? 'linear-gradient(120deg, #1e3a6e 0%, #1e293b 50%, #2d3748 100%)'
+          : 'linear-gradient(120deg, #3b75ff 0%, #93bbff 50%, #ffe4b5 100%)',
         height: 100,
       }} />
 
       {/* Profile header card */}
-      <div className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] px-6 py-5 mb-5">
-        <div className="flex items-center gap-4">
+      <div className={`${card} px-6 py-5 mb-5`}>
+        <div className="flex items-center gap-4 flex-wrap">
           {/* Avatar */}
           <div className="relative shrink-0">
             {avatarUrl ? (
-              <img src={avatarUrl} alt="Avatar" className="w-16 h-16 rounded-full object-cover ring-2 ring-white shadow-md" />
+              <img src={avatarUrl} alt="Avatar" className="w-16 h-16 rounded-full object-cover ring-2 ring-white dark:ring-slate-700 shadow-md" />
             ) : (
-              <div className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-black text-white ring-2 ring-white shadow-md" style={{ background: 'linear-gradient(135deg, #3b75ff, #2452cc)' }}>
+              <div className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-black text-white ring-2 ring-white dark:ring-slate-700 shadow-md" style={{ background: 'linear-gradient(135deg, #3b75ff, #2452cc)' }}>
                 {initials}
               </div>
             )}
-            <label className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center cursor-pointer shadow-lg border-2 border-white" style={{ background: '#3b75ff' }}>
+            <label className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center cursor-pointer shadow-lg border-2 border-white dark:border-[#1e293b]" style={{ background: '#3b75ff' }}>
               {uploading
                 ? <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 : <Camera size={12} className="text-white" />}
@@ -899,27 +920,29 @@ function ProfileTab({ user, profile, answers, onSignOut, router }) {
 
           {/* Name + email */}
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-[#202020] text-lg leading-tight" style={{ fontFamily: 'DM Sans, sans-serif' }}>{name || 'Your Name'}</p>
-            <p className="text-sm text-[#9E9E9E] truncate">{email}</p>
+            <p className="font-bold text-[#202020] dark:text-[#f1f5f9] text-lg leading-tight" style={{ fontFamily: 'DM Sans, sans-serif' }}>{name || 'Your Name'}</p>
+            <p className="text-sm text-[#9E9E9E] dark:text-slate-400 truncate">{email}</p>
             {avatarUrl && (
-              <button onClick={removeAvatar} className="text-[10px] text-rose-400 hover:text-rose-500 mt-1 transition-colors">Remove photo</button>
+              <button onClick={removeAvatar} className="text-[10px] text-rose-400 hover:text-rose-500 mt-1 transition-colors">
+                Remove photo
+              </button>
             )}
           </div>
 
-          {/* Edit / Save button */}
+          {/* Edit / Save / Cancel */}
           {!editing ? (
             <button
               onClick={() => setEditing(true)}
-              className="shrink-0 px-5 py-2 rounded-xl text-sm font-semibold text-white shadow-sm transition-all hover:opacity-90"
+              className="shrink-0 px-6 py-2 rounded-xl text-sm font-semibold text-white shadow-sm transition-all hover:opacity-90"
               style={{ background: '#3b75ff' }}
             >
-              Edit
+              Edit Profile
             </button>
           ) : (
             <div className="flex gap-2 shrink-0">
               <button
                 onClick={() => { setEditing(false); setName(fullName) }}
-                className="px-4 py-2 rounded-xl text-sm font-semibold text-[#5F5F5F] bg-slate-100 hover:bg-slate-200 transition-all"
+                className="px-4 py-2 rounded-xl text-sm font-semibold text-[#5F5F5F] dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:opacity-80 transition-all"
               >
                 Cancel
               </button>
@@ -937,37 +960,36 @@ function ProfileTab({ user, profile, answers, onSignOut, router }) {
       </div>
 
       {/* Personal info grid */}
-      <div className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] px-6 py-6 mb-5">
-        <h3 className="text-sm font-semibold text-[#202020] mb-5">Personal Information</h3>
+      <div className={`${card} px-6 py-6 mb-5`}>
+        <h3 className={`${heading} mb-5`}>Personal Information</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[
-            { label: 'Full Name',      value: name,         onChange: e => setName(e.target.value), editable: true },
-            { label: 'Email Address',  value: email,        onChange: null, editable: false },
-            { label: 'Destination',    value: answers.destination || '—', onChange: null, editable: false },
-            { label: 'Occupation',     value: answers.segment || '—',     onChange: null, editable: false },
-            { label: 'Language Test',  value: answers.language || 'Not taken', onChange: null, editable: false },
-            { label: 'Age Range',      value: answers.age || '—',         onChange: null, editable: false },
+            { label: 'Full Name',     value: name,                          onChange: e => setName(e.target.value), editable: true },
+            { label: 'Email Address', value: email,                         onChange: null, editable: false },
+            { label: 'Destination',   value: answers.destination || '—',    onChange: null, editable: false },
+            { label: 'Occupation',    value: answers.segment || '—',        onChange: null, editable: false },
+            { label: 'Language Test', value: answers.language || 'Not taken', onChange: null, editable: false },
+            { label: 'Age Range',     value: answers.age || '—',            onChange: null, editable: false },
           ].map(({ label, value, onChange, editable }) => (
             <div key={label}>
-              <label className="block text-xs font-semibold text-[#9E9E9E] mb-1.5">{label}</label>
+              <label className={labelClass}>{label}</label>
               <input
                 type="text"
                 value={value}
                 onChange={onChange || undefined}
                 disabled={!editable || !editing}
-                className={fieldClass(editable && editing)}
+                className={inputClass(editable && editing)}
                 placeholder={label}
               />
             </div>
           ))}
         </div>
-
         {answers.destination && (
-          <div className="mt-4 pt-4 border-t border-slate-50">
+          <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-700">
             <button
               onClick={() => router.push('/quiz')}
               className="text-xs font-semibold px-4 py-2 rounded-full transition-all hover:opacity-80"
-              style={{ background: 'rgba(59,117,255,0.1)', color: '#3b75ff' }}
+              style={{ background: 'rgba(59,117,255,0.12)', color: '#3b75ff' }}
             >
               Retake Migration Assessment →
             </button>
@@ -975,98 +997,103 @@ function ProfileTab({ user, profile, answers, onSignOut, router }) {
         )}
       </div>
 
-      {/* My Email Address (like the screenshot) */}
-      <div className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] px-6 py-6 mb-5">
-        <h3 className="text-sm font-semibold text-[#202020] mb-4">My Email Address</h3>
-        <div className="flex items-center gap-3 bg-[#F0F4FF] rounded-xl px-4 py-3">
+      {/* Email address */}
+      <div className={`${card} px-6 py-6 mb-5`}>
+        <h3 className={`${heading} mb-4`}>My Email Address</h3>
+        <div className="flex items-center gap-3 rounded-xl px-4 py-3" style={{ background: darkMode ? 'rgba(59,117,255,0.12)' : '#F0F4FF' }}>
           <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: '#3b75ff' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
             </svg>
           </div>
           <div>
-            <p className="text-sm font-semibold text-[#202020]">{email}</p>
-            <p className="text-xs text-[#9E9E9E]">Primary account email</p>
+            <p className="text-sm font-semibold text-[#202020] dark:text-[#f1f5f9]">{email}</p>
+            <p className={sub}>Primary account email · verified</p>
           </div>
         </div>
       </div>
 
-      {/* Appearance + Notifications */}
-      <div className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] px-6 py-6 mb-5">
-        <h3 className="text-sm font-semibold text-[#202020] mb-5">Preferences</h3>
-        <div className="flex flex-col gap-5">
-          {/* Dark mode */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: darkMode ? '#1e293b' : '#EEF4FF' }}>
-                {darkMode ? <Moon size={16} className="text-blue-300" /> : <Sun size={16} style={{ color: '#3b75ff' }} />}
-              </div>
-              <div>
-                <p className="text-sm font-medium text-[#202020]">{darkMode ? 'Dark Mode' : 'Light Mode'}</p>
-                <p className="text-xs text-[#9E9E9E]">{darkMode ? 'Easy on the eyes at night' : 'Clean and bright interface'}</p>
-              </div>
+      {/* Appearance & Notifications */}
+      <div className={`${card} px-6 py-6 mb-5`}>
+        <h3 className={`${heading} mb-6`}>Preferences</h3>
+
+        {/* Dark mode row */}
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: darkMode ? 'rgba(59,117,255,0.2)' : '#EEF4FF' }}>
+              {darkMode
+                ? <Moon size={18} style={{ color: '#93bbff' }} />
+                : <Sun size={18} style={{ color: '#3b75ff' }} />}
             </div>
-            <button onClick={toggleDarkMode} className="relative w-11 h-6 rounded-full transition-all duration-300 shrink-0" style={{ background: darkMode ? '#3b75ff' : '#E2E8F0' }}>
-              <div className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-all duration-300" style={{ transform: darkMode ? 'translateX(20px)' : 'translateX(0)' }} />
-            </button>
+            <div>
+              <p className="text-sm font-semibold text-[#202020] dark:text-[#f1f5f9]">{darkMode ? 'Dark Mode' : 'Light Mode'}</p>
+              <p className={sub}>{darkMode ? 'Easier on the eyes at night' : 'Clean and bright interface'}</p>
+            </div>
           </div>
-
-          <div className="h-px bg-slate-50" />
-
-          {/* Notifications */}
-          {[
-            { label: 'Email Updates', sub: 'New features and announcements', value: emailNotifs, set: setEmailNotifs },
-            { label: 'Progress Reminders', sub: 'Weekly learning check-ins', value: progressReminders, set: setProgressReminders },
-          ].map(({ label, sub, value, set }) => (
-            <div key={label} className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-[#202020]">{label}</p>
-                <p className="text-xs text-[#9E9E9E]">{sub}</p>
-              </div>
-              <button onClick={() => set(!value)} className="relative w-11 h-6 rounded-full transition-all duration-300 shrink-0" style={{ background: value ? '#3b75ff' : '#E2E8F0' }}>
-                <div className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-all duration-300" style={{ transform: value ? 'translateX(20px)' : 'translateX(0)' }} />
-              </button>
-            </div>
-          ))}
+          <Toggle value={darkMode} onChange={toggleDarkMode} />
         </div>
+
+        <div className="h-px bg-slate-100 dark:bg-slate-700 mb-5" />
+
+        {/* Notification rows */}
+        {[
+          { label: 'Email Updates',       sub2: 'New features and announcements', value: emailNotifs,        set: setEmailNotifs },
+          { label: 'Progress Reminders',  sub2: 'Weekly learning check-ins',     value: progressReminders,  set: setProgressReminders },
+        ].map(({ label, sub2, value, set }) => (
+          <div key={label} className="flex items-center justify-between mb-4 last:mb-0">
+            <div>
+              <p className="text-sm font-medium text-[#202020] dark:text-[#f1f5f9]">{label}</p>
+              <p className={sub}>{sub2}</p>
+            </div>
+            <Toggle value={value} onChange={set} />
+          </div>
+        ))}
       </div>
 
       {/* Account actions */}
-      <div className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] px-6 py-6">
-        <h3 className="text-sm font-semibold text-[#202020] mb-1">Account</h3>
-        <p className="text-xs text-[#9E9E9E] mb-4">Manage your session and account data</p>
-        <div className="flex flex-col gap-2">
-          <button
-            onClick={onSignOut}
-            className="flex items-center gap-3 text-sm font-medium text-[#202020] hover:text-[#3b75ff] transition-colors py-2.5 px-1 rounded-xl hover:bg-slate-50"
-          >
-            <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
-              <LogOut size={14} className="text-[#5F5F5F]" />
-            </div>
-            Sign out
-          </button>
+      <div className={`${card} px-6 py-6`}>
+        <h3 className={`${heading} mb-1`}>Account</h3>
+        <p className={`${sub} mb-5`}>Manage your session and account</p>
 
-          {!deleteConfirm ? (
-            <button
-              onClick={() => setDeleteConfirm(true)}
-              className="flex items-center gap-3 text-sm font-medium text-rose-500 hover:text-rose-600 transition-colors py-2.5 px-1 rounded-xl hover:bg-rose-50"
-            >
-              <div className="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center shrink-0">
-                <Trash2 size={14} className="text-rose-400" />
-              </div>
-              Delete account
-            </button>
-          ) : (
-            <div className="bg-rose-50 border border-rose-100 rounded-2xl p-5 mt-1">
-              <p className="text-sm font-bold text-rose-700 mb-1">Delete your account?</p>
-              <p className="text-xs text-rose-500 mb-4 leading-relaxed">This will sign you out immediately. To fully delete your data, email us at <span className="font-semibold">hello@japalearn.ai</span>.</p>
-              <div className="flex gap-2">
-                <button onClick={deleteAccount} className="text-xs font-semibold text-white px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 transition-colors">Yes, sign me out</button>
-                <button onClick={() => setDeleteConfirm(false)} className="text-xs font-semibold text-[#5F5F5F] px-4 py-2 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 transition-colors">Cancel</button>
-              </div>
+        {/* Sign out */}
+        <button
+          onClick={onSignOut}
+          className="w-full flex items-center gap-3 text-sm font-medium text-[#202020] dark:text-[#f1f5f9] hover:text-[#3b75ff] dark:hover:text-[#3b75ff] transition-colors py-3 px-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 mb-2"
+        >
+          <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0">
+            <LogOut size={15} className="text-[#5F5F5F] dark:text-slate-300" />
+          </div>
+          <span>Sign out</span>
+        </button>
+
+        {/* Delete account */}
+        {!deleteConfirm ? (
+          <button
+            onClick={() => setDeleteConfirm(true)}
+            className="w-full flex items-center gap-3 text-sm font-medium text-rose-500 hover:text-rose-600 transition-colors py-3 px-3 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-900/20"
+          >
+            <div className="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-900/30 flex items-center justify-center shrink-0">
+              <Trash2 size={15} className="text-rose-400" />
             </div>
-          )}
-        </div>
+            <span>Delete account</span>
+          </button>
+        ) : (
+          <div className="bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800 rounded-2xl p-5 mt-1">
+            <p className="text-sm font-bold text-rose-700 dark:text-rose-400 mb-1">Delete your account?</p>
+            <p className="text-xs text-rose-500 dark:text-rose-400 mb-4 leading-relaxed">
+              This will sign you out immediately. To fully delete your data, email us at{' '}
+              <span className="font-semibold">hello@japalearn.ai</span>.
+            </p>
+            <div className="flex gap-2">
+              <button onClick={deleteAccount} className="text-xs font-semibold text-white px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 transition-colors">
+                Yes, sign me out
+              </button>
+              <button onClick={() => setDeleteConfirm(false)} className="text-xs font-semibold text-[#5F5F5F] dark:text-slate-300 px-4 py-2 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 transition-colors">
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -1120,7 +1147,7 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-white dark:bg-[#0f172a] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#3b75ff', borderTopColor: 'transparent' }} />
           <p className="text-[#9E9E9E] text-sm">Loading your dashboard...</p>
@@ -1140,7 +1167,7 @@ export default function Dashboard() {
   return (
     <>
       <Head><title>Dashboard — JapaLearn AI</title></Head>
-      <div className="h-screen bg-white flex overflow-hidden">
+      <div className="h-screen bg-white dark:bg-[#0f172a] flex overflow-hidden">
         <Sidebar
           activeTab={activeTab}
           setActiveTab={setActiveTab}
@@ -1152,7 +1179,7 @@ export default function Dashboard() {
         />
 
         {/* Main content */}
-        <main className="flex-1 lg:ml-[240px] overflow-y-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8 pb-24 lg:pb-8">
+        <main className="flex-1 lg:ml-[240px] overflow-y-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8 pb-24 lg:pb-8 dark:bg-[#0f172a]">
           {/* Mobile header */}
           <div className="flex items-center justify-between lg:hidden mb-5">
             <button
@@ -1189,7 +1216,7 @@ export default function Dashboard() {
 
 
         {/* Mobile bottom navigation */}
-        <nav className="fixed bottom-0 left-0 right-0 lg:hidden bg-white border-t border-slate-100 z-40 px-2 py-2">
+        <nav className="fixed bottom-0 left-0 right-0 lg:hidden bg-white dark:bg-[#1e293b] border-t border-slate-100 dark:border-slate-700 z-40 px-2 py-2">
           <div className="flex items-center justify-around">
             {BOTTOM_NAV.map(item => {
               const Icon = item.icon

@@ -93,6 +93,43 @@ body {
 .card-hover { transition: box-shadow 0.2s, border-color 0.2s; }
 .card-hover:hover { box-shadow: 0 4px 24px rgba(0,0,0,0.08); border-color: #cbd5e1; }
 
+/* ── Dashboard dark mode overrides ──────────────────────────────────────────── */
+/* Backgrounds */
+.dark .bg-white        { background-color: #1e293b; }
+.dark .bg-slate-50     { background-color: #0f172a; }
+.dark .bg-slate-100    { background-color: #1e293b; }
+.dark .bg-\[#f6f9ff\]  { background-color: #0f172a; }
+.dark .bg-\[#F7F8FA\]  { background-color: #0f172a; }
+.dark .bg-\[#F0F0F0\]  { background-color: #334155; }
+.dark .bg-\[#D9D9D9\]  { background-color: #334155; }
+
+/* Text */
+.dark .text-\[\#202020\] { color: #f1f5f9; }
+.dark .text-\[\#5F5F5F\] { color: #94a3b8; }
+.dark .text-\[\#9E9E9E\] { color: #64748b; }
+.dark .text-\[\#3F3F3F\] { color: #94a3b8; }
+.dark .text-slate-500    { color: #94a3b8; }
+
+/* Borders */
+.dark .border-slate-100  { border-color: #334155; }
+.dark .border-slate-200  { border-color: #334155; }
+.dark .border-gray-200   { border-color: #334155; }
+.dark .border-gray-100   { border-color: #1e293b; }
+.dark .divide-slate-100 > * + * { border-color: #334155; }
+
+/* Shadows — darker in dark mode */
+.dark .shadow-\[0px_14px_42px_rgba\(8\,15\,52\,0\.06\)\] {
+  box-shadow: 0 14px 42px rgba(0,0,0,0.35);
+}
+
+/* Sidebar specific */
+.dark aside { background-color: #1e293b; }
+
+/* Scrollbar */
+.dark ::-webkit-scrollbar-track { background: #0f172a; }
+.dark ::-webkit-scrollbar-thumb { background: #334155; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
 /* Lesson prose */
 .prose-lesson p {
   color: #334155;
@@ -123,7 +160,7 @@ body {
 .prose-lesson ol li { list-style-type: decimal; }
 .prose-lesson strong { color: #0f172a; font-weight: 600; }
 .prose-lesson a {
-  color: #702DFF;
+  color: #3b75ff;
   text-decoration: underline;
   text-decoration-color: rgba(59, 117, 255, 0.3);
   text-underline-offset: 3px;
@@ -131,10 +168,10 @@ body {
 }
 .prose-lesson a:hover { color: #5b21b6; }
 .prose-lesson blockquote {
-  border-left: 3px solid #702DFF;
+  border-left: 3px solid #3b75ff;
   padding: 0.875rem 1.25rem;
   margin: 1.75rem 0;
-  background: #f3eeff;
+  background: #eff4ff;
   border-radius: 0 0.625rem 0.625rem 0;
 }
 .prose-lesson blockquote p { margin-bottom: 0; color: #5b21b6; }
@@ -144,7 +181,7 @@ body {
   padding: 0.15rem 0.4rem;
   border-radius: 0.3rem;
   font-size: 0.875em;
-  color: #702DFF;
+  color: #3b75ff;
 }
 
 /* Quiz animations */
