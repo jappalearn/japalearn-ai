@@ -45,7 +45,7 @@ export default function Login() {
     setLoading(true); setError('')
     const { error: loginError } = await supabase.auth.signInWithPassword({ email: form.email, password: form.password })
     if (loginError) { setError(loginError.message); setLoading(false); return }
-    router.push('/dashboard')
+    router.replace('/dashboard')
   }
 
   return (

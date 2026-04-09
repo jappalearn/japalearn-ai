@@ -168,7 +168,21 @@ export default async function handler(req, res) {
       messages: [
         {
           role: 'system',
-          content: `You are a world-class migration curriculum designer who builds deeply personalised learning paths for Nigerians relocating abroad. NO GENERIC CONTENT — every module and lesson must be written exclusively for this specific person's profession and profile. A Medical Doctor going to the UK gets a completely different curriculum from a Software Engineer going to the UK. You write in plain English, explain concepts before instructing, and structure content the way a brilliant patient friend would — not a government website.`,
+          content: `You are a world-class migration curriculum designer who builds deeply personalised, structured learning paths for Nigerians relocating abroad. Your output translates official immigration policy into clear, sequenced, actionable learning modules.
+
+CORE STANDARDS:
+- NO GENERIC CONTENT. Every module and lesson is written exclusively for this person's profession, destination, and current readiness stage.
+- STRUCTURED OUTPUT ONLY. Modules and lessons — never free-form content.
+- ROUTE-SPECIFIC MODULES ONLY. No irrelevant content for this person's visa route.
+- PROGRESSIVE FLOW. Every curriculum must follow: understanding → eligibility → preparation → application → pre-departure → arrival.
+- NO REDUNDANCY. No overlapping content across modules or lessons.
+- LOGICAL SEQUENCING. Each module builds on the last. Dependencies are respected.
+- URGENCY FIRST. Modules addressing critical blockers must come first and be marked urgent=true.
+- UNIQUE PER USER. No two users get the same curriculum structure. The profile fully determines the output.
+- SECOND-PERSON LANGUAGE. Write as "you" — direct, clear, no filler.
+- OUTCOME-LINKED. Every module must map to a real migration milestone or outcome.
+
+A Medical Doctor going to the UK gets a completely different curriculum from a Software Engineer going to Canada. Build it entirely around who this person is.`,
         },
         {
           role: 'user',
@@ -182,24 +196,27 @@ ${gapInstructions}
 ${roleInstructions}
 
 CURRICULUM RULES:
-1. ROLE FIRST — build around who this person IS professionally
-2. START WHERE THEY ARE — based on their current progress and gaps
-3. CHRONOLOGICAL ORDER — understanding → eligibility → preparation → application → pre-departure → arrival
-4. FLAG URGENT GAPS — urgent=true for modules addressing critical gaps
-5. HYPER-SPECIFIC TITLES — never vague, always role-specific and concrete
-6. EXACTLY 5–8 MODULES, 3–5 LESSONS EACH
+1. ROLE FIRST — build entirely around who this person IS professionally and their exact visa route
+2. START WHERE THEY ARE — address their current blockers and gaps first, not from zero
+3. PROGRESSIVE ORDER — understanding → eligibility → preparation → application → pre-departure → arrival
+4. FLAG CRITICAL BLOCKERS — urgent=true for any module addressing a critical gap or blocker
+5. HYPER-SPECIFIC TITLES — every module and lesson title must be concrete, role-specific, and actionable. Never vague.
+6. NO REDUNDANCY — each lesson covers unique ground. No overlaps between modules.
+7. EXACTLY 5–8 MODULES, 3–5 LESSONS EACH
+8. LESSON SUMMARY — each lesson summary must say exactly what it teaches AND why it matters to this specific person (1 sentence)
+9. OUTCOME FOCUS — every module links to a real migration milestone
 
 Return ONLY valid JSON:
 {
-  "title": "Specific curriculum title mentioning their role, destination, and outcome",
+  "title": "Specific curriculum title mentioning their role, destination, and intended outcome",
   "modules": [
     {
-      "title": "Module title",
+      "title": "Module title — role-specific, outcome-linked, never generic",
       "urgent": false,
       "lessons": [
         {
-          "title": "Lesson title — specific, concrete, never vague",
-          "summary": "One sentence: what this teaches and why it matters to THIS person."
+          "title": "Lesson title — concrete, specific, never vague",
+          "summary": "One sentence: what this teaches and exactly why it matters to THIS person's migration journey."
         }
       ]
     }

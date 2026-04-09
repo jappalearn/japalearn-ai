@@ -29,6 +29,7 @@ export default function Signup() {
       localStorage.setItem('pending_quiz_answers', answers)
       localStorage.setItem('pending_quiz_score', score)
     }
+    localStorage.setItem('just_signed_up', 'true')
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/dashboard` },
@@ -47,17 +48,16 @@ export default function Signup() {
       options: { data: { full_name: form.full_name } },
     })
     if (signupError) { setError(signupError.message); setLoading(false); return }
-    if (answers && score && data.user) {
-      await supabase.from('quiz_results').insert({
-        user_id: data.user.id,
-        answers: JSON.parse(answers),
-        score: parseInt(score),
-        destination: JSON.parse(answers).destination,
-        segment: JSON.parse(answers).segment,
-      })
+    // Save quiz data and name to localStorage — inserted on dashboard load when session is guaranteed
+    if (answers && score) {
+      localStorage.setItem('pending_quiz_answers', answers)
+      localStorage.setItem('pending_quiz_score', score)
+    }
+    if (form.full_name) {
+      localStorage.setItem('pending_full_name', form.full_name)
     }
     localStorage.setItem('just_signed_up', 'true')
-    router.push('/dashboard')
+    router.replace('/dashboard')
   }
 
   return (

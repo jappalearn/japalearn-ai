@@ -239,9 +239,13 @@ export default function Report() {
             </div>
             <div className="flex items-center gap-2 sm:gap-3">
               <Link href="/login" className="hidden sm:inline-block text-[#0f1720] font-medium text-sm hover:opacity-60 transition-opacity">Sign in</Link>
-              <Link href="/signup" className="inline-flex px-5 py-2 rounded-full text-sm font-medium text-white transition-all hover:opacity-90" style={{ background: PRIMARY }}>
+              <button
+                onClick={() => router.push(`/signup?answers=${encodeURIComponent(JSON.stringify(answers))}&score=${score}`)}
+                className="inline-flex px-5 py-2 rounded-full text-sm font-medium text-white transition-all hover:opacity-90"
+                style={{ background: PRIMARY }}
+              >
                 Sign up free
-              </Link>
+              </button>
             </div>
           </nav>
         </div>

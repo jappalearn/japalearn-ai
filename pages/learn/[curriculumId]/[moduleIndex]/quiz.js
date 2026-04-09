@@ -144,6 +144,7 @@ export default function ModuleQuiz() {
     setAnswers([])
     setShowExplanation(false)
     setPhase('quiz')
+    setPreviousResult(null)
     setLoading(true)
     const { data: { session } } = await supabase.auth.getSession()
     await generateQuiz(session?.access_token)

@@ -36,54 +36,63 @@ export default async function handler(req, res) {
       max_tokens: 3000,
       messages: [{
         role: 'system',
-        content: `You are a world-class migration education writer. You write for Nigerians who are intelligent and motivated but may have zero prior knowledge of immigration systems. You never assume the reader knows what a visa category, government body, or immigration term means — you always explain it first. You write like a brilliant, patient friend who has been through the process and is sitting across the table walking someone through it. You use rich markdown formatting to make content easy to scan and navigate. You embed real hyperlinks to official government sources inline.`
+        content: `You are a world-class migration education writer producing structured, source-backed lessons that translate immigration policy into clear actions for Nigerians relocating abroad.
+
+STANDARDS YOU MUST MEET:
+- PRACTICAL ONLY. No fluff, no filler, no motivational language. Every sentence must teach something actionable.
+- SECOND-PERSON DIRECT. Write as "you" throughout. Clear, direct, no passive voice.
+- EXPLAIN BEFORE INSTRUCTING. Define every immigration term, body, or concept the first time it appears — the reader may have zero prior knowledge.
+- OFFICIAL SOURCES EMBEDDED. Real government URLs linked inline throughout the lesson.
+- NIGERIAN CONTEXT ALWAYS. Nigerian passport, WAEC/NECO results, NYSC discharge letter, NIN, Lagos/Abuja notarisation, NGN cost equivalents — use these throughout.
+- OUTCOME-LINKED. Every section must connect back to what completing this step unlocks.
+- HIGHLIGHT FAILURE POINTS. Be specific about what Nigerians get wrong and why it kills applications.
+- NO GENERIC CONTENT. This lesson is for THIS person (${segment} going to ${destination}). Every example, cost, and step must reflect their exact situation.`
       }, {
         role: 'user',
-        content: `Write an extremely detailed, comprehensive lesson about "${lessonTitle}" for a Nigerian ${segment} planning to move to ${destination}.
+        content: `Write a comprehensive, structured lesson about "${lessonTitle}" for a Nigerian ${segment} planning to move to ${destination}.
 
 Part of: "${moduleTitle}" in "${curriculumTitle}"
 
 OPENING STYLE: ${openingStyle}
 
-TONE: Write for someone intelligent who knows nothing about immigration. Explain every term the first time you use it. Be thorough — leave nothing out. This should feel like the most complete resource available on this topic for a Nigerian reader.
-
 FORMAT — use rich markdown throughout:
 - **Bold** every key term, fee, deadline, threshold, and document name on first appearance
 - Bullet points (-) for lists of requirements, documents, criteria, or options
 - Numbered steps (1.) for sequential processes
-- Inline links [Official Source Name](https://real-url.gov) — include at least 4-5 real official government links embedded naturally in the text
-- Use headers (##) to break the lesson into clear sections
-- Blockquotes (>) for important warnings or critical notes
+- Inline links [Official Source Name](https://real-url.gov) — at least 4–5 real official government links embedded naturally
+- Headers (##) for each section
+- Blockquotes (>) for critical warnings or must-know notes
 
-STRUCTURE — cover ALL of these sections with a header for each:
+STRUCTURE — include ALL sections in this order:
+
 ## What Is [Topic] and Why It Matters
-Explain what this topic is in plain English. Why does it exist? Why does it matter at this stage of the journey? What happens if you skip it or get it wrong?
+What is this, in plain English? Why does it exist? What happens if you skip it or get it wrong? Link it to a specific migration outcome.
 
 ## Who Qualifies and Who Doesn't
-Break down the exact eligibility criteria. Use bullet points. Include real thresholds, scores, minimums. Be specific about what counts and what doesn't.
+Exact eligibility criteria. Real thresholds, scores, minimums. Bullet points. Be specific about what counts and what doesn't for a Nigerian applicant.
 
 ## Exactly What You Need (Documents & Requirements)
-Full list of every document, certificate, or piece of evidence required. For each one, explain what it is, where a Nigerian gets it, how long it takes, and approximate cost in both GBP/USD and NGN.
+Every document, certificate, and piece of evidence required. For each: what it is, where a Nigerian gets it, how long it takes, approximate cost in GBP/USD and NGN.
 
 ## Step-by-Step: How the Process Works
-Number every step. Include real timelines for each step. Include the exact portal, website, or office where each step happens. Link to official sources.
+Number every step. Include real timelines. Name the exact portal, website, or office. Link to official sources at each step.
 
 ## Costs and Timelines: The Full Picture
-Complete cost breakdown including application fees, NHS surcharge, biometrics, document costs, courier fees — everything. Give NGN equivalents. Give realistic total timelines.
+Complete cost breakdown: application fees, surcharges, biometrics, document costs, courier fees. NGN equivalents for all. Realistic total timeline.
 
 ## What Nigerians Get Wrong Here
-The 4-5 most common mistakes made by Nigerian applicants specifically on this topic. Be direct and specific.
+The 4–5 most common mistakes Nigerian applicants make on this specific topic. Direct and specific — not generic advice.
 
 ## What Success Looks Like
-What does completing this stage give you? What does it unlock? What is the next step?
+What does completing this stage give you? What does it unlock? What is your next step immediately after?
 
 REAL DATA REQUIREMENTS:
-- Every fee must be in both GBP/USD and approximate NGN equivalent
-- Every timeline must be the real current figure from official sources
-- Every document name must be the exact official name
-- Nigerian context throughout: NYSC discharge, Nigerian passport, WAEC/NECO, NIN, notarisation in Lagos/Abuja
+- Every fee in both GBP/USD and approximate NGN equivalent
+- Every timeline from current official sources
+- Every document by its exact official name
+- Nigerian context: NYSC discharge, Nigerian passport, WAEC/NECO, NIN, notarisation in Lagos/Abuja
 
-Write 900-1200 words minimum. Be thorough. Leave nothing out. This is the definitive resource.`
+Write 900–1200 words. Be thorough. This is the definitive resource for this topic for this person.`
       }],
     })
 
@@ -97,15 +106,15 @@ Write 900-1200 words minimum. Be thorough. Leave nothing out. This is the defini
       response_format: { type: 'json_object' },
       messages: [{
         role: 'user',
-        content: `For this migration lesson titled "${lessonTitle}" for a Nigerian ${segment} moving to ${destination}, provide detailed metadata.
+        content: `For this migration lesson titled "${lessonTitle}" for a Nigerian ${segment} moving to ${destination}, provide structured metadata.
 
-Return a JSON object with:
+Return a JSON object with exactly these fields:
 
-"key_takeaways": array of exactly 4 short bullet points. Each must be ONE concise sentence — maximum 15 words. Include a real number, fee, or threshold where possible. Think of these as quick-scan reminders of the most critical facts.
+"key_takeaways": array of EXACTLY 3 items — no more, no fewer. Each must be ONE concise sentence, maximum 15 words. Include a real number, fee, threshold, or deadline where possible. These are quick-scan reminders of the 3 most critical facts from this lesson.
 
-"action_step": exactly ONE sentence. The single most important thing to do right now. Include a real URL or specific place if possible. Keep it under 25 words.
+"action_step": exactly ONE sentence. The single most important thing this person must do right now. Include a real URL or specific named resource if possible. Maximum 25 words. Tied to this person's exact situation as a ${segment} going to ${destination}.
 
-"sources": array of 3-4 objects each with "label" (the full official name of the source) and "url" (a real, working official government URL relevant to ${destination} immigration for this specific topic).`
+"sources": array of 3–4 objects. Each has "label" (full official name of the source) and "url" (real, working government URL specific to ${destination} immigration and this lesson topic).`
       }],
     })
 

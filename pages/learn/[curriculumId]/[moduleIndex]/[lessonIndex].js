@@ -173,8 +173,8 @@ export default function LessonPage() {
             <div className="flex-1">
               <div className="w-full bg-slate-100 rounded-full h-1.5">
                 <div
-                  className="h-1.5 rounded-full transition-all duration-500" style={{ background: '#3b75ff' }}
-                  style={{ width: `${(lessonNumber / totalLessons) * 100}%` }}
+                  className="h-1.5 rounded-full transition-all duration-500"
+                  style={{ background: '#3b75ff', width: `${(lessonNumber / totalLessons) * 100}%` }}
                 />
               </div>
             </div>
@@ -365,7 +365,11 @@ export default function LessonPage() {
                   : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
               }`}
             >
-              {completed ? <>Next Lesson <ChevronRight size={16} /></> : <><Lock size={14} /> Complete to continue</>}
+              {completed
+                ? (parseInt(lessonIndex) + 1 >= currentModule?.lessons.length
+                    ? <>Take Module Quiz <ChevronRight size={16} /></>
+                    : <>Next Lesson <ChevronRight size={16} /></>)
+                : <><Lock size={14} /> Complete to continue</>}
             </button>
           </div>
         </div>

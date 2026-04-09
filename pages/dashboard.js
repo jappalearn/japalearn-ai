@@ -10,6 +10,7 @@ import {
   X, Star, Heart,
   Search, SlidersHorizontal, Play, ChevronLeft, Plus,
   Moon, Sun, User, Trash2, Camera, Save, Edit3,
+  FileText, File, Download, Filter, FilesIcon, Upload,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { getScoreFlag } from '../lib/quizData'
@@ -82,6 +83,7 @@ const NAV_ITEMS = [
   { id: 'learning',      label: 'Learning',        icon: BookOpen,        locked: false },
   { id: 'roadmap',       label: 'My Roadmap',      icon: Map,             locked: false },
   { id: 'resources',     label: 'Resources',       icon: FolderOpen,      locked: false },
+  { id: 'documents',     label: 'Documents',       icon: FilesIcon,       locked: false },
   { id: 'conversations', label: 'Conversations',   icon: MessageSquare,   locked: true },
   { id: 'peers',         label: 'Peers',           icon: Users,           locked: true },
   { id: 'marketplace',   label: 'Marketplace',     icon: ShoppingBag,     locked: true },
@@ -94,26 +96,6 @@ const BOTTOM_NAV = [
   { id: 'profile',  label: 'Profile',   icon: User },
 ]
 
-// ── Score Bar Chart ────────────────────────────────────────────────────────────
-function ScoreBarChart({ breakdown }) {
-  if (!breakdown || breakdown.length === 0) return null
-  const barColors = ['#3b75ff', '#6b9fff', '#3b75ff', '#93bbff', '#3b75ff', '#6b9fff']
-  return (
-    <div className="flex items-end gap-1.5 h-20">
-      {breakdown.map((factor, i) => {
-        const pct = Math.max(8, Math.round((factor.score / factor.max) * 100))
-        return (
-          <div key={i} className="flex-1 flex flex-col items-center gap-1">
-            <div
-              className="w-full rounded-t-md transition-all duration-700"
-              style={{ height: `${pct}%`, backgroundColor: barColors[i] }}
-            />
-          </div>
-        )
-      })}
-    </div>
-  )
-}
 
 // ── Sidebar ────────────────────────────────────────────────────────────────────
 function Sidebar({ activeTab, setActiveTab, onSignOut, isMobileOpen, onMobileClose, userInitials, userDisplayName }) {
@@ -279,19 +261,32 @@ const CATEGORY_COLORS = {
   Profile:    { bg: 'rgba(139,92,246,0.1)',  text: '#8b5cf6'  },
 }
 
+const FILTER_CATEGORIES = ['All', 'Navigation', 'Learning', 'Roadmap', 'Resources', 'Profile']
+
 function SearchBar({ answers, setActiveTab }) {
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [activeFilter, setActiveFilter] = useState('All')
   const [index] = useState(() => buildSearchIndex(answers))
   const ref = useRef(null)
 
-  const results = query.trim().length < 2 ? [] : index.filter(item =>
-    item.label.toLowerCase().includes(query.toLowerCase())
-  ).slice(0, 8)
+  const filtered = index.filter(item =>
+    activeFilter === 'All' || item.category === activeFilter
+  )
+  const results = query.trim().length < 2
+    ? (activeFilter !== 'All' ? filtered.slice(0, 8) : [])
+    : filtered.filter(item => item.label.toLowerCase().includes(query.toLowerCase())).slice(0, 8)
 
-  // close on outside click
+  const showResults = open && (results.length > 0 || query.trim().length >= 2)
+
   useEffect(() => {
-    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) {
+        setOpen(false)
+        setFilterOpen(false)
+      }
+    }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
@@ -300,34 +295,103 @@ function SearchBar({ answers, setActiveTab }) {
     setActiveTab(item.tab)
     setQuery('')
     setOpen(false)
+    setFilterOpen(false)
   }
 
+  const selectFilter = (cat) => {
+    setActiveFilter(cat)
+    if (cat !== 'All') setOpen(true)
+  }
+
+  const cc_active = CATEGORY_COLORS[activeFilter] || { bg: 'rgba(59,117,255,0.1)', text: '#3b75ff' }
+
   return (
-    <div ref={ref} className="relative flex-1">
-      <div className="flex items-center gap-3 bg-white dark:bg-[#1e293b] border border-[rgba(204,204,204,0.8)] dark:border-slate-600 rounded-xl px-4 py-3.5">
-        <Search size={16} className="text-[#9E9E9E] shrink-0" />
-        <input
-          type="text"
-          value={query}
-          onChange={e => { setQuery(e.target.value); setOpen(true) }}
-          onFocus={() => setOpen(true)}
-          placeholder="Search learning, roadmap, resources..."
-          className="flex-1 text-xs font-medium text-[#202020] dark:text-[#f1f5f9] bg-transparent outline-none placeholder-[#9E9E9E]"
-        />
-        {query && (
-          <button onClick={() => { setQuery(''); setOpen(false) }} className="text-[#9E9E9E] hover:text-[#202020] transition-colors shrink-0">
-            <X size={14} />
-          </button>
-        )}
+    <div ref={ref} className="flex flex-col gap-2">
+      {/* Search row */}
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <div className="flex items-center gap-3 bg-white dark:bg-[#1e293b] border border-[rgba(204,204,204,0.8)] dark:border-slate-600 rounded-xl px-4 py-3.5">
+            <Search size={16} className="text-[#9E9E9E] shrink-0" />
+            <input
+              type="text"
+              value={query}
+              onChange={e => { setQuery(e.target.value); setOpen(true) }}
+              onFocus={() => setOpen(true)}
+              placeholder="Search learning, roadmap, resources..."
+              className="flex-1 text-xs font-medium text-[#202020] dark:text-[#f1f5f9] bg-transparent outline-none placeholder-[#9E9E9E]"
+            />
+            {query && (
+              <button type="button" onClick={() => { setQuery(''); setOpen(false) }} className="text-[#9E9E9E] hover:text-[#202020] transition-colors shrink-0">
+                <X size={14} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Filter toggle button */}
+        <button
+          type="button"
+          onClick={() => setFilterOpen(f => !f)}
+          className="w-12 h-12 rounded-xl flex items-center justify-center transition-all shrink-0"
+          style={{
+            background: filterOpen || activeFilter !== 'All' ? cc_active.bg : 'rgba(0,0,0,0.04)',
+            border: filterOpen || activeFilter !== 'All' ? `1.5px solid ${cc_active.text}` : '1.5px solid transparent',
+            color: filterOpen || activeFilter !== 'All' ? cc_active.text : '#9E9E9E',
+          }}
+          title="Filter by category"
+        >
+          <SlidersHorizontal size={17} />
+        </button>
       </div>
 
-      {open && results.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-[#1e293b] border border-slate-100 dark:border-slate-700 rounded-2xl shadow-[0px_14px_42px_rgba(8,15,52,0.12)] z-50 overflow-hidden">
+      {/* Inline filter chips — shown when filter is open */}
+      {filterOpen && (
+        <div className="flex flex-wrap gap-2 px-1 py-1">
+          {FILTER_CATEGORIES.map(cat => {
+            const cc = CATEGORY_COLORS[cat] || { bg: 'rgba(59,117,255,0.1)', text: '#3b75ff' }
+            const isActive = activeFilter === cat
+            return (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => selectFilter(cat)}
+                className="px-3 py-1.5 rounded-full text-xs font-semibold transition-all"
+                style={{
+                  background: isActive ? (cat === 'All' ? '#3b75ff' : cc.text) : (cat === 'All' ? 'rgba(59,117,255,0.1)' : cc.bg),
+                  color: isActive ? '#fff' : (cat === 'All' ? '#3b75ff' : cc.text),
+                  border: `1.5px solid ${isActive ? (cat === 'All' ? '#3b75ff' : cc.text) : 'transparent'}`,
+                }}
+              >
+                {cat}
+              </button>
+            )
+          })}
+          {activeFilter !== 'All' && (
+            <button
+              type="button"
+              onClick={() => { selectFilter('All'); setOpen(false) }}
+              className="px-3 py-1.5 rounded-full text-xs font-medium text-slate-400 hover:text-slate-600 transition-all"
+            >
+              Clear ×
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Search results — rendered inline, no absolute positioning */}
+      {showResults && (
+        <div className="bg-white dark:bg-[#1e293b] border border-slate-100 dark:border-slate-700 rounded-2xl shadow-[0px_8px_24px_rgba(8,15,52,0.10)] overflow-hidden">
+          {activeFilter !== 'All' && query.trim().length < 2 && (
+            <div className="px-4 py-2 border-b border-slate-50 dark:border-slate-700/50">
+              <p className="text-[10px] font-semibold text-[#9E9E9E] uppercase tracking-wider">Showing: {activeFilter}</p>
+            </div>
+          )}
           {results.map((item, i) => {
             const cc = CATEGORY_COLORS[item.category] || CATEGORY_COLORS.Navigation
             return (
               <button
                 key={i}
+                type="button"
                 onClick={() => go(item)}
                 className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors text-left border-b border-slate-50 dark:border-slate-700/50 last:border-0"
               >
@@ -339,12 +403,18 @@ function SearchBar({ answers, setActiveTab }) {
               </button>
             )
           })}
-        </div>
-      )}
-
-      {open && query.trim().length >= 2 && results.length === 0 && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-[#1e293b] border border-slate-100 dark:border-slate-700 rounded-2xl shadow-[0px_14px_42px_rgba(8,15,52,0.12)] z-50 px-4 py-5 text-center">
-          <p className="text-sm text-[#9E9E9E]">No results for "<span className="text-[#202020] dark:text-[#f1f5f9] font-medium">{query}</span>"</p>
+          {query.trim().length >= 2 && results.length === 0 && (
+            <div className="px-4 py-5 text-center">
+              <p className="text-sm text-[#9E9E9E]">No results for &ldquo;<span className="text-[#202020] dark:text-[#f1f5f9] font-medium">{query}</span>&rdquo;
+                {activeFilter !== 'All' && <span> in {activeFilter}</span>}
+              </p>
+              {activeFilter !== 'All' && (
+                <button type="button" onClick={() => selectFilter('All')} className="text-xs mt-2 font-semibold" style={{ color: '#3b75ff' }}>
+                  Search all categories
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -372,21 +442,21 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
   const milestones = [
     {
       icon: CheckCircle2,
-      status: quizResult ? 'Completed' : 'Pending',
+      status: quizResult ? 'Completed' : 'Not started',
       label: 'Migration Assessment',
       done: !!quizResult,
-      cta: () => router.push('/quiz'),
+      cta: !quizResult ? () => router.push('/quiz') : null,
     },
     {
       icon: Globe2,
-      status: answers.language && answers.language !== 'Not taken' ? 'Registered' : 'Not yet started',
+      status: answers.language && answers.language !== 'Not taken' ? 'Registered' : 'Not started',
       label: 'Language Test',
       done: !!(answers.language && answers.language !== 'Not taken'),
       cta: null,
     },
     {
       icon: FolderOpen,
-      status: 'In progress',
+      status: 'Not started',
       label: 'Core Documents',
       done: false,
       cta: null,
@@ -404,13 +474,8 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
   return (
     <div className="flex flex-col gap-6 pb-10">
 
-      {/* Search */}
-      <div className="flex items-center gap-3">
-        <SearchBar answers={answers} setActiveTab={setActiveTab} />
-        <button className="w-12 h-12 rounded-full flex items-center justify-center text-[#5F5F5F] dark:text-slate-400 hover:text-[#3b75ff] transition-colors shrink-0">
-          <SlidersHorizontal size={18} />
-        </button>
-      </div>
+      {/* Search + Filter */}
+      <SearchBar answers={answers} setActiveTab={setActiveTab} />
 
       {/* Hero banner */}
       <div className="relative rounded-[20px] overflow-hidden px-6 py-5" style={{ background: '#3b75ff', minHeight: 181 }}>
@@ -900,92 +965,248 @@ function RoadmapTab({ answers, score }) {
 }
 
 // ── RESOURCES TAB ──────────────────────────────────────────────────────────────
-function ResourcesTab({ answers }) {
-  const destination = answers.destination || ''
+const RESOURCE_CATEGORIES = [
+  { value: 'all',         label: 'All' },
+  { value: 'template',    label: 'Template',    color: '#3b75ff' },
+  { value: 'checklist',   label: 'Checklist',   color: '#10b981' },
+  { value: 'guide',       label: 'Guide',       color: '#f59e0b' },
+  { value: 'sop_sample',  label: 'SOP Sample',  color: '#8b5cf6' },
+  { value: 'cv_guide',    label: 'CV Guide',    color: '#0ea5e9' },
+  { value: 'official_doc',label: 'Official Doc', color: '#6b7280' },
+]
+const FILE_TYPE_ICONS = {
+  pdf:  { icon: FileText, color: '#ef4444', bg: '#fef2f2', label: 'PDF' },
+  docx: { icon: File,     color: '#3b75ff', bg: '#eff6ff', label: 'DOCX' },
+  xlsx: { icon: File,     color: '#10b981', bg: '#ecfdf5', label: 'XLSX' },
+}
 
-  const resourceSections = [
-    {
-      title: 'Document Checklists', icon: CheckCircle2,
-      color: '#10b981', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.2)',
-      items: [
-        'Core Document Checklist — Passport, Degree, NYSC, ID',
-        `${destination || 'UK'} Visa Application Document List`,
-        'Police Clearance Certificate — How to Obtain',
-        'Degree Certificate Apostille Guide',
-        'Birth Certificate & Next of Kin Documents',
-      ],
-    },
-    {
-      title: 'CV & Career Templates', icon: Briefcase,
-      color: '#3b75ff', bg: 'rgba(59,117,255,0.08)', border: 'rgba(59,117,255,0.2)',
-      items: [
-        'International CV Template (ATS-Optimised)',
-        'Cover Letter Template — Skilled Worker Visa Jobs',
-        'LinkedIn Profile Optimisation Guide',
-        'References Request Email Template',
-        'Skills Assessment Evidence Template',
-      ],
-    },
-    {
-      title: 'SOP & Personal Statement', icon: FolderOpen,
-      color: '#3b82f6', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.2)',
-      items: [
-        'Statement of Purpose (SOP) — Study Visa Template',
-        'Personal Statement Guide — Skilled Worker',
-        'Letter of Explanation — Financial History',
-        'Sponsor Letter Template (Family Visa)',
-        'Employment History Letter Template',
-      ],
-    },
-    {
-      title: 'Financial Planning', icon: Wallet,
-      color: '#0ea5e9', bg: 'rgba(14,165,233,0.08)', border: 'rgba(14,165,233,0.2)',
-      items: [
-        'Migration Budget Calculator — NGN to GBP/CAD/USD',
-        `Proof of Funds Requirements — ${destination || 'UK / Canada / USA'}`,
-        'Bank Statement Preparation Guide',
-        'Migration Savings Plan Template',
-        'Cost Breakdown: Visa Fees, Flights, Housing',
-      ],
-    },
-  ]
+function ResourcesTab({ answers, userId }) {
+  const [resources, setResources] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [categoryFilter, setCategoryFilter] = useState('all')
+  const [fileTypeFilter, setFileTypeFilter] = useState('all')
+  const [profileFiltered, setProfileFiltered] = useState(true)
+  const [fallback, setFallback] = useState(false)
+
+  useEffect(() => { loadResources() }, [profileFiltered])
+
+  const loadResources = async () => {
+    setLoading(true)
+    const country = answers.destination
+    const segment = answers.segment
+
+    let query = supabase.from('resources').select('*').eq('is_active', true).order('created_at', { ascending: false })
+
+    if (profileFiltered && country) {
+      query = query.contains('country', [country])
+    }
+
+    const { data } = await query
+
+    if (!data || (data.length === 0 && profileFiltered)) {
+      // Fall back to all
+      setFallback(true)
+      setProfileFiltered(false)
+      const { data: all } = await supabase.from('resources').select('*').eq('is_active', true).order('created_at', { ascending: false })
+      setResources(all || [])
+    } else {
+      setFallback(profileFiltered && country ? data.length === 0 : false)
+      setResources(data || [])
+    }
+    setLoading(false)
+  }
+
+  const displayed = resources.filter(r => {
+    if (categoryFilter !== 'all' && r.category !== categoryFilter) return false
+    if (fileTypeFilter !== 'all' && r.file_type !== fileTypeFilter) return false
+    return true
+  })
 
   return (
     <div className="flex flex-col gap-5 pb-10">
-      <div>
-        <h2 className="text-xl font-bold text-[#202020] mb-1">Resources</h2>
-        <p className="text-sm text-[#5F5F5F]">Templates, checklists, and guides curated for your migration route</p>
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h2 className="text-xl font-bold text-[#202020] dark:text-[#f1f5f9] mb-1">Resources</h2>
+          <p className="text-sm text-[#5F5F5F] dark:text-slate-400">
+            {profileFiltered && answers.destination
+              ? `Showing resources for ${answers.destination}${answers.segment ? ` · ${answers.segment}` : ''}`
+              : 'All available resources'}
+          </p>
+        </div>
+        {answers.destination && (
+          <button
+            onClick={() => { setProfileFiltered(f => !f); setFallback(false) }}
+            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition-all"
+            style={profileFiltered
+              ? { background: 'rgba(59,117,255,0.1)', color: '#3b75ff', borderColor: 'rgba(59,117,255,0.3)' }
+              : { background: '#f8fafc', color: '#64748b', borderColor: '#e2e8f0' }}
+          >
+            <Filter size={11} />
+            {profileFiltered ? `My Profile (${answers.destination})` : 'All Resources'}
+          </button>
+        )}
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-5">
-        {resourceSections.map((section) => {
-          const Icon = section.icon
-          return (
-            <div key={section.title} className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-5" style={{ border: `1px solid ${section.border}` }}>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: section.bg, border: `1px solid ${section.border}` }}>
-                  <Icon size={16} style={{ color: section.color }} />
+      {/* Fallback notice */}
+      {fallback && (
+        <div className="flex items-center gap-2 rounded-xl px-4 py-3 text-sm" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', color: '#b45309' }}>
+          <Star size={13} className="shrink-0" />
+          No resources matched your profile yet — showing all available.
+        </div>
+      )}
+
+      {/* Filter bar */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {RESOURCE_CATEGORIES.map(cat => (
+          <button
+            key={cat.value}
+            onClick={() => setCategoryFilter(cat.value)}
+            className="px-3 py-1.5 rounded-full text-xs font-semibold border transition-all"
+            style={categoryFilter === cat.value
+              ? { background: cat.color || '#3b75ff', color: '#fff', borderColor: cat.color || '#3b75ff' }
+              : { background: '#f8fafc', color: '#64748b', borderColor: '#e2e8f0' }}
+          >
+            {cat.label}
+          </button>
+        ))}
+        <div className="h-5 w-px bg-slate-200 mx-1" />
+        {['all', 'pdf', 'docx', 'xlsx'].map(ft => (
+          <button
+            key={ft}
+            onClick={() => setFileTypeFilter(ft)}
+            className="px-3 py-1.5 rounded-full text-xs font-semibold border transition-all"
+            style={fileTypeFilter === ft
+              ? { background: '#1e293b', color: '#fff', borderColor: '#1e293b' }
+              : { background: '#f8fafc', color: '#64748b', borderColor: '#e2e8f0' }}
+          >
+            {ft === 'all' ? 'All Types' : ft.toUpperCase()}
+          </button>
+        ))}
+      </div>
+
+      {/* Content */}
+      {loading ? (
+        <div className="flex justify-center py-16">
+          <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#3b75ff', borderTopColor: 'transparent' }} />
+        </div>
+      ) : displayed.length === 0 ? (
+        <div className="bg-white dark:bg-[#1e293b] shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-12 text-center">
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: 'rgba(59,117,255,0.1)' }}>
+            <FolderOpen size={22} style={{ color: '#3b75ff' }} />
+          </div>
+          <h3 className="font-bold text-[#202020] dark:text-[#f1f5f9] mb-2">No resources found</h3>
+          <p className="text-[#5F5F5F] dark:text-slate-400 text-sm mb-4">
+            {categoryFilter !== 'all' || fileTypeFilter !== 'all'
+              ? 'Try removing some filters to see more resources.'
+              : 'Resources for your profile will appear here as they\'re added.'}
+          </p>
+          {(categoryFilter !== 'all' || fileTypeFilter !== 'all') && (
+            <button onClick={() => { setCategoryFilter('all'); setFileTypeFilter('all') }} className="text-xs font-semibold px-4 py-2 rounded-full" style={{ background: 'rgba(59,117,255,0.1)', color: '#3b75ff' }}>
+              Clear filters
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {displayed.map(r => {
+            const fi = FILE_TYPE_ICONS[r.file_type] || FILE_TYPE_ICONS.pdf
+            const FileIcon = fi.icon
+            const cat = RESOURCE_CATEGORIES.find(c => c.value === r.category)
+            return (
+              <div key={r.id} className="bg-white dark:bg-[#1e293b] shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-5 flex flex-col gap-3 hover:shadow-lg transition-shadow">
+                {/* File type + category badges */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style={{ background: fi.bg }}>
+                    <FileIcon size={11} style={{ color: fi.color }} />
+                    <span className="text-[10px] font-bold" style={{ color: fi.color }}>{fi.label}</span>
+                  </div>
+                  {cat && cat.value !== 'all' && (
+                    <span className="text-[10px] font-semibold px-2.5 py-1 rounded-lg" style={{ background: (cat.color || '#3b75ff') + '1a', color: cat.color || '#3b75ff' }}>
+                      {cat.label}
+                    </span>
+                  )}
+                  {r.country?.slice(0, 2).map(c => (
+                    <span key={c} className="text-[10px] font-medium text-[#9E9E9E] bg-slate-100 dark:bg-slate-700 dark:text-slate-400 px-2 py-0.5 rounded-full">{c}</span>
+                  ))}
                 </div>
-                <h3 className="font-semibold text-[#202020] text-sm">{section.title}</h3>
+
+                {/* Title + description */}
+                <div className="flex-1">
+                  <h4 className="font-semibold text-[#202020] dark:text-[#f1f5f9] text-sm leading-snug mb-1">{r.title}</h4>
+                  {r.description && <p className="text-[#9E9E9E] dark:text-slate-400 text-xs leading-relaxed">{r.description}</p>}
+                </div>
+
+                {/* Download button */}
+                <a
+                  href={r.file_url}
+                  download
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90"
+                  style={{ background: '#3b75ff', color: '#fff' }}
+                >
+                  <Download size={14} /> Download
+                </a>
               </div>
-              <ul className="space-y-2.5">
-                {section.items.map((item, i) => (
-                  <li key={i} className="flex items-center gap-2.5 group cursor-pointer">
-                    <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: section.color, opacity: 0.4 }} />
-                    <span className="text-[#5F5F5F] text-sm group-hover:text-[#202020] transition-colors flex-1">{item}</span>
-                    <span className="text-[10px] bg-slate-100 text-[#9E9E9E] px-2 py-0.5 rounded-full font-medium shrink-0">Soon</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )
-        })}
+            )
+          })}
+        </div>
+      )}
+
+      {!loading && resources.length > 0 && (
+        <p className="text-center text-xs text-[#9E9E9E]">{displayed.length} resource{displayed.length !== 1 ? 's' : ''} shown · More added regularly</p>
+      )}
+    </div>
+  )
+}
+
+// ── DOCUMENTS TAB ─────────────────────────────────────────────────────────────
+function DocumentsTab() {
+  return (
+    <div className="flex flex-col gap-5 pb-10">
+      <div>
+        <h2 className="text-xl font-bold text-[#202020] dark:text-[#f1f5f9] mb-1">Documents</h2>
+        <p className="text-sm text-[#5F5F5F] dark:text-slate-400">Your personal document vault</p>
       </div>
 
-      <div className="rounded-[20px] p-6 text-center" style={{ background: 'rgba(59,117,255,0.05)', border: '1px solid rgba(59,117,255,0.15)' }}>
-        <Star size={20} style={{ color: '#3b75ff' }} className="mx-auto mb-3" />
-        <h3 className="font-bold text-[#202020] mb-1">More resources being added weekly</h3>
-        <p className="text-[#5F5F5F] text-sm">Country-specific templates, expert guides, and downloadable checklists are being curated for each migration route.</p>
+      <div className="bg-white dark:bg-[#1e293b] shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-10 sm:p-16 flex flex-col items-center text-center gap-5">
+        <div className="relative">
+          <div className="w-20 h-20 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(59,117,255,0.08)', border: '1px solid rgba(59,117,255,0.15)' }}>
+            <Upload size={28} style={{ color: '#3b75ff' }} />
+          </div>
+          <span className="absolute -top-2 -right-2 text-[10px] font-bold px-2 py-0.5 rounded-full text-white" style={{ background: '#3b75ff' }}>
+            Coming Soon
+          </span>
+        </div>
+
+        <div>
+          <h3 className="font-bold text-[#202020] dark:text-[#f1f5f9] text-xl mb-2" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+            Document Upload
+          </h3>
+          <p className="text-[#5F5F5F] dark:text-slate-400 text-sm max-w-sm leading-relaxed">
+            Upload your CV, certificates, and supporting documents — our AI will analyse them to strengthen your profile and flag gaps in your application.
+          </p>
+        </div>
+
+        <div className="w-full max-w-xs space-y-3">
+          {['CV / Resume', 'Degree Certificate', 'Language Test Result', 'Professional Licence'].map((doc) => (
+            <div key={doc} className="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-600 opacity-50">
+              <FileText size={15} className="text-[#9E9E9E] shrink-0" />
+              <span className="text-sm text-[#5F5F5F] dark:text-slate-400 flex-1 text-left">{doc}</span>
+              <span className="text-[10px] text-[#9E9E9E]">Not uploaded</span>
+            </div>
+          ))}
+        </div>
+
+        <button
+          disabled
+          className="flex items-center gap-2 px-8 py-3 rounded-full text-sm font-semibold text-slate-400 bg-slate-100 dark:bg-slate-700 dark:text-slate-500 cursor-not-allowed border border-slate-200 dark:border-slate-600"
+        >
+          <Upload size={14} /> Upload Documents
+        </button>
+
+        <p className="text-xs text-[#9E9E9E] dark:text-slate-500">We'll notify you when document upload is ready.</p>
       </div>
     </div>
   )
@@ -1314,12 +1535,19 @@ export default function Dashboard() {
       if (!session) { router.push('/'); return }
       setUser(session.user)
 
-      // Check if this is a fresh signup
+      // Check if this is a fresh signup — validate against account creation time to avoid false Welcome messages
       const justSignedUp = localStorage.getItem('just_signed_up') === 'true'
-      if (justSignedUp) { setIsFirstVisit(true); localStorage.removeItem('just_signed_up') }
+      localStorage.removeItem('just_signed_up')
+      if (justSignedUp) {
+        const createdAt = session.user.created_at
+        const accountAgeMs = createdAt ? Date.now() - new Date(createdAt).getTime() : Infinity
+        const isNewAccount = accountAgeMs < 5 * 60 * 1000 // created within last 5 minutes
+        if (isNewAccount) setIsFirstVisit(true)
+      }
 
       const pendingAnswers = localStorage.getItem('pending_quiz_answers')
       const pendingScore = localStorage.getItem('pending_quiz_score')
+      const pendingName = localStorage.getItem('pending_full_name')
       if (pendingAnswers && pendingScore) {
         localStorage.removeItem('pending_quiz_answers')
         localStorage.removeItem('pending_quiz_score')
@@ -1335,10 +1563,33 @@ export default function Dashboard() {
         } catch (e) { console.error('Failed to save quiz result:', e) }
       }
 
-      const [{ data: profileData }, { data: quizData }] = await Promise.all([
-        supabase.from('profiles').select('*').eq('id', session.user.id).maybeSingle(),
-        supabase.from('quiz_results').select('*').eq('user_id', session.user.id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
-      ])
+      if (pendingName) localStorage.removeItem('pending_full_name')
+
+      // Load profile — create row if it doesn't exist yet
+      let { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .maybeSingle()
+
+      if (!profileData) {
+        const nameForProfile = pendingName || session.user.user_metadata?.full_name || ''
+        const { data: newProfile } = await supabase
+          .from('profiles')
+          .insert({ id: session.user.id, full_name: nameForProfile, updated_at: new Date().toISOString() })
+          .select()
+          .maybeSingle()
+        profileData = newProfile
+      }
+
+      const { data: quizData } = await supabase
+        .from('quiz_results')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
       setProfile(profileData)
       setQuizResult(quizData)
       setLoading(false)
@@ -1362,11 +1613,9 @@ export default function Dashboard() {
   const score = quizResult?.score || 0
   const answers = quizResult?.answers || {}
   const flag = getScoreFlag(score)
-  const fullName = profile?.full_name || user?.email || ''
+  const fullName = profile?.full_name || user?.user_metadata?.full_name || user?.email || ''
   const firstName = fullName.split(/[\s@]/)[0]
   const displayName = firstName.charAt(0).toUpperCase() + firstName.slice(1)
-  const breakdown = quizResult ? getScoreBreakdown(answers, score) : []
-
   return (
     <>
       <Head><title>Dashboard — JapaLearn AI</title></Head>
@@ -1410,7 +1659,8 @@ export default function Dashboard() {
               {activeTab === 'overview'  && <OverviewTab answers={answers} score={score} flag={flag} displayName={displayName} isNewUser={isFirstVisit} router={router} quizResult={quizResult} setActiveTab={setActiveTab} />}
               {activeTab === 'learning'  && <LearningTab answers={answers} userId={user?.id} />}
               {activeTab === 'roadmap'   && <RoadmapTab answers={answers} score={score} />}
-              {activeTab === 'resources' && <ResourcesTab answers={answers} />}
+              {activeTab === 'resources' && <ResourcesTab answers={answers} userId={user?.id} />}
+              {activeTab === 'documents' && <DocumentsTab />}
               {activeTab === 'profile'   && <ProfileTab user={user} profile={profile} answers={answers} onSignOut={handleSignOut} router={router} />}
             </motion.div>
           </AnimatePresence>
