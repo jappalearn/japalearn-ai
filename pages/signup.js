@@ -56,6 +56,7 @@ export default function Signup() {
         segment: JSON.parse(answers).segment,
       })
     }
+    localStorage.setItem('just_signed_up', 'true')
     router.push('/dashboard')
   }
 

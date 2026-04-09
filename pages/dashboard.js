@@ -1249,12 +1249,17 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('overview')
   const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const [isFirstVisit, setIsFirstVisit] = useState(false)
 
   useEffect(() => {
     const load = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/'); return }
       setUser(session.user)
+
+      // Check if this is a fresh signup
+      const justSignedUp = localStorage.getItem('just_signed_up') === 'true'
+      if (justSignedUp) { setIsFirstVisit(true); localStorage.removeItem('just_signed_up') }
 
       const pendingAnswers = localStorage.getItem('pending_quiz_answers')
       const pendingScore = localStorage.getItem('pending_quiz_score')
@@ -1345,7 +1350,7 @@ export default function Dashboard() {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.18 }}
             >
-              {activeTab === 'overview'  && <OverviewTab answers={answers} score={score} flag={flag} displayName={displayName} isNewUser={!quizResult} router={router} quizResult={quizResult} setActiveTab={setActiveTab} />}
+              {activeTab === 'overview'  && <OverviewTab answers={answers} score={score} flag={flag} displayName={displayName} isNewUser={isFirstVisit} router={router} quizResult={quizResult} setActiveTab={setActiveTab} />}
               {activeTab === 'learning'  && <LearningTab answers={answers} userId={user?.id} />}
               {activeTab === 'roadmap'   && <RoadmapTab answers={answers} score={score} />}
               {activeTab === 'resources' && <ResourcesTab answers={answers} />}
