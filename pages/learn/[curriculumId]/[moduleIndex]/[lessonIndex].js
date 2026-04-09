@@ -96,9 +96,13 @@ export default function LessonPage() {
     if (!curriculum) return
     const mIdx = parseInt(moduleIndex), lIdx = parseInt(lessonIndex)
     const module = curriculum.modules[mIdx]
-    if (lIdx + 1 < module.lessons.length) router.push(`/learn/${curriculumId}/${mIdx}/${lIdx + 1}`)
-    else if (mIdx + 1 < curriculum.modules.length) router.push(`/learn/${curriculumId}/${mIdx + 1}/0`)
-    else router.push('/dashboard')
+    if (lIdx + 1 < module.lessons.length) {
+      // More lessons in this module
+      router.push(`/learn/${curriculumId}/${mIdx}/${lIdx + 1}`)
+    } else {
+      // Last lesson in module → go to module quiz
+      router.push(`/learn/${curriculumId}/${mIdx}/quiz`)
+    }
   }
 
   const goPrev = () => {

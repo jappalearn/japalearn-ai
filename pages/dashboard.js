@@ -556,6 +556,7 @@ function LearningTab({ answers, userId }) {
   const [loading, setLoading] = useState(false)
   const [genError, setGenError] = useState('')
   const [progress, setProgress] = useState({})
+  const [quizPassed, setQuizPassed] = useState({}) // { moduleIndex: true/false }
   const [expandedModule, setExpandedModule] = useState(0)
 
   useEffect(() => { if (userId && answers.destination) loadExisting() }, [userId])
@@ -567,12 +568,21 @@ function LearningTab({ answers, userId }) {
   }
 
   const loadProgress = async (curriculumId) => {
-    const { data } = await supabase.from('lesson_progress').select('module_index, lesson_index, completed')
-      .eq('user_id', userId).eq('curriculum_id', curriculumId)
-    if (data) {
+    const [{ data: lessonData }, { data: quizData }] = await Promise.all([
+      supabase.from('lesson_progress').select('module_index, lesson_index, completed')
+        .eq('user_id', userId).eq('curriculum_id', curriculumId),
+      supabase.from('module_quiz_results').select('module_index, passed')
+        .eq('user_id', userId).eq('curriculum_id', curriculumId),
+    ])
+    if (lessonData) {
       const map = {}
-      data.forEach(r => { map[`${r.module_index}-${r.lesson_index}`] = r.completed })
+      lessonData.forEach(r => { map[`${r.module_index}-${r.lesson_index}`] = r.completed })
       setProgress(map)
+    }
+    if (quizData) {
+      const qmap = {}
+      quizData.forEach(r => { qmap[r.module_index] = r.passed })
+      setQuizPassed(qmap)
     }
   }
 
@@ -595,7 +605,14 @@ function LearningTab({ answers, userId }) {
     setLoading(false)
   }
 
+  const isModuleUnlocked = (mi) => {
+    if (mi === 0) return true
+    // Previous module quiz must be passed
+    return quizPassed[mi - 1] === true
+  }
+
   const isLessonUnlocked = (mi, li) => {
+    if (!isModuleUnlocked(mi)) return false
     if (mi === 0 && li === 0) return true
     if (li > 0) return progress[`${mi}-${li - 1}`]
     return progress[`${mi - 1}-${curriculum.modules[mi - 1]?.lessons.length - 1}`]
@@ -604,6 +621,11 @@ function LearningTab({ answers, userId }) {
   const openLesson = (mi, li) => {
     if (!curriculum?.id || !isLessonUnlocked(mi, li)) return
     router.push(`/learn/${curriculum.id}/${mi}/${li}`)
+  }
+
+  const openQuiz = (mi) => {
+    if (!curriculum?.id || !isModuleUnlocked(mi)) return
+    router.push(`/learn/${curriculum.id}/${mi}/quiz`)
   }
 
   if (!curriculum) {
@@ -670,40 +692,45 @@ function LearningTab({ answers, userId }) {
       {curriculum.modules.map((module, mi) => {
         const moduleDone = module.lessons.every((_, li) => progress[`${mi}-${li}`])
         const moduleStarted = module.lessons.some((_, li) => progress[`${mi}-${li}`])
+        const moduleUnlocked = isModuleUnlocked(mi)
         const isOpen = expandedModule === mi
         const completedInModule = module.lessons.filter((_, li) => progress[`${mi}-${li}`]).length
+        const quizPassedForModule = quizPassed[mi] === true
+        const allLessonsDone = module.lessons.every((_, li) => progress[`${mi}-${li}`])
+        const canTakeQuiz = moduleUnlocked && allLessonsDone && !quizPassedForModule
 
         return (
           <div key={mi} className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] overflow-hidden">
             <button
-              onClick={() => setExpandedModule(isOpen ? -1 : mi)}
-              className="w-full px-5 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors"
+              onClick={() => moduleUnlocked && setExpandedModule(isOpen ? -1 : mi)}
+              className={cn("w-full px-5 py-4 flex items-center justify-between transition-colors", moduleUnlocked ? "hover:bg-slate-50 cursor-pointer" : "cursor-not-allowed opacity-60")}
             >
               <div className="flex items-center gap-3">
                 <div className={cn(
                   "w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold shrink-0",
-                  moduleDone    ? "bg-emerald-100 text-emerald-600" :
-                  moduleStarted ? "text-white" : "bg-slate-100 text-slate-500"
-                )} style={moduleStarted && !moduleDone ? { background: '#3b75ff' } : {}}>
-                  {moduleDone ? <CircleCheck size={16} /> : mi + 1}
+                  quizPassedForModule ? "bg-emerald-100 text-emerald-600" :
+                  !moduleUnlocked     ? "bg-slate-100 text-slate-400" :
+                  moduleStarted       ? "text-white" : "bg-slate-100 text-slate-500"
+                )} style={moduleStarted && !quizPassedForModule && moduleUnlocked ? { background: '#3b75ff' } : {}}>
+                  {quizPassedForModule ? <CircleCheck size={16} /> : !moduleUnlocked ? <Lock size={14} /> : mi + 1}
                 </div>
                 <div className="text-left">
                   <div className="text-[#202020] font-semibold text-sm">{module.title}</div>
                   <div className="text-[#9E9E9E] text-xs mt-0.5">
-                    {completedInModule}/{module.lessons.length} lessons
-                    {moduleDone && <span className="text-emerald-600 ml-2">· Complete</span>}
+                    {moduleUnlocked ? `${completedInModule}/${module.lessons.length} lessons` : 'Pass previous module quiz to unlock'}
+                    {quizPassedForModule && <span className="text-emerald-600 ml-2">· Quiz passed ✓</span>}
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {module.urgent && (
+                {module.urgent && moduleUnlocked && (
                   <span className="bg-rose-50 text-rose-600 text-xs px-2 py-0.5 rounded-full font-semibold">Urgent</span>
                 )}
-                {isOpen ? <ChevronUp size={16} className="text-[#9E9E9E]" /> : <ChevronDown size={16} className="text-[#9E9E9E]" />}
+                {moduleUnlocked && (isOpen ? <ChevronUp size={16} className="text-[#9E9E9E]" /> : <ChevronDown size={16} className="text-[#9E9E9E]" />)}
               </div>
             </button>
 
-            {isOpen && (
+            {isOpen && moduleUnlocked && (
               <div className="border-t border-slate-100 divide-y divide-slate-100">
                 {module.lessons.map((lesson, li) => {
                   const done = progress[`${mi}-${li}`]
@@ -723,7 +750,7 @@ function LearningTab({ answers, userId }) {
                       <div className={cn(
                         "w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-xs font-bold border",
                         done     ? "bg-emerald-100 border-emerald-200 text-emerald-600" :
-                        unlocked ? "border-purple-200 text-white" :
+                        unlocked ? "border-blue-200 text-white" :
                                    "bg-slate-100 border-slate-200 text-slate-400"
                       )} style={unlocked && !done ? { background: 'rgba(59,117,255,0.12)', borderColor: '#3b75ff' } : {}}>
                         {done ? <CircleCheck size={14} /> : unlocked ? <PlayCircle size={14} style={{ color: '#3b75ff' }} /> : <Lock size={11} />}
@@ -737,6 +764,36 @@ function LearningTab({ answers, userId }) {
                     </button>
                   )
                 })}
+
+                {/* Module Quiz row */}
+                <div className={cn(
+                  "px-5 py-3.5 flex items-center gap-4",
+                  canTakeQuiz ? "bg-[#3b75ff]/5 cursor-pointer hover:bg-[#3b75ff]/10 transition-colors" : ""
+                )}
+                  onClick={canTakeQuiz ? () => openQuiz(mi) : undefined}
+                >
+                  <div className={cn(
+                    "w-7 h-7 rounded-full flex items-center justify-center shrink-0 border",
+                    quizPassedForModule ? "bg-emerald-100 border-emerald-200" :
+                    canTakeQuiz        ? "border-[#3b75ff]" :
+                                         "bg-slate-100 border-slate-200"
+                  )} style={canTakeQuiz && !quizPassedForModule ? { background: 'rgba(59,117,255,0.12)' } : {}}>
+                    {quizPassedForModule
+                      ? <CircleCheck size={14} className="text-emerald-600" />
+                      : <Sparkles size={12} style={{ color: canTakeQuiz ? '#3b75ff' : '#9E9E9E' }} />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className={cn("font-semibold text-sm", quizPassedForModule ? "text-emerald-600" : canTakeQuiz ? "text-[#3b75ff]" : "text-[#9E9E9E]")}>
+                      Module Quiz — {module.title}
+                    </div>
+                    <p className="text-[#9E9E9E] text-xs mt-0.5">
+                      {quizPassedForModule ? 'Passed · Module unlocks next module' : canTakeQuiz ? '10 questions · Score 70%+ to continue' : 'Complete all lessons first'}
+                    </p>
+                  </div>
+                  {quizPassedForModule && <span className="text-emerald-600 text-xs font-semibold shrink-0">Passed ✓</span>}
+                  {canTakeQuiz && <ChevronRight size={14} style={{ color: '#3b75ff' }} className="shrink-0" />}
+                  {!quizPassedForModule && !canTakeQuiz && <Lock size={12} className="text-[#9E9E9E] shrink-0" />}
+                </div>
               </div>
             )}
           </div>
