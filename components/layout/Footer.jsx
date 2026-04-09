@@ -27,7 +27,7 @@ export const Footer = () => {
           <Button
             asChild
             size="lg"
-            className="bg-white text-primary hover:bg-white/95 rounded-full px-8 sm:px-12 py-5 sm:py-6 text-sm sm:text-base font-semibold shadow-lg w-full sm:w-auto max-w-xs sm:max-w-none mx-auto"
+            className="bg-white hover:bg-white/95 rounded-full px-8 sm:px-12 py-5 sm:py-6 text-sm sm:text-base font-semibold shadow-lg w-full sm:w-auto max-w-xs sm:max-w-none mx-auto" style={{ color: '#702DFF' }}
           >
             <Link href="/quiz">Take The Free AI Quiz</Link>
           </Button>
