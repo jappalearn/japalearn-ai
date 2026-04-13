@@ -68,63 +68,63 @@ export const Footer = () => {
       </div>
 
       {/* Main Footer Content */}
-      <div className="border-t border-slate-800 bg-gradient-to-br from-slate-900 via-[#0a101d] to-slate-950 pt-16 pb-8 relative overflow-hidden">
+      <div className="border-t border-border bg-gradient-to-br from-white via-slate-50 to-[#f6f9ff] pt-16 pb-8 relative overflow-hidden">
         {/* Decorative background glows */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-          <div className="absolute -top-[50%] -left-[10%] w-[50%] h-[50%] rounded-full bg-primary/10 blur-[100px]" />
-          <div className="absolute top-[20%] right-[0%] w-[30%] h-[40%] rounded-full bg-primary/5 blur-[80px]" />
+          <div className="absolute -bottom-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-primary/10 blur-[100px]" />
+          <div className="absolute -top-[10%] right-[0%] w-[40%] h-[40%] rounded-full bg-primary/5 blur-[80px]" />
         </div>
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-8">
-            <div className="md:col-span-1 border-r-0 md:border-r border-slate-800 pr-0 md:pr-8">
+            <div className="md:col-span-1 border-r-0 md:border-r border-border pr-0 md:pr-8">
               <Link href="/" className="inline-block mb-4">
-                <span className="text-2xl font-heading font-bold text-white">Japa<span className="text-primary">Learn</span></span>
+                <span className="text-2xl font-heading font-bold text-primary">JapaLearn</span>
               </Link>
-              <p className="text-sm text-slate-300 mb-6 leading-relaxed">
+              <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
                 Your smart companion for navigating the path to global opportunities. We simplify the relocation process with AI-driven insights.
               </p>
-              <div className="flex items-center gap-4 text-slate-400">
+              <div className="flex items-center gap-4 text-muted-foreground">
                 <a href="#" className="hover:text-primary hover:-translate-y-1 transition-all"><span className="sr-only">Twitter</span><svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg></a>
                 <a href="#" className="hover:text-primary hover:-translate-y-1 transition-all"><span className="sr-only">LinkedIn</span><svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>
               </div>
             </div>
             
             <div className="md:col-span-1 md:pl-4">
-              <h4 className="font-semibold text-white mb-4">Quick Links</h4>
+              <h4 className="font-semibold text-foreground mb-4">Quick Links</h4>
               <ul className="space-y-3">
-                <li><Link href="/" className="text-sm text-slate-400 hover:text-white hover:translate-x-1 transition-all inline-block">Home</Link></li>
-                <li><Link href="/quiz" className="text-sm text-slate-400 hover:text-white hover:translate-x-1 transition-all inline-block">AI Assessment</Link></li>
-                <li><Link href="/pricing" className="text-sm text-slate-400 hover:text-white hover:translate-x-1 transition-all inline-block">Pricing</Link></li>
-                <li><Link href="/about" className="text-sm text-slate-400 hover:text-white hover:translate-x-1 transition-all inline-block">About Us</Link></li>
+                <li><Link href="/" className="text-sm text-muted-foreground hover:text-primary hover:translate-x-1 transition-all inline-block">Home</Link></li>
+                <li><Link href="/quiz" className="text-sm text-muted-foreground hover:text-primary hover:translate-x-1 transition-all inline-block">AI Assessment</Link></li>
+                <li><Link href="/pricing" className="text-sm text-muted-foreground hover:text-primary hover:translate-x-1 transition-all inline-block">Pricing</Link></li>
+                <li><Link href="/about" className="text-sm text-muted-foreground hover:text-primary hover:translate-x-1 transition-all inline-block">About Us</Link></li>
               </ul>
             </div>
 
             <div className="md:col-span-1 md:pl-4">
-              <h4 className="font-semibold text-white mb-4">Resources</h4>
+              <h4 className="font-semibold text-foreground mb-4">Resources</h4>
               <ul className="space-y-3">
-                <li><Link href="/blog" className="text-sm text-slate-400 hover:text-white hover:translate-x-1 transition-all inline-block">Blog</Link></li>
-                <li><Link href="/guides" className="text-sm text-slate-400 hover:text-white hover:translate-x-1 transition-all inline-block">Destination Guides</Link></li>
-                <li><Link href="/success-stories" className="text-sm text-slate-400 hover:text-white hover:translate-x-1 transition-all inline-block">Success Stories</Link></li>
-                <li><Link href="/faq" className="text-sm text-slate-400 hover:text-white hover:translate-x-1 transition-all inline-block">FAQ</Link></li>
+                <li><Link href="/blog" className="text-sm text-muted-foreground hover:text-primary hover:translate-x-1 transition-all inline-block">Blog</Link></li>
+                <li><Link href="/guides" className="text-sm text-muted-foreground hover:text-primary hover:translate-x-1 transition-all inline-block">Destination Guides</Link></li>
+                <li><Link href="/success-stories" className="text-sm text-muted-foreground hover:text-primary hover:translate-x-1 transition-all inline-block">Success Stories</Link></li>
+                <li><Link href="/faq" className="text-sm text-muted-foreground hover:text-primary hover:translate-x-1 transition-all inline-block">FAQ</Link></li>
               </ul>
             </div>
 
             <div className="md:col-span-1 md:pl-4">
-              <h4 className="font-semibold text-white mb-4">Legal</h4>
+              <h4 className="font-semibold text-foreground mb-4">Legal</h4>
               <ul className="space-y-3">
-                <li><Link href="/privacy" className="text-sm text-slate-400 hover:text-white hover:translate-x-1 transition-all inline-block">Privacy Policy</Link></li>
-                <li><Link href="/terms" className="text-sm text-slate-400 hover:text-white hover:translate-x-1 transition-all inline-block">Terms of Service</Link></li>
-                <li><Link href="/cookies" className="text-sm text-slate-400 hover:text-white hover:translate-x-1 transition-all inline-block">Cookie Policy</Link></li>
+                <li><Link href="/privacy" className="text-sm text-muted-foreground hover:text-primary hover:translate-x-1 transition-all inline-block">Privacy Policy</Link></li>
+                <li><Link href="/terms" className="text-sm text-muted-foreground hover:text-primary hover:translate-x-1 transition-all inline-block">Terms of Service</Link></li>
+                <li><Link href="/cookies" className="text-sm text-muted-foreground hover:text-primary hover:translate-x-1 transition-all inline-block">Cookie Policy</Link></li>
               </ul>
             </div>
           </div>
           
-          <div className="border-t border-slate-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-xs text-slate-500">
+          <div className="border-t border-border/50 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-xs text-muted-foreground">
               © {new Date().getFullYear()} JapaLearn. All rights reserved.
             </p>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-foreground">
               Disclaimer: Not a visa agency · Not legal advice.
             </p>
           </div>
