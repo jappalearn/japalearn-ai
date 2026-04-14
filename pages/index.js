@@ -13,7 +13,7 @@ export default function LandingPage() {
   return (
     <>
       <Head>
-        <title>JapaLearn AI — Your Migration Roadmap, Built by AI</title>
+        <title>JapaLearn AI — Your Migration Assistant</title>
         <meta name="description" content="Get personalised migration guidance through AI. Know your visa route, readiness score, and step-by-step plan before spending a dime." />
       </Head>
 
