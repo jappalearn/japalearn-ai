@@ -442,11 +442,10 @@ export default function BlogPost() {
                   <BookOpen className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-widest text-primary">QUICK ANSWERS</p>
                   <h2 className="text-2xl font-bold text-foreground">Frequently Asked Questions</h2>
                 </div>
               </div>
-              <p className="text-muted-foreground mb-10 ml-14 text-sm">
+              <p className="text-muted-foreground mb-10 text-sm">
                 The most common questions from Nigerians asking about this topic.
               </p>
               <div className="space-y-3">
@@ -454,40 +453,15 @@ export default function BlogPost() {
                   <FAQItem key={index} faq={faq} index={index} />
                 ))}
               </div>
-            </section>
-
-            {/* ── CTA Banner ───────────────────────────────────────── */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="mt-20 p-8 sm:p-12 md:p-16 rounded-[32px] md:rounded-[40px] relative overflow-hidden bg-white border-2 border-primary/20 shadow-2xl shadow-primary/5"
-            >
-              <div className="relative z-10">
-                <h3 className="text-2xl md:text-4xl font-heading font-bold mb-6 leading-tight max-w-2xl text-gray-900">
-                  Find out exactly where you stand on your Japa journey
-                </h3>
-                
-                <p className="text-gray-600 mb-10 max-w-xl text-base md:text-lg leading-relaxed">
-                  In 60 seconds, our AI will assess your profile against the latest 2024 UK immigration rules and give you a personalised readiness score.
-                </p>
-                
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <Link
-                    href="/quiz"
-                    className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-[#1E4DD7] text-white font-bold text-base hover:bg-[#1E4DD7]/90 transition-all hover:scale-105 active:scale-95 shadow-xl shadow-[#1E4DD7]/20"
-                  >
-                    Take the Free AI Assessment <ArrowRight className="w-4 h-4" />
-                  </Link>
-                  <button
-                    onClick={() => setShareOpen(true)}
-                    className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full border border-border bg-white text-muted-foreground font-semibold text-base hover:bg-gray-50 transition-all"
-                  >
-                    <Share2 className="w-4 h-4" /> Share Article
-                  </button>
-                </div>
+              <div className="mt-12 flex justify-center">
+                <button
+                  onClick={() => setShareOpen(true)}
+                  className="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-full border border-border bg-white text-muted-foreground font-semibold text-sm hover:bg-gray-50 transition-all hover:scale-105 active:scale-95 shadow-sm"
+                >
+                  <Share2 className="w-4 h-4" /> Share This Article
+                </button>
               </div>
-            </motion.div>
+            </section>
 
             {/* ── Related Posts ────────────────────────────────────── */}
             <section className="mt-20 pt-16 border-t border-border">
