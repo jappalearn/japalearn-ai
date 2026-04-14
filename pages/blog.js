@@ -74,7 +74,7 @@ function PostCard({ post, index }) {
             {post.excerpt}
           </p>
           <div className="mt-5 flex items-center justify-between">
-            <span className="text-xs font-semibold text-foreground">Victory · JapaLearn</span>
+            <span className="text-xs font-semibold text-foreground">{post.author || "JapaLearn"}</span>
             <div className="w-8 h-8 rounded-full border border-border flex items-center justify-center group-hover:bg-primary group-hover:border-primary transition-all">
               <ArrowRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-white transition-colors" />
             </div>
@@ -159,7 +159,7 @@ export default function BlogIndex() {
     <>
       <Head>
         <title>Blog · JapaLearn AI — Migration Insights for Nigerians</title>
-        <meta name="description" content="Expert migration advice, visa updates, and success stories written for the Nigerian community by Taiwo from JapaLearn." />
+        <meta name="description" content="Visa guides, relocation insights, financial strategies, migration stories and first hand updates published weekly to help Nigerians relocate smarter." />
       </Head>
 
       <div className="flex flex-col min-h-screen bg-white">
@@ -200,10 +200,9 @@ export default function BlogIndex() {
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="max-w-xl mx-auto text-muted-foreground text-base md:text-lg leading-relaxed mb-10"
+                className="max-w-2xl mx-auto text-muted-foreground text-base md:text-lg leading-relaxed mb-10"
               >
-                Visa guides, financial strategies, and real stories — published weekly by Taiwo
-                to help Nigerians relocate smarter.
+                Visa guides, relocation insights, financial strategies, migration stories and first hand updates published weekly to help Nigerians relocate smarter.
               </motion.p>
 
               {/* Search bar */}
