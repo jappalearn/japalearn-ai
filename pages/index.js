@@ -4,7 +4,9 @@ import { Hero } from '@/components/layout/Hero'
 import { Stats } from '@/components/layout/Stats'
 import { ProblemSection } from '@/components/layout/ProblemSection'
 import { Roadmap } from '@/components/layout/Roadmap'
+import { PathwaysMarquee } from '@/components/layout/PathwaysMarquee'
 import { Testimonials } from '@/components/layout/Testimonials'
+import { FAQ } from '@/components/layout/FAQ'
 import { Footer } from '@/components/layout/Footer'
 
 export default function LandingPage() {
@@ -21,8 +23,16 @@ export default function LandingPage() {
           <Hero />
           <Stats />
           <ProblemSection />
-          <Roadmap />
-          <Testimonials />
+          <div id="how-it-works">
+            <Roadmap />
+          </div>
+          <div id="pathways">
+            <PathwaysMarquee />
+          </div>
+          <div id="testimonials">
+            <Testimonials />
+          </div>
+          <FAQ />
         </main>
         <Footer />
       </div>

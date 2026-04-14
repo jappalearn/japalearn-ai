@@ -235,8 +235,8 @@ export default function AdaezeReferralProfile({ onSignUp }) {
         <Link href="/">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
             <JapaLearnLogo size={24} />
-            <span style={{ fontSize: '15px', fontWeight: 800, color: '#18181B', fontFamily: '"DM Sans", sans-serif', letterSpacing: '-0.4px' }}>
-              JapaLearn<span style={{ color: '#1E4DD7' }}>AI</span>
+            <span style={{ fontSize: '15px', fontWeight: 800, color: '#000000', fontFamily: '"DM Sans", sans-serif', letterSpacing: '-0.4px' }}>
+              JapaLearn <span style={{ color: '#1E4DD7' }}>AI</span>
             </span>
           </div>
         </Link>
@@ -493,7 +493,7 @@ export default function AdaezeReferralProfile({ onSignUp }) {
         <footer style={{ textAlign: 'center' }}>
           <p style={{ margin: 0, fontSize: '11px', color: '#C4C9D8', fontFamily: '"Inter", sans-serif', lineHeight: 1.7 }}>
             Not legal advice · Not a visa agency · JapaLearn AI is an educational tool<br />
-            © 2025 JapaLearn AI · Nigeria's leading UK migration intelligence platform
+            © {new Date().getFullYear()} JapaLearn AI · Nigeria's leading UK migration intelligence platform
           </p>
         </footer>
       </main>

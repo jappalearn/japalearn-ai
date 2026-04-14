@@ -6,12 +6,12 @@ import Logo from "@/lib/Logo"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 
-const navLinks = [
-  { name: "Features", href: "#features", hasDropdown: true },
-  { name: "Pricing", href: "#pricing" },
-  { name: "Learn", href: "#learn", hasDropdown: true },
-  { name: "Blogs", href: "#blogs" },
-  { name: "FAQs", href: "#faq" },
+const navItems = [
+  { name: "Features", href: "/#how-it-works" },
+  { name: "Pathways", href: "/#pathways" },
+  { name: "Testimonials", href: "/#testimonials" },
+  { name: "Blogs", href: "#" },
+  { name: "FAQs", href: "/#faq" },
 ]
 
 export const Navbar = () => {
@@ -36,12 +36,12 @@ export const Navbar = () => {
       <div className="w-full max-w-6xl mx-auto flex items-center justify-between bg-white border border-gray-100 rounded-3xl px-4 md:px-6 lg:px-8 py-2.5 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.1)]">
         <Link href="/" className="flex items-center gap-2 group">
           <Logo size={32} />
-          <span className="text-lg font-heading font-bold text-primary">JapaLearn</span>
+          <span className="text-lg font-heading font-bold text-black">JapaLearn <span className="text-primary">AI</span></span>
         </Link>
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-4 lg:gap-10">
-          {navLinks.map((link) => (
+          {navItems.map((link) => (
             <Link
               key={link.name}
               href={link.href}
@@ -89,7 +89,7 @@ export const Navbar = () => {
             className="absolute top-24 left-4 right-4 bg-white border border-border rounded-2xl p-6 shadow-xl md:hidden"
           >
             <nav className="flex flex-col gap-4">
-              {navLinks.map((link) => (
+              {navItems.map((link) => (
                 <Link
                   key={link.name}
                   href={link.href}

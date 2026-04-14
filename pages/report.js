@@ -157,7 +157,7 @@ export default function Report() {
       <div className="min-h-screen bg-white flex flex-col items-center justify-center px-5" style={{ fontFamily: 'Inter, sans-serif' }}>
         <Link href="/" className="flex items-center gap-2.5 mb-16 hover:opacity-80 transition-opacity">
           <Logo size={32} />
-          <span className="font-bold text-[#0f1720] text-base" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+          <span className="font-bold text-[#000000] text-base" style={{ fontFamily: 'DM Sans, sans-serif' }}>
             JapaLearn <span style={{ color: PRIMARY }}>AI</span>
           </span>
         </Link>
@@ -228,23 +228,19 @@ export default function Report() {
           <nav className="mx-auto h-14 sm:h-16 bg-white rounded-[16px] sm:rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.12)] flex items-center justify-between px-4 sm:px-8" style={{ border: '1px solid #e3e9f3' }}>
             <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity shrink-0">
               <Logo size={28} />
-              <span className="font-bold text-sm sm:text-base text-[#0f1720]" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+              <span className="font-bold text-sm sm:text-base text-[#000000]" style={{ fontFamily: 'DM Sans, sans-serif' }}>
                 JapaLearn <span style={{ color: PRIMARY }}>AI</span>
               </span>
             </Link>
-            <div className="hidden md:flex items-center gap-7">
-              {['Features','Pricing','Learn','Blogs','FAQs'].map(item => (
-                <button key={item} className="text-[#0f1720] font-medium text-sm hover:opacity-60 transition-opacity">{item}</button>
-              ))}
-            </div>
-            <div className="flex items-center gap-2 sm:gap-3">
-              <Link href="/login" className="hidden sm:inline-block text-[#0f1720] font-medium text-sm hover:opacity-60 transition-opacity">Sign in</Link>
+            
+            <div className="flex items-center gap-3">
               <button
                 onClick={() => router.push(`/signup?answers=${encodeURIComponent(JSON.stringify(answers))}&score=${score}`)}
-                className="inline-flex px-5 py-2 rounded-full text-sm font-medium text-white transition-all hover:opacity-90"
+                className="inline-flex px-4 sm:px-6 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95 shadow-[0_4px_12px_rgba(59,117,255,0.25)]"
                 style={{ background: PRIMARY }}
               >
-                Sign up free
+                <span className="sm:hidden">Sign up free</span>
+                <span className="hidden sm:inline">Create your free account</span>
               </button>
             </div>
           </nav>
