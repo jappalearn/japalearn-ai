@@ -247,48 +247,41 @@ Source: Immigration, Refugees and Citizenship Canada (canada.ca) - Policy update
     image: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&q=80&w=1200",
     featured: false,
     content: `
-For decades, the "Japa" journey for many Nigerians has been a game of chance. You find a consultant through a friend of a friend, you join countless Telegram groups, and you sift through massive PDF manuals, hoping the information you’re reading isn't three months out of date.
+Let’s be honest, the traditional way we do this "Japa" thing in Nigeria is broken. You pay one agent you met through a friend, join 50 different Telegram groups, and read long PDF documents until your eyes hurt, just hoping the rules haven't changed overnight.
 
-The world of international migration is changing at a breakneck pace. Policies that were true in December are often reversed by March. In this landscape, "guessing" is the most expensive mistake you can make. At JapaLearn, we realized that the traditional way of moving abroad is broken. It’s too slow, too confusing, and far too dependent on luck.
+Because the truth is, migration rules are changing faster than Lagos traffic. The UK can drop a new policy in December, and by March, Canada has reversed theirs. If you are using old information or just guessing, you are risking millions of Naira and years of your life. 
 
-That’s why we’re using Artificial Intelligence to rebuild the migration experience from the ground up.
+That is the exact problem we decided to solve at JapaLearn. We asked ourselves: what if we built an AI that is smarter than the best agent, faster than manual research, and available to you 24/7?
 
----
-
-### 1. The Death of Information Overload
-The biggest barrier to relocation isn't a lack of information—it's having too much of it. When you search for "UK Skilled Worker Visa," you're hit with 50 different blogs, 20 government pages, and 100 conflicting YouTube videos. 
-
-**The JapaLearn Solution:**
-Our AI doesn't just "search" the web; it processes official gazettes, IRCC updates, and UKVI policy changes in real-time. Instead of a 40-page manual, you get a single, clear answer that applies specifically to your profile. We’ve turned "research" into a 60-second assessment.
-
-### 2. Structured Learning: Your Personalized Japa Curriculum
-Migration isn't just about filing a form; it's about preparing for a new life. A nurse moving to the NHS needs entirely different preparation than a software engineer moving to Toronto.
-
-**How it Works:**
-Once our AI assesses your readiness, it builds a **Structured Learning Path**. This isn't a generic course. It’s a step-by-step curriculum that teaches you exactly what you need for your specific route—from passing the NMC CBT to scaling your tech interview in a foreign market. We take the "what next?" out of your daily routine.
-
-### 3. Predictive Success Scores
-The most common question we get is: "Do I have a chance?" In the past, no one could answer that with certainty.
-
-**The Power of Data:**
-By analyzing thousands of successful (and unsuccessful) migration patterns, our AI generates a **Personalised Readiness Score**. This score tells you precisely where your application is weak—whether it's your proof of funds strategy, your English test timing, or your job offer alignment. We help you fix the gaps *before* you pay the visa fee.
-
-### 4. Democratizing Elite Expertise
-In the past, high-level immigration strategy was reserved for those who could afford expensive lawyers. We believe global opportunities should be accessible to every talented Nigerian, regardless of their network.
-
-**Our Mission:**
-JapaLearn AI acts as a 24/7 migration consultant in your pocket. It’s about more than just technology; it’s about giving you the confidence that your dream is backed by data, not just hope.
+Here is how we are using Artificial Intelligence to completely change the game for you.
 
 ---
 
-### Why AI Makes Your Journey Safer
-1.  **Zero Fatigue**: Humans get tired; AI doesn’t. It never misses a tiny policy update in a 300-page government document.
-2.  **Unbiased Assessment**: Our AI looks at the facts of your profile, giving you an honest assessment of your chances.
-3.  **Proactive Alerts**: If a rule changes that affects your specific route, our system knows immediately.
+### 1. Killing Information Overload
+The real problem today is not that there is no information. The problem is having *too much* confusing information. You search for "UK Skilled Worker Visa" and you see 100 YouTube videos saying different things.
 
-The "Rise of AI" isn't about replacing humans; it's about empowering them. At JapaLearn, we’re using silicon to help you reach the soil you’ve been dreaming of.
+**How JapaLearn AI Fixes It:**
+Instead of you reading through confusing government websites, our AI does the heavy lifting. It processes the latest IRCC updates, UKVI policies, and official documents in real-time. You just answer a few questions about your profile, and the AI gives you a clear, straight-to-the-point answer. What used to take 3 weeks of research now takes 60 seconds.
 
-*Tomide from JapaLearn · April 14, 2026*
+### 2. We Tell You Exactly What To Do Next (Structured Learning)
+Moving abroad is not just about filling forms; it’s about upgrading your life. A Nigerian nurse moving to the UK needs a completely different plan from a tech bro moving to Canada.
+
+**How JapaLearn AI Fixes It:**
+Once the AI checks your profile, it doesn't just leave you hanging. It builds a **Personalised Curriculum** for you. Think of it as a step-by-step roadmap. It tells you what to study, when to write your IELTS, and how to prep for your interviews. No more guessing "what next?" 
+
+### 3. Knowing Your Chances Before You Spend Money
+The number one question every Nigerian asks is: "Do I actually have a chance?" Back in the day, you just paid your visa fee, prayed, and hoped for the best.
+
+**How JapaLearn AI Fixes It:**
+We use AI to look at thousands of successful (and failed) visa applications. Based on that data, we give you a **Readiness Score**. This score tells you the exact truth: if your proof of funds is weak, or if your job experience doesn't match the route. We expose the gaps so you can fix them *before* you waste your hard-earned money.
+
+### 4. Expert Advice, Minus the Crazy Fees
+Good immigration lawyers charge heavy fees that most people cannot afford. We believe that global opportunities should not only be for the rich or those who "know someone."
+
+**How JapaLearn AI Fixes It:**
+JapaLearn is like having a top-tier migration expert in your pocket. The AI never gets tired, it doesn't have a bad day, and it never forgets a policy update. If a rule changes tomorrow that affects your specific plan, our system alerts you immediately.
+
+At the end of the day, AI won't pack your bags for you, but it will make sure you are packing them for the right country, with the right documents, at the exact right time. We are here to make your relocation journey smart, safe, and stress-free.
 `,
     faqs: [
       {
@@ -302,6 +295,14 @@ The "Rise of AI" isn't about replacing humans; it's about empowering them. At Ja
       {
         question: "Does the AI help with document preparation?",
         answer: "Yes! Our AI generates a custom document checklist for your route and can even perform basic reviews of your uploaded files to ensure they meet the high-priority standards required for fast-track processing."
+      },
+      {
+        question: "How much does it cost to use JapaLearn AI?",
+        answer: "The initial AI readiness assessment is completely free. We believe everyone deserves to know where they stand before committing financial resources. Premium features like advanced document review and personalized interview prep are available at a fraction of the cost of traditional agents."
+      },
+      {
+        question: "Will JapaLearn apply for the visa on my behalf?",
+        answer: "We are an AI-driven preparation platform, not a travel agency. We empower you with the exact knowledge, documents, and structured steps you need so you can apply yourself with 100% confidence, saving you agent fees and avoiding scams."
       }
     ]
   }
