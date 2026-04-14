@@ -1216,9 +1216,9 @@ function generateMilestones(answers, score) {
   const hasGoodLang  = lang.includes('7.') || lang.includes('8.') ||
     lang.startsWith('OET') || lang.startsWith('CELPIP')
 
-  const m1Done = false
-  const m2Done = false
-  const m3Done = false
+  const m1Done = true                  // reaching the roadmap means the quiz (eligibility assessment) is complete
+  const m2Done = lang !== 'Not taken'  // user has booked or registered for a language test
+  const m3Done = hasGoodLang           // user has a passing language score
   const m4Done = false; const m5Done = false; const m6Done = false
 
   const currentIdx = m1Done && m2Done && m3Done && m4Done && m5Done ? 5
@@ -1403,7 +1403,7 @@ function generateMilestones(answers, score) {
 }
 
 function RoadmapTab({ answers, score, quizResult, router }) {
-  const [expandedMilestone, setExpandedMilestone] = useState('mi2')
+  const [expandedMilestone, setExpandedMilestone] = useState(null)
   const [showReportModal, setShowReportModal] = useState(false)
   const [reportInterest, setReportInterest] = useState(false)
   const isMobile = useIsMobile()
@@ -1490,7 +1490,7 @@ function RoadmapTab({ answers, score, quizResult, router }) {
     <div className="bg-white rounded-[18px]" style={{ padding: isMobile ? 16 : 24, boxShadow: '0px 2px 16px rgba(30,77,215,0.06)', border: '1px solid #F0F2FF' }}>
       <div className="flex flex-col gap-0">
         {milestones.map((milestone, idx) => {
-          const isOpen = expandedMilestone === milestone.id
+          const isOpen = expandedMilestone === milestone.id || (expandedMilestone === null && milestone.current)
           return (
             <div key={milestone.id} className="flex gap-0">
               {/* Timeline spine */}
