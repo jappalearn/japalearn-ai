@@ -458,15 +458,14 @@ export default function BlogPost() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="mt-20 p-6 sm:p-10 md:p-14 rounded-[32px] md:rounded-[40px] relative overflow-hidden border border-border"
-              style={{ background: '#f6f9ff' }}
+              className="mt-20 p-8 sm:p-12 md:p-16 rounded-[32px] md:rounded-[40px] relative overflow-hidden bg-white border-2 border-primary/20 shadow-2xl shadow-primary/5"
             >
               <div className="relative z-10">
-                <h3 className="text-2xl md:text-4xl font-heading font-bold mb-6 leading-tight max-w-2xl text-foreground">
+                <h3 className="text-2xl md:text-4xl font-heading font-bold mb-6 leading-tight max-w-2xl text-gray-900">
                   Find out exactly where you stand on your Japa journey
                 </h3>
                 
-                <p className="text-muted-foreground mb-10 max-w-xl text-base md:text-lg leading-relaxed">
+                <p className="text-gray-600 mb-10 max-w-xl text-base md:text-lg leading-relaxed">
                   In 60 seconds, our AI will assess your profile against the latest 2024 UK immigration rules and give you a personalised readiness score.
                 </p>
                 
