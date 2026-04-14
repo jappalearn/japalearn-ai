@@ -9,48 +9,114 @@ import { getScoreFlag, normaliseSegment, calculateScoreBreakdown } from '../lib/
 const PRIMARY = '#3b75ff'
 const PRIMARY_DARK = '#2452cc'
 
-const ROUTE_RECOMMENDATIONS = {
-  Canada: {
-    'Tech Professional':           { route: 'Express Entry — Federal Skilled Worker', cost: '₦8M – ₦14M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']] },
-    'Career Professional':         { route: 'Express Entry — Federal Skilled Worker', cost: '₦8M – ₦14M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']] },
-    'Healthcare Worker':           { route: 'Express Entry + Healthcare Streams',     cost: '₦9M – ₦16M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']] },
-    'Student or Post-Grad':        { route: 'Study Permit → PGWP → PR',              cost: '₦12M – ₦25M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']] },
-    'Freelancer or Remote Worker': { route: 'Express Entry — Federal Skilled Worker', cost: '₦8M – ₦14M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']] },
-    default:                       { route: 'Express Entry — Federal Skilled Worker', cost: '₦8M – ₦14M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']] },
-  },
-  UK: {
-    'Tech Professional':    { route: 'Global Talent Visa / Skilled Worker', cost: '₦5M – ₦10M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–9'],['Settlement','Month 9–12']] },
-    'Healthcare Worker':    { route: 'Health & Care Worker Visa',           cost: '₦4M – ₦8M',  timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–9'],['Settlement','Month 9–12']] },
-    'Student or Post-Grad': { route: 'UK Student Visa (Tier 4)',            cost: '₦4M – ₦12M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']] },
-    'Career Professional':  { route: 'Skilled Worker Visa',                 cost: '₦5M – ₦10M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–9'],['Settlement','Month 9–12']] },
-    default:                { route: 'Skilled Worker Visa',                 cost: '₦5M – ₦10M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–9'],['Settlement','Month 9–12']] },
-  },
-  Germany: {
-    'Tech Professional':           { route: 'EU Blue Card / Skilled Immigration Act', cost: '₦7M – ₦12M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']] },
-    'Career Professional':         { route: 'EU Blue Card',                           cost: '₦7M – ₦12M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']] },
-    'Student or Post-Grad':        { route: 'Student Visa → Job Seeker',              cost: '₦8M – ₦15M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']] },
-    'Freelancer or Remote Worker': { route: 'Germany Freelance Visa',                 cost: '₦5M – ₦9M',  timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–9'],['Settlement','Month 9–12']] },
-    default:                       { route: 'EU Blue Card',                           cost: '₦7M – ₦12M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']] },
-  },
-  Australia: {
-    'Student or Post-Grad': { route: 'Student Visa → Graduate Visa (485)', cost: '₦12M – ₦22M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']] },
-    default:                { route: 'Skilled Nominated Visa (190)',        cost: '₦10M – ₦18M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']] },
-  },
-  Ireland: {
-    'Student or Post-Grad': { route: 'Study → 2-Year Stay Back',         cost: '₦10M – ₦18M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']] },
-    default:                { route: 'Critical Skills Employment Permit', cost: '₦6M – ₦11M',  timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–9'],['Settlement','Month 9–12']] },
-  },
-  Portugal: {
-    'Freelancer or Remote Worker': { route: 'D8 Digital Nomad Visa', cost: '₦3M – ₦6M', timeline: [['Preparation','Month 1–2'],['Testing & Docs','Month 2–4'],['Application','Month 4–6'],['Settlement','Month 6–9']] },
-    default:                       { route: 'Job Seeker Visa',       cost: '₦4M – ₦8M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–5'],['Application','Month 5–8'],['Settlement','Month 8–12']] },
-  },
-  UAE: { default: { route: 'Employment Visa / Freelance Permit', cost: '₦2M – ₦5M', timeline: [['Preparation','Month 1–2'],['Testing & Docs','Month 2–3'],['Application','Month 3–5'],['Settlement','Month 5–8']] } },
-}
+function getRecommendation(destination, segment, answers = {}) {
+  const hasOffer = answers.job_offer === 'Yes — confirmed offer' || answers.job_offer === 'Yes — confirmed'
+  const inInterviews = answers.job_offer?.startsWith('In active')
+  const isSenior = ['7 – 10 years', '10+ years'].includes(answers.experience)
+  const isStudent = segment === 'Student or Post-Grad'
+  const isFreelancer = segment === 'Freelancer or Remote Worker'
+  const isHealthcare = segment === 'Healthcare Worker'
+  const isTech = segment === 'Tech Professional'
+  const isFamily = answers.segment === 'Moving to join family abroad'
 
-function getRecommendation(destination, segment) {
-  const routes = ROUTE_RECOMMENDATIONS[destination]
-  if (!routes) return { route: 'Skilled Worker / Employment Visa', cost: '₦5M – ₦12M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']] }
-  return routes[segment] || routes['default'] || { route: 'Skilled Worker / Employment Visa', cost: '₦5M – ₦12M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']] }
+  const R = (route, cost, timeline) => ({ route, cost, timeline })
+  const tl18 = [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']]
+  const tl12 = [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–9'],['Settlement','Month 9–12']]
+  const tl9  = [['Preparation','Month 1–2'],['Testing & Docs','Month 2–4'],['Application','Month 4–6'],['Settlement','Month 6–9']]
+
+  switch (destination) {
+    case 'UK':
+      if (isStudent)                                  return R('UK Student Visa',              '₦4M – ₦12M', tl18)
+      if (isHealthcare)                               return R('Health & Care Worker Visa',    '₦4M – ₦8M',  tl12)
+      if (isFamily)                                   return R('UK Family Visa',               '₦3M – ₦7M',  tl12)
+      if (isTech && isSenior && !hasOffer && !inInterviews) return R('Global Talent Visa',    '₦5M – ₦10M', tl12)
+      if (isFreelancer && isSenior)                   return R('Global Talent Visa',           '₦5M – ₦10M', tl12)
+      return R('Skilled Worker Visa', '₦5M – ₦10M', tl12)
+
+    case 'Canada':
+      if (isStudent)    return R('Study Permit → Post-Graduation Work Permit → PR', '₦12M – ₦25M', tl18)
+      if (isFamily)     return R('Spousal & Family Sponsorship',                    '₦5M – ₦10M',  tl18)
+      if (isHealthcare) return R('Express Entry — Federal Skilled Worker',          '₦9M – ₦16M',  tl18)
+      return R('Express Entry — Federal Skilled Worker', '₦8M – ₦14M', tl18)
+
+    case 'Germany':
+      if (isStudent)    return R('German Student Visa',        '₦8M – ₦15M', tl18)
+      if (isFreelancer) return R('Germany Freelance Visa',     '₦5M – ₦9M',  tl12)
+      if (isFamily)     return R('German Family Reunion Visa', '₦4M – ₦8M',  tl12)
+      if (hasOffer || inInterviews) return R('EU Blue Card',   '₦7M – ₦12M', tl18)
+      return R('Germany Job Seeker Visa', '₦5M – ₦9M', tl12)
+
+    case 'Australia':
+      if (isStudent)              return R('Student Visa (Subclass 500)',            '₦12M – ₦22M', tl18)
+      if (isHealthcare)           return R('Skilled — Employer Sponsored (Subclass 482)', '₦10M – ₦18M', tl18)
+      if (hasOffer || inInterviews) return R('Employer Sponsored Visa (Subclass 482)', '₦10M – ₦18M', tl18)
+      return R('Skilled Nominated Visa (Subclass 190)', '₦10M – ₦18M', tl18)
+
+    case 'Ireland':
+      if (isStudent) return R('Irish Study Visa → 2-Year Graduate Stay Back', '₦10M – ₦18M', tl18)
+      if (isFamily)  return R('Irish Family Reunification Visa',               '₦4M – ₦8M',  tl12)
+      return R('Critical Skills Employment Permit', '₦6M – ₦11M', tl12)
+
+    case 'USA':
+      if (isStudent)                          return R('F-1 Student Visa',                 '₦8M – ₦20M', tl18)
+      if (isFamily)                           return R('Family-Based Immigrant Visa',       '₦4M – ₦10M', tl18)
+      if (isHealthcare)                       return R('EB-3 Immigrant Worker Visa',        '₦8M – ₦18M', tl18)
+      if (isTech && isSenior && !hasOffer)    return R('O-1A Extraordinary Ability Visa',  '₦6M – ₦15M', tl18)
+      return R('H-1B Specialty Occupation Visa', '₦6M – ₦14M', tl18)
+
+    case 'Netherlands':
+      if (isStudent)    return R('Dutch Study Visa (MVV)',                '₦8M – ₦16M', tl18)
+      if (isFreelancer) return R('Dutch Self-Employment Visa (Zelfstandige)', '₦5M – ₦10M', tl12)
+      if (isFamily)     return R('Dutch Family Reunification Visa',       '₦4M – ₦8M',  tl12)
+      return R('Highly Skilled Migrant Visa (Kennismigrant)', '₦7M – ₦13M', tl12)
+
+    case 'Portugal':
+      if (isFreelancer) return R('D8 Digital Nomad Visa',         '₦3M – ₦6M',  tl9)
+      if (isStudent)    return R('Portuguese Student Visa (D4)',   '₦7M – ₦14M', tl18)
+      if (isFamily)     return R('Portuguese Family Reunification Visa', '₦4M – ₦8M', tl12)
+      return R('D3 Highly Qualified Activity Visa', '₦4M – ₦8M', tl12)
+
+    case 'France':
+      if (isStudent)    return R('French Long-Stay Student Visa (VLS-TS)',   '₦7M – ₦14M', tl18)
+      if (isFreelancer) return R('French Talent Passport — Innovative Project', '₦5M – ₦10M', tl12)
+      if (isFamily)     return R('French Family Reunification Visa',         '₦4M – ₦8M',  tl12)
+      return R('Passeport Talent (Highly Skilled Professionals)', '₦6M – ₦12M', tl18)
+
+    case 'New Zealand':
+      if (isStudent)    return R('New Zealand Student Visa',             '₦10M – ₦20M', tl18)
+      if (isFamily)     return R('New Zealand Partnership / Family Visa','₦5M – ₦10M',  tl12)
+      if (hasOffer || inInterviews) return R('Accredited Employer Work Visa (AEWV)', '₦9M – ₦16M', tl12)
+      return R('Skilled Migrant Category Visa', '₦10M – ₦18M', tl18)
+
+    case 'Sweden':
+      if (isStudent)    return R('Swedish Student Residence Permit', '₦8M – ₦15M', tl18)
+      if (isFreelancer) return R('Swedish Self-Employment Permit',   '₦5M – ₦10M', tl12)
+      if (isFamily)     return R('Swedish Family Reunification Permit', '₦4M – ₦8M', tl12)
+      return R('Swedish Work Permit (Employer Sponsored)', '₦6M – ₦12M', tl12)
+
+    case 'Norway':
+      if (isStudent)    return R('Norwegian Student Residence Permit', '₦8M – ₦16M', tl18)
+      if (isFreelancer) return R('Norwegian Self-Employed Permit',     '₦5M – ₦10M', tl12)
+      if (isFamily)     return R('Norwegian Family Immigration Permit','₦4M – ₦8M',  tl12)
+      return R('Norwegian Skilled Worker Permit', '₦7M – ₦13M', tl12)
+
+    case 'UAE':
+      if (isStudent)                 return R('UAE Student Visa',                         '₦2M – ₦5M', tl9)
+      if (isFreelancer)              return R('UAE Freelance Permit',                     '₦2M – ₦4M', tl9)
+      if (isTech && isSenior)        return R('UAE Golden Visa (Talent Category)',        '₦3M – ₦7M', tl12)
+      if (isHealthcare)              return R('UAE Employment Visa (Healthcare Stream)',  '₦2M – ₦5M', tl9)
+      if (isFamily)                  return R('UAE Residence Visa (Family Sponsorship)',  '₦2M – ₦4M', tl9)
+      return R('UAE Employment Visa', '₦2M – ₦5M', tl9)
+
+    case 'Singapore':
+      if (isStudent)              return R("Singapore Student's Pass",                '₦8M – ₦18M', tl18)
+      if (isFamily)               return R('Singapore Dependant\'s Pass',             '₦3M – ₦7M',  tl12)
+      if (isTech && isSenior)     return R('Singapore Tech.Pass',                    '₦6M – ₦14M', tl12)
+      return R('Singapore Employment Pass (EP)', '₦5M – ₦12M', tl12)
+
+    default:
+      return R('Skilled Worker Employment Visa', '₦5M – ₦12M', tl18)
+  }
 }
 
 const REPORT_LABEL_MAP = { Experience: 'Work Experience', Language: 'Language Test', Age: 'Age Factor', Savings: 'Financial Readiness', Profile: 'Skills & Certs', Education: 'Education' }
@@ -203,7 +269,7 @@ export default function Report() {
 
   const { score, answers } = data
   const flag = getScoreFlag(score)
-  const recommendation = getRecommendation(answers.destination, normaliseSegment(answers.segment))
+  const recommendation = getRecommendation(answers.destination, normaliseSegment(answers.segment), answers)
   const breakdown = getScoreBreakdown(answers)
   const { strengths, gaps } = getStrengthsAndGaps(breakdown)
   const nextSteps = getNextSteps(answers, score)
