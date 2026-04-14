@@ -316,13 +316,8 @@ export default function BlogPost() {
 
             {/* ── FAQ Section ──────────────────────────────────────── */}
             <section className="mt-20 pt-16 border-t border-border">
-              <div className="flex items-center gap-4 mb-2">
-                <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
-                  <BookOpen className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-foreground">Frequently Asked Questions</h2>
-                </div>
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-foreground">Frequently Asked Questions</h2>
               </div>
               <p className="text-muted-foreground mb-10 text-sm">
                 The most common questions from Nigerians asking about this topic.

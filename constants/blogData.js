@@ -8,7 +8,7 @@ export const BLOG_POSTS = [
     date: "April 14, 2026",
     readTime: "12 min",
     author: "Victory from JapaLearn",
-    image: "https://images.unsplash.com/photo-1576091160550-2173dad99901?auto=format&fit=crop&q=80&w=1200",
+    image: "/images/blog/medicine-guide.png",
     featured: true,
     content: `
 Many Nigerian students grow up with the dream of becoming a doctor. You spend years studying, writing JAMB, trying UTME again, watching cut-off marks, and praying for a miracle at the end of each admission cycle. And when the Nigerian system does not cooperate, the next logical question becomes: what if I study medicine abroad?
@@ -151,7 +151,7 @@ Studying medicine abroad is possible. It requires research, realistic planning, 
     date: "April 14, 2026",
     readTime: "9 min",
     author: "Victory from JapaLearn",
-    image: "https://images.unsplash.com/photo-1551076805-e1869033e561?auto=format&fit=crop&q=80&w=1200",
+    image: "/images/blog/canada-guide.png",
     featured: false,
     content: `
 If you've been planning to study in Canada for your Master's or PhD, I have some really good news for you. Canada just announced changes to its student visa process that will make your application journey significantly easier starting January 1, 2026.
