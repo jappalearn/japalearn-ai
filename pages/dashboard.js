@@ -97,7 +97,7 @@ const BOTTOM_NAV = [
   { id: 'learning', label: 'Learning',  icon: BookOpen },
   { id: 'roadmap',  label: 'Roadmap',   icon: Map },
   { id: 'resources',label: 'Resources', icon: FolderOpen },
-  { id: 'profile',  label: 'Profile',   icon: User },
+  { id: 'credit',   label: 'Score',     icon: TrendingUp },
 ]
 
 
@@ -1366,6 +1366,8 @@ function generateMilestones(answers, score) {
 
 function RoadmapTab({ answers, score, quizResult, router }) {
   const [expandedMilestone, setExpandedMilestone] = useState('mi2')
+  const [showReportModal, setShowReportModal] = useState(false)
+  const [reportInterest, setReportInterest] = useState(false)
   const isMobile = useIsMobile()
 
   if (!quizResult?.answers?.destination || !quizResult?.answers?.segment) {
@@ -1543,6 +1545,93 @@ function RoadmapTab({ answers, score, quizResult, router }) {
     </div>
   )
 
+  const REPORT_INCLUDES = [
+    'Your personalised step-by-step relocation plan',
+    `Tailored to your ${answers.destination || 'destination'} ${answers.segment ? `(${answers.segment})` : ''} pathway`,
+    'Week-by-week actionable milestones with specific deadlines',
+    'Document checklist, financial planning & visa timeline',
+    'Downloadable PDF you can share with family',
+  ]
+
+  const MigrationReportCard = (
+    <div style={{ background: 'linear-gradient(135deg, #EBF1FF 0%, #F2EEFF 100%)', borderRadius: isMobile ? 14 : 16, padding: isMobile ? '14px 16px' : '18px 20px', border: '1px solid #D4DCFF', display: 'flex', alignItems: 'center', gap: isMobile ? 12 : 14 }}>
+      <div style={{ width: isMobile ? 36 : 40, height: isMobile ? 36 : 40, borderRadius: isMobile ? 10 : 12, background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <FileText size={isMobile ? 15 : 18} color="#FFFFFF" />
+      </div>
+      <div style={{ flex: 1 }}>
+        <p style={{ margin: '0 0 2px', fontSize: isMobile ? 12 : 13, fontWeight: 700, color: '#1E4DD7' }}>Your next priority action</p>
+        <p style={{ margin: 0, fontSize: isMobile ? 12 : 13, color: '#4D4D56', lineHeight: 1.5 }}>Get a detailed, personalised Migration Report. This is the basic roadmap.</p>
+      </div>
+      <button
+        onClick={() => setShowReportModal(true)}
+        style={{ padding: isMobile ? '9px 14px' : '10px 18px', background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)', color: '#FFFFFF', border: 'none', borderRadius: isMobile ? 9 : 10, fontSize: isMobile ? 12 : 13, fontWeight: 600, cursor: 'pointer', flexShrink: 0, whiteSpace: 'nowrap', boxShadow: '0px 4px 14px rgba(30,77,215,0.25)' }}
+      >
+        Get Report
+      </button>
+    </div>
+  )
+
+  const ReportModal = (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', padding: isMobile ? 0 : 24 }} onClick={() => { setShowReportModal(false); setReportInterest(false) }}>
+      <div style={{ background: '#FFFFFF', borderRadius: isMobile ? '20px 20px 0 0' : 24, padding: isMobile ? '24px 20px 32px' : '32px 32px 36px', width: '100%', maxWidth: isMobile ? '100%' : 480, boxShadow: '0px -10px 60px rgba(30,77,215,0.18)' }} onClick={e => e.stopPropagation()}>
+        {!reportInterest ? (
+          <>
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+              <div>
+                <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 700, color: '#1E4DD7', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Full Migration Report</p>
+                <h2 style={{ margin: 0, fontSize: isMobile ? 22 : 26, fontWeight: 800, color: '#18181B', letterSpacing: '-0.5px', fontFamily: 'DM Sans, sans-serif', lineHeight: 1.2 }}>Your Personalised<br />Report is ₦5,000</h2>
+              </div>
+              <button onClick={() => setShowReportModal(false)} style={{ background: '#F4F6FF', border: 'none', borderRadius: 10, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+                <X size={14} color="#82858A" />
+              </button>
+            </div>
+
+            {/* What's included */}
+            <p style={{ margin: '0 0 12px', fontSize: 12, fontWeight: 700, color: '#82858A', textTransform: 'uppercase', letterSpacing: '0.07em' }}>What&apos;s included</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+              {REPORT_INCLUDES.map((item, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', background: '#F0F5FF', borderRadius: 10, border: '1px solid #D4DCFF' }}>
+                  <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                    <CheckCircle2 size={9} color="#FFFFFF" />
+                  </div>
+                  <span style={{ fontSize: 13, color: '#2D2D35', lineHeight: 1.5 }}>{item}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* vs basic */}
+            <div style={{ background: '#FFF7E6', borderRadius: 10, padding: '10px 14px', marginBottom: 20, border: '1px solid #FDE68A' }}>
+              <p style={{ margin: 0, fontSize: 12, color: '#92400E' }}><strong>vs your basic roadmap:</strong> The full report includes exact dates, financial projections, and a consultant-reviewed document checklist — not just milestone overviews.</p>
+            </div>
+
+            {/* CTA */}
+            <button
+              onClick={() => setReportInterest(true)}
+              style={{ width: '100%', padding: '14px', background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)', color: '#FFFFFF', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: 'pointer', boxShadow: '0px 6px 20px rgba(30,77,215,0.3)', letterSpacing: '-0.2px', fontFamily: 'DM Sans, sans-serif' }}
+            >
+              I&apos;m Interested — ₦5,000
+            </button>
+            <p style={{ margin: '10px 0 0', textAlign: 'center', fontSize: 11, color: '#9E9E9E' }}>Payments launching soon — we&apos;ll notify you first</p>
+          </>
+        ) : (
+          <>
+            <div style={{ textAlign: 'center', padding: '16px 0 8px' }}>
+              <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, #21C474, #10B981)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                <CheckCircle2 size={26} color="#FFFFFF" />
+              </div>
+              <h2 style={{ margin: '0 0 8px', fontSize: 22, fontWeight: 800, color: '#18181B', letterSpacing: '-0.5px', fontFamily: 'DM Sans, sans-serif' }}>You&apos;re on the list!</h2>
+              <p style={{ margin: '0 0 24px', fontSize: 14, color: '#82858A', lineHeight: 1.6 }}>We&apos;re setting up payments now. We&apos;ll email you the moment your personalised Migration Report is ready to order.</p>
+              <button onClick={() => { setShowReportModal(false); setReportInterest(false) }} style={{ width: '100%', padding: '13px', background: '#F4F6FF', color: '#1E4DD7', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+                Close
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+
   if (isMobile) {
     return (
       <div className="flex flex-col gap-4 pb-10 w-full">
@@ -1576,6 +1665,8 @@ function RoadmapTab({ answers, score, quizResult, router }) {
         </div>
 
         {MilestoneTimeline}
+        {MigrationReportCard}
+        {showReportModal && ReportModal}
       </div>
     )
   }
@@ -1637,6 +1728,8 @@ function RoadmapTab({ answers, score, quizResult, router }) {
       </div>
 
       {MilestoneTimeline}
+      {MigrationReportCard}
+      {showReportModal && ReportModal}
     </div>
   )
 }
@@ -2598,6 +2691,75 @@ function ProfileTab({ user, profile, answers, score, quizResult, onSignOut, rout
   )
 }
 
+// ── CREDIT SCORE TAB ────────────────────────────────────────────────────────────
+function CreditScoreTab({ score, quizResult, answers }) {
+  const isMobile = useIsMobile()
+
+  const SCORE_FACTORS = [
+    { label: 'Migration Readiness',  value: quizResult ? `${score}%` : '—', color: '#1E4DD7', done: !!quizResult },
+    { label: 'Language Preparation', value: answers?.language && answers.language !== 'Not taken' ? 'In progress' : 'Not started', color: '#F59A0A', done: !!(answers?.language && answers.language !== 'Not taken') },
+    { label: 'Document Status',      value: '—', color: '#82858A', done: false },
+    { label: 'Financial Proof',      value: '—', color: '#82858A', done: false },
+    { label: 'Visa Application',     value: '—', color: '#82858A', done: false },
+  ]
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 16 : 20, paddingBottom: 40 }}>
+      {/* Header */}
+      <div>
+        <p style={{ margin: '0 0 3px', fontSize: isMobile ? 11 : 13, color: '#82858A', fontWeight: 500 }}>Your migration readiness at a glance</p>
+        <h1 style={{ margin: 0, fontSize: isMobile ? 22 : 26, fontWeight: 700, color: '#18181B', letterSpacing: '-0.5px', fontFamily: 'DM Sans, sans-serif' }}>Migration Score</h1>
+      </div>
+
+      {/* Score card */}
+      <div style={{ background: 'linear-gradient(135deg, #1A42C2 0%, #2F67F8 60%, #5C8AFF 100%)', borderRadius: isMobile ? 18 : 22, padding: isMobile ? '24px 20px' : '32px 32px', boxShadow: '0px 12px 40px rgba(30,77,215,0.28)', textAlign: 'center' }}>
+        <p style={{ margin: '0 0 8px', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.65)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Overall Migration Score</p>
+        <div style={{ fontSize: isMobile ? 72 : 88, fontWeight: 900, color: '#FFFFFF', fontFamily: 'DM Sans, sans-serif', lineHeight: 1, marginBottom: 8 }}>
+          {quizResult ? score : '—'}
+        </div>
+        <p style={{ margin: '0 0 20px', fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>
+          {quizResult
+            ? score >= 70 ? 'Strong profile — keep going'
+              : score >= 45 ? 'Good start — a few gaps to close'
+              : 'Early stage — let\'s build your profile'
+            : 'Take the quiz to get your score'}
+        </p>
+        {quizResult && (
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.15)', borderRadius: 20, padding: '6px 14px', border: '1px solid rgba(255,255,255,0.25)' }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ADE80' }} />
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#FFFFFF' }}>Score updates as you progress</span>
+          </div>
+        )}
+      </div>
+
+      {/* Coming soon banner */}
+      <div style={{ background: 'rgba(245,158,11,0.08)', borderRadius: isMobile ? 14 : 16, padding: isMobile ? '14px 16px' : '16px 20px', border: '1px solid rgba(245,158,11,0.25)', display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+        <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(245,158,11,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <Star size={14} color="#F59A0A" />
+        </div>
+        <div>
+          <p style={{ margin: '0 0 2px', fontSize: 13, fontWeight: 700, color: '#92400E' }}>Full Credit Engine — Coming Soon</p>
+          <p style={{ margin: 0, fontSize: 12, color: '#B45309', lineHeight: 1.55 }}>We&apos;re building a detailed credit scoring system that tracks each factor below — finances, documents, language, and visa readiness — to give you a live migration credit score.</p>
+        </div>
+      </div>
+
+      {/* Score factors */}
+      <div style={{ background: '#FFFFFF', borderRadius: isMobile ? 16 : 20, padding: isMobile ? 16 : 24, boxShadow: '0px 2px 12px rgba(30,77,215,0.06)', border: '1px solid #F0F2FF' }}>
+        <p style={{ margin: '0 0 16px', fontSize: 13, fontWeight: 700, color: '#18181B', fontFamily: 'DM Sans, sans-serif' }}>Score Breakdown</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {SCORE_FACTORS.map((f, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px', borderRadius: 10, background: '#FAFBFF', border: '1px solid #ECEEFF' }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: f.done ? '#21C474' : '#D1D5DB', flexShrink: 0 }} />
+              <span style={{ flex: 1, fontSize: 13, color: '#2D2D35', fontWeight: 500 }}>{f.label}</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: f.done ? f.color : '#82858A', background: f.done ? `${f.color}15` : '#F4F4F6', padding: '3px 8px', borderRadius: 6 }}>{f.value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Main Dashboard ─────────────────────────────────────────────────────────────
 export default function Dashboard() {
   const router = useRouter()
@@ -2792,6 +2954,7 @@ export default function Dashboard() {
               {activeTab === 'peers'          && <PeersTab answers={answers} />}
               {activeTab === 'marketplace'    && <MarketplaceTab answers={answers} />}
               {activeTab === 'profile'        && <ProfileTab user={user} profile={profile} answers={answers} score={score} quizResult={quizResult} onSignOut={handleSignOut} router={router} />}
+              {activeTab === 'credit'         && <CreditScoreTab score={score} quizResult={quizResult} answers={answers} />}
             </motion.div>
           </AnimatePresence>
         </main>
