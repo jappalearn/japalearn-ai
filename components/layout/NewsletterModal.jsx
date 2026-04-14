@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Mail, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { X, Send } from 'lucide-react';
 import { useRouter } from 'next/router';
+import { Button } from '@/components/ui/button';
 
 export function NewsletterModal() {
   const [visible, setVisible] = useState(false);
@@ -14,16 +15,13 @@ export function NewsletterModal() {
   const isBlogPage = router.pathname.startsWith('/blog');
 
   useEffect(() => {
-    // Hide if navigating away from blog
     if (!isBlogPage) {
       setVisible(false);
       return;
     }
 
-    // Don't show if already dismissed in this session
     if (sessionStorage.getItem('newsletter_dismissed')) return;
 
-    // Show after 6 seconds
     const timer = setTimeout(() => {
       setVisible(true);
     }, 6000);
@@ -41,7 +39,6 @@ export function NewsletterModal() {
     e.preventDefault();
     if (!email) return;
     setSubmitted(true);
-    // In production, POST to your newsletter API here
     setTimeout(() => {
       handleDismiss();
     }, 2500);
@@ -53,77 +50,68 @@ export function NewsletterModal() {
     <AnimatePresence>
       {visible && (
         <motion.div
-          initial={{ opacity: 0, y: 40, scale: 0.95 }}
+          initial={{ opacity: 0, y: 50, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 40, scale: 0.95 }}
-          transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-          className="fixed bottom-6 right-6 z-50 w-[340px] max-w-[calc(100vw-24px)]"
+          exit={{ opacity: 0, y: 50, scale: 0.95 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+          className="fixed bottom-6 right-6 z-50 w-[380px] max-w-[calc(100vw-48px)]"
           role="dialog"
-          aria-label="Subscribe to JapaLearn newsletter"
+          aria-label="Subscribe to newsletter"
         >
-          <div className="relative bg-white rounded-[28px] shadow-2xl shadow-black/15 border border-border overflow-hidden">
-            {/* Gradient accent top bar */}
-            <div className="h-1.5 w-full" style={{ background: 'linear-gradient(to right, #5B6AF4, #7C8DF8, #a78bfa)' }} />
-
-            {/* Dismiss button */}
+          {/* Main Card - Adapting styles from Landing Page Footer */}
+          <div className="relative bg-[#f6f9ff] rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-border overflow-hidden">
+            
+            {/* Dismiss Button */}
             <button
               onClick={handleDismiss}
-              className="absolute top-4 right-4 w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors z-10"
+              className="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/80 hover:bg-white flex items-center justify-center transition-all duration-200 z-10"
               aria-label="Close"
             >
-              <X className="w-3.5 h-3.5 text-gray-500" />
+              <X className="w-4 h-4 text-slate-400" />
             </button>
 
-            <div className="p-7 pt-5">
+            <div className="p-8 pb-10">
               {!submitted ? (
                 <>
-                  {/* Icon */}
-                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-                    <Mail className="w-6 h-6 text-primary" />
-                  </div>
-
-                  <h3 className="text-lg font-bold text-foreground mb-1.5 leading-snug pr-6">
-                    Weekly Japa insights, free.
+                  <h3 className="text-xl font-heading font-bold text-foreground mb-3 leading-tight pr-6">
+                    Dreaming of relocating but don&apos;t know where to start?
                   </h3>
-                  <p className="text-muted-foreground text-xs leading-relaxed mb-5">
-                    Every Monday, Taiwo sends one high-value migration tip — visa updates, proof of funds strategies, real community stories. No spam.
+                  
+                  <p className="text-muted-foreground text-[13px] leading-relaxed mb-8">
+                    Sign up to get real relocation stories, guides, and expert tips straight to your inbox.
                   </p>
 
-                  <form onSubmit={handleSubmit} className="space-y-2.5">
+                  <form onSubmit={handleSubmit} className="flex flex-col gap-3">
                     <input
                       type="email"
                       required
                       value={email}
                       onChange={e => setEmail(e.target.value)}
-                      placeholder="Your email address"
-                      className="w-full h-11 px-4 rounded-2xl border border-border bg-gray-50/60 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm"
+                      placeholder="Enter your email"
+                      className="w-full h-12 px-5 rounded-full border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white text-sm transition-all"
                     />
-                    <button
+                    <Button 
                       type="submit"
-                      className="w-full h-11 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold text-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-md shadow-primary/20"
+                      className="h-12 w-full rounded-full bg-primary hover:bg-primary/90 font-semibold text-sm transition-all active:scale-[0.98]"
                     >
-                      Subscribe — It&apos;s Free <ArrowRight className="w-4 h-4" />
-                    </button>
+                      Subscribe Now
+                    </Button>
                   </form>
 
-                  <p className="text-center text-[10px] text-muted-foreground mt-3">
-                    Unsubscribe anytime · No spam, ever
+                  <p className="text-center text-[10px] text-muted-foreground/60 mt-4">
+                    Join thousands of Nigerians relocating smarter.
                   </p>
                 </>
               ) : (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="text-center py-4"
-                >
-                  <div className="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-4">
-                    <CheckCircle2 className="w-8 h-8 text-green-500" />
+                <div className="text-center py-6">
+                  <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 border border-green-100 shadow-sm">
+                    <Send className="w-8 h-8 text-primary animate-pulse" />
                   </div>
-                  <h3 className="text-lg font-bold text-foreground mb-2">You&apos;re in! 🎉</h3>
-                  <p className="text-muted-foreground text-sm">
-                    Watch your inbox this Monday for your first Japa insight from Taiwo.
+                  <h3 className="text-xl font-heading font-bold text-foreground mb-2">You&apos;re in! 🎉</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed px-4">
+                    Get ready for real relocation stories and expert tips in your inbox soon.
                   </p>
-                </motion.div>
+                </div>
               )}
             </div>
           </div>

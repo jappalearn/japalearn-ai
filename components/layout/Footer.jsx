@@ -51,7 +51,7 @@ export const Footer = () => {
         <div className="bg-[#f6f9ff] py-12 sm:py-16 text-center">
           <div className="max-w-xl mx-auto px-4 sm:px-6">
             <h3 className="text-xl sm:text-2xl font-heading font-bold text-foreground mb-3 leading-snug">
-              Dreaming of relocating but don&apos;t <br className="hidden sm:block" /> know where to start?
+              Dreaming of relocating but don&apos;t know where to start?
             </h3>
             <p className="text-muted-foreground text-sm mb-8 max-w-sm mx-auto leading-relaxed">
               Sign up to get real relocation stories, guides, and expert tips straight to your inbox.
