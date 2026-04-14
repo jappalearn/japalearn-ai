@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
+import { BLOG_POSTS } from '@/constants/blogData';
 
 // ─── Categories ────────────────────────────────────────────────────────────────
 const CATEGORIES = [
@@ -24,20 +25,7 @@ const CATEGORIES = [
   { id: 'ai-insights',       label: 'AI & Japa',          icon: Zap },
 ];
 
-// ─── Posts data ───────────────────────────────────────────────────────────────
-const POSTS = [
-  {
-    id: 1,
-    title: "10 Affordable Countries Nigerian Students Can Study Medicine in 2026",
-    slug: "affordable-countries-medicine-2026",
-    excerpt: "Many Nigerian students grow up with the dream of becoming a doctor. We researched the top 10 destinations where you can get a globally recognised degree without breaking the bank.",
-    category: 'visa-guides',
-    date: "Apr 14, 2026",
-    readTime: "12 min",
-    image: "https://images.unsplash.com/photo-1576091160550-2173dad99901?auto=format&fit=crop&q=80&w=800",
-    featured: true,
-  },
-];
+const POSTS = BLOG_POSTS;
 
 // ─── Category label lookup ────────────────────────────────────────────────────
 function getCategoryLabel(id) {

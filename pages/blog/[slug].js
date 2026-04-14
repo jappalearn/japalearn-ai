@@ -20,162 +20,12 @@ import {
   BookOpen,
   ExternalLink,
 } from 'lucide-react';
+import { useRouter } from 'next/router';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
+import { BLOG_POSTS } from '@/constants/blogData';
 
-// ─── Post Data (mock — will be replaced by gray-matter + fs in production) ──────
-const POST_DATA = {
-  title: "10 Affordable Countries Nigerian Students Can Study Medicine in 2026",
-  date: "April 14, 2026",
-  category: "Visa Guides",
-  author: "Victory from JapaLearn",
-  readTime: "12 min",
-  image: "https://images.unsplash.com/photo-1576091160550-2173dad99901?auto=format&fit=crop&q=80&w=1400",
-  excerpt: "Many Nigerian students grow up with the dream of becoming a doctor. We researched the top 10 destinations where you can get a globally recognised medical degree without breaking the bank.",
-  content: `
-Many Nigerian students grow up with the dream of becoming a doctor. You spend years studying, writing JAMB, trying UTME again, watching cut-off marks, and praying for a miracle at the end of each admission cycle. And when the Nigerian system does not cooperate, the next logical question becomes: what if I study medicine abroad?
-
-It is a valid question, but the moment you start researching, you hit another wall: medical education abroad sounds expensive. And honestly, in many countries it is. A single year of medical school in the United States can cost more than $60,000. The UK is not far behind, and Canada is similar. For most Nigerian families, those numbers are simply not realistic.
-
-But there's something we want you to know before you give up on the dream entirely. There are countries in the world where you can get a solid, internationally recognised medical degree, without breaking a bank or taking a loan that will follow you for the next decade. We researched the options, looked at tuition fees, living costs, visa processes, and degree recognition, and put together this guide specifically for Nigerian medical students planning ahead for 2026.
-
-Let us walk you through all 10 of them.
-
----
-
-### 1. Poland
-Poland does not always come up in conversations about studying medicine abroad, but it should. It is a full European Union member state, its universities are accredited and globally recognised, and the tuition fees are significantly lower than what you would pay in Western Europe.
-
-**Quick Facts:**
-*   **Tuition**: $7,000 – $13,400 per year
-*   **Living Costs**: $400 – $800 per month
-*   **Duration**: 6 years (English-taught)
-
-Polish medical degrees are listed in the World Directory of Medical Schools (WDOMS), and graduates are eligible to sit for licensing exams like PLAB and USMLE. For your student visa, you will apply for a Polish national visa (Type D). Processing generally takes between four and eight weeks.
-
-### 2. Hungary
-Hungary is an EU member state with a long track record of training international doctors. It has universities that are respected globally, including Semmelweis University, the University of Debrecen, and the University of Pecs.
-
-**Quick Facts:**
-*   **Tuition**: $10,000 – $20,000 per year
-*   **Living Costs**: $600 – $900 per month
-*   **Scholarship**: Stipendium Hungaricum (Covers tuition, accommodation, and stipend)
-
-A degree from Hungary is recognised across the EU and accepted for licensing exams including PLAB and USMLE. Nigerian students are eligible for the Stipendium Hungaricum scholarship, which can drop your costs to near zero.
-
-### 3. Russia
-Russia has one of the longest histories of training African medical students. Affordability is a significant part of why.
-
-**Quick Facts:**
-*   **Tuition**: $2,800 – $4,300 per year
-*   **Living Costs**: $425 – $685 per month
-*   **Total Program Cost**: Approximately $17,000 – $26,000
-
-While highly affordable, the current geopolitical situation allows for practical complications, including international banking challenges. Before you commit, speak to current Nigerian students who are already there to get firsthand accounts of the experience.
-
-### 4. India
-India is a destination that Nigerian medical students often overlook. With over 700 medical colleges and enormous clinical exposure, India offers training competitive with many Western institutions.
-
-**Quick Facts:**
-*   **Tuition (Private)**: $5,000 – $15,000 per year
-*   **Living Costs**: $300 – $500 per month
-*   **Language**: English-medium across all major colleges
-
-Indian medical degrees can qualify graduates to sit for licensing exams in Nigeria, the UK, and the US. One major advantage is that English is widely used for both education and daily life.
-
-### 5. Philippines
-The Philippines has a very specific advantage: the curriculum is American-patterned. If your long-term plan involves the USMLE, this alignment can be a significant benefit.
-
-**Quick Facts:**
-*   **Tuition**: $3,000 – $6,000 per year
-*   **Living Costs**: $400 – $600 per month
-*   **Focus**: Success in USMLE-driven preparation
-
-The Philippines is an English-speaking country, removing the adjustment most other countries require. Filipino medical graduates have a strong track record when it comes to passing international licensing exams.
-
-### 6. Germany
-If you are willing to learn the German language (B2/C1 level), Germany might be the best deal on medical education anywhere in the world.
-
-**Quick Facts:**
-*   **Tuition**: Near zero (Public Universities)
-*   **Semester Fee**: $250 – $350
-*   **Requirements**: German proficiency is mandatory
-
-If you commit to the language and get admitted to a public university, you can graduate from a world-class program with almost no tuition debt.
-
-### 7. Turkey
-Turkey has grown significantly as a medical education destination. It sits at the intersection of Europe and Asia and offers English-taught programs at many well-regarded universities.
-
-**Quick Facts:**
-*   **Tuition (Public)**: $2,000 – $5,000 per year
-*   **Living Costs**: $400 – $700 per month
-*   **Hospital Exposure**: Modern healthcare systems with diverse clinical cases
-
-Before you commit, confirm the MDCN recognition status for your specific university, as not all Turkish institutions are on the approved list for Nigeria.
-
-### 8. Romania
-As a full EU member state, medical degrees from Romanian public universities carry EU recognition, opening doors for practice across Europe and Nigeria.
-
-**Quick Facts:**
-*   **Tuition (English-medium)**: $4,500 – $11,000 per year
-*   **Living Costs**: $400 – $700 per month
-*   **Community**: Significant local community of Nigerian and African students
-
-Romanian living costs are among the lowest in the EU, balancing high-quality education with financial reality.
-
-### 9. Georgia
-Georgia has become one of the fastest-growing destinations due to its affordable fees and English-taught programs.
-
-**Quick Facts:**
-*   **Tuition**: $4,500 – $7,000 per year
-*   **Living Costs**: $300 – $600 per month
-*   **Admission**: Often does not require UCAT or complex entrance exams
-
-If you have a strong academic record, the path to admission in Georgia is more straightforward than in most European countries.
-
-### 10. Cyprus
-Cyprus offers EU-standard education with a warm Mediterranean climate. English is widely spoken, making the transition from Nigeria smoother than most Eastern European options.
-
-**Quick Facts:**
-*   **Tuition**: $5,000 – $10,000 per year
-*   **Living Costs**: $600 – $900 per month
-*   **Location**: Always choose the Republic of Cyprus (EU) over Northern Cyprus for international recognition
-
----
-
-### Before You Apply: The 4 Critical Checkpoints
-None of these destinations will work for you if you skip the due diligence.
-
-1.  **MDCN & WDOMS Recognition**: Make sure your chosen university is recognized by the Medical and Dental Council of Nigeria and listed in the World Directory of Medical Schools.
-2.  **Calculate Your Real Budget**: Add visa fees, flights, health insurance, and setup costs (first 3 months).
-3.  **Language Barriers**: Even in English-taught programs, you will need conversational local language skills for clinical hospital rotations.
-4.  **Scholarship Hunting**: Investigate the Stipendium Hungaricum (Hungary) or DAAD (Germany) before paying full price.
-
-Studying medicine abroad is possible. It requires research, realistic planning, and honesty about your budget. JapaLearn AI exists to help you figure out which option actually makes sense for your specific situation.
-
-*Victory from JapaLearn · April 14, 2026*
-`,
-  faqs: [
-    {
-      question: "Are medical degrees from these countries recognized in Nigeria?",
-      answer: "Most are, but you must verify each specific university on the MDCN (Medical and Dental Council of Nigeria) approved list before applying. Listing in the World Directory of Medical Schools (WDOMS) is also a critical requirement."
-    },
-    {
-      question: "Is there a language barrier in these non-English speaking countries?",
-      answer: "Most universities on this list offer medicine in English. However, you will still need to learn the local language for clinical rotations to communicate with patients during your 4th, 5th, and 6th years."
-    },
-    {
-      question: "Can I work while studying medicine abroad?",
-      answer: "Medicine is a demanding full-time course. While some countries allow part-time student work, it is highly recommended to have your full financial backing secured so you can focus on your studies."
-    },
-    {
-      question: "What is the Stipendium Hungaricum scholarship?",
-      answer: "It is a Hungarian government scholarship that covers full tuition and accommodation, and provides a monthly stipend. It is one of the best ways for Nigerian students to study medicine for free in the EU."
-    }
-  ],
-  relatedPosts: [],
-  authorImage: "/images/victory.png"
-};
+// Post Data is now dynamic via BLOG_POSTS
 
 // ─── FAQ Accordion ────────────────────────────────────────────────────────────
 function FAQItem({ faq, index }) {
@@ -343,8 +193,37 @@ function ReadingProgress() {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function BlogPost() {
-  const post = POST_DATA;
+  const router = useRouter();
+  const { slug } = router.query;
   const [shareOpen, setShareOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Find the post based on the slug
+  const post = BLOG_POSTS.find((p) => p.slug === slug);
+  
+  // Find related posts (exclude current)
+  const relatedPosts = BLOG_POSTS.filter((p) => p.slug !== slug).slice(0, 3);
+
+  if (!mounted || !slug) return <div className="min-h-screen bg-white" />;
+  
+  if (!post) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 bg-gray-50">
+        <Navbar />
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Article Not Found</h1>
+          <p className="text-gray-600 mb-8">The Japa insight you're looking for seems to have moved or doesn't exist.</p>
+          <Link href="/blog" className="inline-flex items-center gap-2 px-8 py-3 rounded-full bg-primary text-white font-bold hover:scale-105 transition-all">
+            <ArrowRight className="w-4 h-4" /> Back to Blog
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -471,7 +350,7 @@ export default function BlogPost() {
                 <p className="text-muted-foreground text-sm mt-2">More expert migration insights for Nigerians</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {post.relatedPosts.map((related, index) => (
+                {relatedPosts.map((related, index) => (
                   <motion.div
                     key={related.id}
                     initial={{ opacity: 0, y: 20 }}
