@@ -2360,7 +2360,10 @@ function ProfileTab({ user, profile, answers, score, quizResult, onSignOut, rout
 
   useEffect(() => { setDarkMode(document.documentElement.classList.contains('dark')) }, [])
 
-  const profileUrl = `https://japalearn.ai/u/${user?.id}`
+  const referralCode = profile?.referral_code || ''
+  const profileUrl = referralCode
+    ? `https://japalearn.ai/u/${referralCode}`
+    : `https://japalearn.ai/u/${user?.id}`
   const handleCopyLink = () => {
     navigator.clipboard.writeText(profileUrl).then(() => {
       setCopied(true)
