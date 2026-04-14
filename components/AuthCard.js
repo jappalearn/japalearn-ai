@@ -401,31 +401,16 @@ export default function AuthCard({ defaultView = 'signup' }) {
       <style>{`
         @media (min-width: 1024px) {
           .lg-left-panel { display: flex !important; }
-          .auth-mobile-topbar { display: none !important; }
-          .auth-form-mt { margin-top: 0 !important; }
         }
       `}</style>
 
       <div style={{ minHeight: '100vh', width: '100%', display: 'flex', background: BG_PAGE }}>
         <LeftPanel view={view} quizScore={score} />
 
-        <main style={{ flex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', minHeight: '100vh', padding: '20px', boxSizing: 'border-box', overflowY: 'auto' }}>
-
-          {/* Mobile top bar */}
-          <div className="auth-mobile-topbar" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 20, background: 'rgba(247,249,255,0.92)', backdropFilter: 'blur(12px)', borderBottom: `1px solid ${BORDER_CARD}`, padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Logo size={28} />
-              <span style={{ fontSize: '15px', fontWeight: 700, color: '#000000', letterSpacing: '-0.4px', fontFamily: '"DM Sans", sans-serif' }}>
-                JapaLearn <span style={{ fontWeight: 800, color: BLUE_PRIMARY, marginLeft: '3px', fontSize: '13px' }}>AI</span>
-              </span>
-            </div>
-            <span style={{ fontSize: '11px', fontWeight: 700, color: BLUE_PRIMARY, background: '#EBF1FF', border: '1px solid rgba(30,77,215,0.15)', padding: '4px 12px', borderRadius: '20px', fontFamily: '"Inter", sans-serif' }}>
-              {view === 'login' ? 'Sign in' : 'Create account'}
-            </span>
-          </div>
+        <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '20px', boxSizing: 'border-box' }}>
 
           {/* Card */}
-          <div className="auth-form-mt" style={{ width: '100%', maxWidth: '440px', marginTop: '72px' }}>
+          <div style={{ width: '100%', maxWidth: '440px' }}>
             <div style={{ background: BG_CARD, borderRadius: '28px', boxShadow: '0px 32px 80px rgba(30,77,215,0.12), 0px 0px 0px 1px rgba(30,77,215,0.06)', overflow: 'hidden' }}>
 
               {/* Tab bar */}
