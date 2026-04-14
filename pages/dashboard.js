@@ -450,7 +450,7 @@ function QuizRequiredState({ icon: Icon, title, description, router }) {
 }
 
 // ── OVERVIEW TAB ─────────────────────────────────────────────────────────────
-function OverviewTab({ answers, score, flag, displayName, isNewUser, router, quizResult, setActiveTab }) {
+function OverviewTab({ answers, score, flag, displayName, isNewUser, router, quizResult, setActiveTab, curriculum, recentProgress }) {
   const visaRoute = answers.destination ? getVisaRoute(answers.destination, answers.segment) : null
   const today = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
   const greetingHour = new Date().getHours()
@@ -482,24 +482,45 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
     }
   }) : []
 
-  // Priority actions — real state
+  // Priority actions — evolve based on real user state
+  const hasStartedLessons = recentProgress.length > 0
   const actions = [
+    // No quiz → take assessment first
     !quizResult && {
       icon: TrendingUp, title: 'Take Migration Assessment', desc: 'Understand your readiness score',
       color: '#EF4369', bg: '#FDECEC', urgent: true, onClick: () => router.push('/quiz'),
     },
+    // Quiz done, no language test → urgent
     quizResult && (!answers.language || answers.language === 'Not taken') && {
       icon: Globe2, title: 'Register for Language Test', desc: 'IELTS / OET required for most visas',
       color: '#EF4369', bg: '#FDECEC', urgent: true, onClick: () => setActiveTab('resources'),
     },
-    quizResult && {
+    // Has curriculum and has started lessons → continue
+    quizResult && curriculum && hasStartedLessons && {
+      icon: BookOpen, title: 'Continue your module', desc: 'Pick up where you left off',
+      color: '#1E4DD7', bg: '#EBF1FF', urgent: false, onClick: () => setActiveTab('learning'),
+    },
+    // Has quiz but no curriculum yet, or curriculum exists but no lessons started → start
+    quizResult && !(curriculum && hasStartedLessons) && {
       icon: BookOpen, title: 'Start Your Curriculum', desc: `Personalised for ${answers.destination || 'your destination'}`,
       color: '#1E4DD7', bg: '#EBF1FF', urgent: false, onClick: () => setActiveTab('learning'),
     },
-    {
+    // Low readiness → improve IELTS
+    quizResult && score < 40 && {
+      icon: Globe2, title: 'Improve your IELTS preparation', desc: 'Your language score needs a boost',
+      color: '#F59A0A', bg: '#FFF7E6', urgent: false, onClick: () => setActiveTab('resources'),
+    },
+    // High readiness → documents
+    quizResult && score >= 70 && {
+      icon: FolderOpen, title: 'Prepare your documents', desc: "You're almost ready — get your docs in order",
+      color: '#21C474', bg: '#E8F9EE', urgent: false, onClick: () => setActiveTab('resources'),
+    },
+    // Mid readiness → documents
+    quizResult && score >= 40 && score < 70 && {
       icon: FolderOpen, title: 'Prepare Core Documents', desc: 'Passport, certificates & more',
       color: '#F59A0A', bg: '#FFF7E6', urgent: false, onClick: () => setActiveTab('resources'),
     },
+    // Always show roadmap if quiz done
     quizResult && {
       icon: Map, title: 'Review Your Roadmap', desc: 'See your 12-month migration plan',
       color: '#21C474', bg: '#E8F9EE', urgent: false, onClick: () => setActiveTab('roadmap'),
@@ -582,7 +603,7 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             {[
               { icon: TrendingUp, val: quizResult ? `${score}%` : '0', label: 'Readiness Score', color: '#F59A0A', bg: '#FFF7E6' },
-              { icon: BookOpen,   val: quizResult && answers.destination ? '1' : '—', label: 'Modules Active', color: '#3B75FF', bg: '#EBF1FF' },
+              { icon: BookOpen,   val: curriculum ? String(Math.max(1, new Set(recentProgress.map(p => p.module_index)).size)) : '—', label: 'Modules Active', color: '#3B75FF', bg: '#EBF1FF' },
               { icon: Flame,      val: '—', label: 'Day Streak',   color: '#21C474', bg: '#E8F9EE' },
               { icon: FilesIcon,  val: '—', label: 'Docs Ready',   color: '#EF4369', bg: '#FDECEC' },
             ].map(card => {
@@ -661,7 +682,7 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
             <div className="grid grid-cols-2 gap-2.5 content-center">
               {[
                 { icon: TrendingUp, val: quizResult ? `${score}%` : '0', label: 'Readiness Score', color: '#F59A0A' },
-                { icon: BookOpen,   val: quizResult && answers.destination ? '1' : '—', label: 'Modules Active', color: '#3B75FF' },
+                { icon: BookOpen,   val: curriculum ? String(Math.max(1, new Set(recentProgress.map(p => p.module_index)).size)) : '—', label: 'Modules Active', color: '#3B75FF' },
                 { icon: Flame,      val: '—', label: 'Day Streak',    color: '#21C474' },
                 { icon: FilesIcon,  val: '—', label: 'Docs Ready',    color: '#EF4369' },
               ].map(s => {
@@ -774,28 +795,35 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
         {/* Recent Activity (placeholder) */}
         <div className="bg-white rounded-[18px] p-5" style={{ border: '1px solid #F0F2FF', boxShadow: '0px 2px 12px rgba(30,77,215,0.05)' }}>
           <h2 className="text-[13px] font-bold text-[#18181B] mb-4" style={{ fontFamily: 'DM Sans, sans-serif' }}>Recent Activity</h2>
-          {quizResult ? (
-            <ul className="flex flex-col divide-y divide-[#F4F6FF]">
-              {[
-                { icon: CheckCircle2, title: 'Completed Migration Assessment', time: 'Recently',  color: '#21C474', bg: '#E8F9EE' },
-                { icon: TrendingUp,   title: `Readiness score: ${score}/100`,  time: 'Recently',  color: '#1E4DD7', bg: '#EBF1FF' },
-                { icon: Map,          title: 'Roadmap generated',              time: 'Recently',  color: '#F59A0A', bg: '#FFF7E6' },
-              ].map((item, i) => {
-                const Icon = item.icon
-                return (
-                  <li key={i} className="flex items-center gap-2.5 py-2.5">
-                    <div className="w-8 h-8 rounded-[8px] flex items-center justify-center shrink-0" style={{ background: item.bg }}>
-                      <Icon size={14} style={{ color: item.color }} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[12px] font-medium text-[#18181B] leading-snug truncate">{item.title}</p>
-                      <p className="text-[10px] text-[#B0B4C4]">{item.time}</p>
-                    </div>
-                  </li>
-                )
-              })}
-            </ul>
-          ) : (
+          {quizResult ? (() => {
+            const quizActivity = { icon: CheckCircle2, title: 'Completed Migration Assessment', time: quizResult.created_at ? new Date(quizResult.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'Recently', color: '#21C474', bg: '#E8F9EE' }
+            const lessonActivities = recentProgress.slice(0, 4).map(p => {
+              const mod = curriculum?.modules?.[p.module_index]
+              const lesson = mod?.lessons?.[p.lesson_index]
+              const title = lesson?.title ? `Completed: ${lesson.title}` : `Completed Module ${p.module_index + 1} – Lesson ${p.lesson_index + 1}`
+              const time = p.completed_at ? new Date(p.completed_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'Recently'
+              return { icon: BookOpen, title, time, color: '#1E4DD7', bg: '#EBF1FF' }
+            })
+            const allActivities = [...lessonActivities, quizActivity].slice(0, 5)
+            return (
+              <ul className="flex flex-col divide-y divide-[#F4F6FF]">
+                {allActivities.map((item, i) => {
+                  const Icon = item.icon
+                  return (
+                    <li key={i} className="flex items-center gap-2.5 py-2.5">
+                      <div className="w-8 h-8 rounded-[8px] flex items-center justify-center shrink-0" style={{ background: item.bg }}>
+                        <Icon size={14} style={{ color: item.color }} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12px] font-medium text-[#18181B] leading-snug truncate">{item.title}</p>
+                        <p className="text-[10px] text-[#B0B4C4]">{item.time}</p>
+                      </div>
+                    </li>
+                  )
+                })}
+              </ul>
+            )
+          })() : (
             <div className="text-center py-6">
               <p className="text-[12px] text-[#B0B4C4]">Your activity will appear here once you get started.</p>
             </div>
@@ -1874,7 +1902,7 @@ function ConversationsTab({ user, profile, answers }) {
           ))}
           {/* Coming soon overlay */}
           <div className="mt-2 mx-auto text-center px-4 py-3 rounded-[12px] max-w-xs" style={{ background: 'rgba(124,106,247,0.07)', border: '1px solid #DDD6FE' }}>
-            <p className="text-[11px] font-bold text-[#7C6AF7] mb-0.5">Full AI Chat — Coming in Coming Soon</p>
+            <p className="text-[11px] font-bold text-[#7C6AF7] mb-0.5">Full AI Chat — Coming Soon</p>
             <p className="text-[11px] text-[#82858A]">Two-way conversation, live answers, and personalised advice.</p>
           </div>
         </div>
@@ -2005,7 +2033,7 @@ function PeersTab({ answers }) {
 
       {/* Coming Soon notice */}
       <div className="text-center py-4 px-4 rounded-[14px]" style={{ background: 'rgba(124,106,247,0.06)', border: '1px solid #DDD6FE' }}>
-        <p className="text-[12px] font-bold text-[#7C6AF7] mb-0.5">Full Peer Network — Coming in Coming Soon</p>
+        <p className="text-[12px] font-bold text-[#7C6AF7] mb-0.5">Full Peer Network — Coming Soon</p>
         <p className="text-[11px] text-[#82858A]">Real profiles, DMs, and community threads for your exact migration route.</p>
       </div>
     </div>
@@ -2170,7 +2198,7 @@ function MarketplaceTab({ answers }) {
 
       {/* Coming Soon notice */}
       <div className="text-center py-4 px-4 rounded-[14px]" style={{ background: 'rgba(124,106,247,0.06)', border: '1px solid #DDD6FE' }}>
-        <p className="text-[12px] font-bold text-[#7C6AF7] mb-0.5">Live Booking — Coming in Coming Soon</p>
+        <p className="text-[12px] font-bold text-[#7C6AF7] mb-0.5">Live Booking — Coming Soon</p>
         <p className="text-[11px] text-[#82858A]">Real bookings, payments, and one-on-one consultant sessions will be live soon.</p>
       </div>
     </div>
@@ -2546,6 +2574,8 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('overview')
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const [isFirstVisit, setIsFirstVisit] = useState(false)
+  const [curriculum, setCurriculum] = useState(null)
+  const [recentProgress, setRecentProgress] = useState([])
 
   useEffect(() => {
     const load = async () => {
@@ -2614,6 +2644,30 @@ export default function Dashboard() {
 
       setProfile(profileData)
       setQuizResult(quizData)
+
+      // Fetch curriculum + recent lesson progress for personalised dashboard
+      if (quizData?.answers?.destination && quizData?.answers?.segment) {
+        const { data: currData } = await supabase
+          .from('curricula')
+          .select('id, modules')
+          .eq('user_id', session.user.id)
+          .eq('destination', quizData.answers.destination)
+          .eq('segment', quizData.answers.segment)
+          .maybeSingle()
+        if (currData) {
+          setCurriculum(currData)
+          const { data: progressData } = await supabase
+            .from('lesson_progress')
+            .select('module_index, lesson_index, completed, completed_at')
+            .eq('user_id', session.user.id)
+            .eq('curriculum_id', currData.id)
+            .eq('completed', true)
+            .order('completed_at', { ascending: false })
+            .limit(10)
+          setRecentProgress(progressData || [])
+        }
+      }
+
       setLoading(false)
     }
     load()
@@ -2679,7 +2733,7 @@ export default function Dashboard() {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.18 }}
             >
-              {activeTab === 'overview'       && <OverviewTab answers={answers} score={score} flag={flag} displayName={displayName} isNewUser={isFirstVisit} router={router} quizResult={quizResult} setActiveTab={setActiveTab} />}
+              {activeTab === 'overview'       && <OverviewTab answers={answers} score={score} flag={flag} displayName={displayName} isNewUser={isFirstVisit} router={router} quizResult={quizResult} setActiveTab={setActiveTab} curriculum={curriculum} recentProgress={recentProgress} />}
               {activeTab === 'learning'       && <LearningTab answers={answers} userId={user?.id} quizResult={quizResult} router={router} />}
               {activeTab === 'roadmap'        && <RoadmapTab answers={answers} score={score} quizResult={quizResult} router={router} />}
               {activeTab === 'resources'      && <ResourcesTab answers={answers} userId={user?.id} />}
