@@ -7,16 +7,28 @@ import {
   Lock, ChevronRight, ChevronDown, ChevronUp, CheckCircle2,
   CircleCheck, PlayCircle, Sparkles, ArrowRight,
   Globe2, Briefcase, Clock, Wallet, TrendingUp,
-  X, Star, Heart,
+  X, Star, Heart, AlertTriangle, XCircle, Calendar,
   Search, SlidersHorizontal, Play, ChevronLeft, Plus,
   Moon, Sun, User, Trash2, Camera, Save, Edit3,
-  FileText, File, Download, Filter, FilesIcon, Upload,
+  FileText, File, Download, Filter, FilesIcon, Upload, Flame,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { getScoreFlag } from '../lib/quizData'
 import Logo from '../lib/Logo'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
+
+// ── Mobile breakpoint hook ────────────────────────────────────────────────────
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
+  return isMobile
+}
 
 // ── Visa route lookup ─────────────────────────────────────────────────────────
 const VISA_ROUTES = {
@@ -77,17 +89,35 @@ function getScoreBreakdown(answers, score) {
   ]
 }
 
-// ── Nav items ─────────────────────────────────────────────────────────────────
-const NAV_ITEMS = [
-  { id: 'overview',      label: 'Home',           icon: LayoutDashboard, locked: false },
-  { id: 'learning',      label: 'Learning',        icon: BookOpen,        locked: false },
-  { id: 'roadmap',       label: 'My Roadmap',      icon: Map,             locked: false },
-  { id: 'resources',     label: 'Resources',       icon: FolderOpen,      locked: false },
-  { id: 'documents',     label: 'Documents',       icon: FilesIcon,       locked: false },
-  { id: 'conversations', label: 'Conversations',   icon: MessageSquare,   locked: true },
-  { id: 'peers',         label: 'Peers',           icon: Users,           locked: true },
-  { id: 'marketplace',   label: 'Marketplace',     icon: ShoppingBag,     locked: true },
+// ── Nav groups (new grouped design) ──────────────────────────────────────────
+const NAV_GROUPS = [
+  {
+    label: 'Main',
+    items: [
+      { id: 'overview',  label: 'Home',       icon: LayoutDashboard },
+      { id: 'learning',  label: 'Curriculum', icon: BookOpen },
+      { id: 'roadmap',   label: 'My Roadmap', icon: Map },
+      { id: 'resources', label: 'Resources',  icon: FolderOpen },
+    ],
+  },
+  {
+    label: 'Coming Soon',
+    items: [
+      { id: 'conversations', label: 'Conversations',   icon: MessageSquare },
+      { id: 'documents',     label: 'Document Upload', icon: FilesIcon },
+      { id: 'peers',         label: 'Peers',           icon: Users },
+      { id: 'marketplace',   label: 'Marketplace',     icon: ShoppingBag },
+    ],
+  },
+  {
+    label: 'Account',
+    items: [
+      { id: 'plans',   label: 'Subscription Plans', icon: Star },
+      { id: 'profile', label: 'My Profile',         icon: User },
+    ],
+  },
 ]
+const LOCKED_IDS = new Set(['plans'])
 const BOTTOM_NAV = [
   { id: 'overview', label: 'Home',      icon: LayoutDashboard },
   { id: 'learning', label: 'Learning',  icon: BookOpen },
@@ -112,76 +142,86 @@ function Sidebar({ activeTab, setActiveTab, onSignOut, isMobileOpen, onMobileClo
       </AnimatePresence>
 
       <aside className={cn(
-        "fixed top-0 left-0 h-full w-[240px] bg-white z-50 flex flex-col justify-between py-8 transition-transform duration-300",
-        "shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-r-[20px]",
+        "fixed top-0 left-0 h-full w-[260px] bg-white z-50 flex flex-col py-7 transition-transform duration-300 overflow-y-auto",
+        "shadow-[0px_14px_42px_rgba(8,15,52,0.08)] border-r border-[#ECEEFF]",
         "lg:translate-x-0",
         isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
-        {/* Top section */}
-        <div className="flex flex-col gap-12 px-8">
-          {/* Logo */}
-          <div className="flex items-center gap-2.5">
-            <Logo size={32} />
-            <span className="font-bold text-sm text-[#202020]" style={{ fontFamily: 'DM Sans, sans-serif' }}>
-              JapaLearn <span style={{ color: '#3b75ff' }}>AI</span>
-            </span>
-            <button className="ml-auto lg:hidden text-slate-400" onClick={onMobileClose}>
-              <X size={16} />
-            </button>
-          </div>
+        {/* Logo */}
+        <div className="flex items-center gap-2.5 px-6 mb-4">
+          <Logo size={32} />
+          <span className="font-bold text-sm text-[#18181B]" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+            JapaLearn <span style={{ color: '#1E4DD7' }}>AI</span>
+          </span>
+          <button className="ml-auto lg:hidden text-slate-400" onClick={onMobileClose}>
+            <X size={16} />
+          </button>
+        </div>
 
-          {/* Overview section */}
-          <div className="flex flex-col gap-2.5">
-            <p className="text-xs font-semibold text-[#3F3F3F] uppercase tracking-wider mb-2">Overview</p>
-            {NAV_ITEMS.filter(i => !i.locked).map((item) => {
-              const Icon = item.icon
-              const isActive = activeTab === item.id
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => { setActiveTab(item.id); onMobileClose() }}
-                  className={cn(
-                    "w-full flex items-center gap-3 px-0 py-2 rounded-[40px] text-sm font-medium transition-all",
-                    isActive ? "text-[#3b75ff]" : "text-[#202020] hover:text-[#3b75ff]"
-                  )}
-                >
-                  <Icon size={16} className="shrink-0" />
-                  {item.label}
-                </button>
-              )
-            })}
+        {/* Mobile-only: User card in sidebar */}
+        <div className="lg:hidden mx-4 mb-4 px-3 py-2.5 rounded-[14px] flex items-center gap-2.5 cursor-pointer"
+          style={{ background: 'linear-gradient(135deg, #F4F7FF 0%, #EBF1FF 100%)', border: '1px solid #E0E8FF' }}
+          onClick={() => { setActiveTab('profile'); onMobileClose() }}>
+          <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)' }}>
+            <span className="text-white text-sm font-bold">{userInitials}</span>
           </div>
-
-          {/* Coming soon */}
-          <div className="flex flex-col gap-2.5">
-            <p className="text-xs font-semibold text-[#3F3F3F] uppercase tracking-wider mb-2">Coming Soon</p>
-            {NAV_ITEMS.filter(i => i.locked).map((item) => {
-              const Icon = item.icon
-              return (
-                <div key={item.id} className="flex items-center gap-3 py-2 text-slate-300 cursor-default">
-                  <Icon size={16} className="shrink-0" />
-                  <span className="text-sm font-medium flex-1">{item.label}</span>
-                  <Lock size={11} className="shrink-0" />
-                </div>
-              )
-            })}
+          <div className="min-w-0">
+            <p className="text-[13px] font-bold text-[#18181B] leading-tight truncate">{userDisplayName}</p>
+            <p className="text-[11px] font-medium" style={{ color: '#3B75FF' }}>View profile →</p>
           </div>
         </div>
 
-        {/* Bottom: user avatar + settings icon */}
-        <div className="flex flex-col gap-3 px-8">
-          <div className="h-px bg-slate-100" />
+        {/* Nav groups */}
+        <div className="flex flex-col gap-6 px-4 flex-1">
+          {NAV_GROUPS.map((group) => (
+            <div key={group.label}>
+              <div className="flex items-center gap-2 px-2 mb-2">
+                <p className="text-[10px] font-bold text-[#B0B4C4] uppercase tracking-widest">{group.label}</p>
+              </div>
+              <div className="flex flex-col gap-0.5">
+                {group.items.map((item) => {
+                  const Icon = item.icon
+                  const isActive = activeTab === item.id
+                  const isLocked = LOCKED_IDS.has(item.id)
+                  if (isLocked) {
+                    return (
+                      <div key={item.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm cursor-default">
+                        <Icon size={16} className="shrink-0 text-[#D0D4E8]" />
+                        <span className="font-medium text-[#D0D4E8] flex-1">{item.label}</span>
+                        <Lock size={10} className="shrink-0 text-[#D0D4E8]" />
+                      </div>
+                    )
+                  }
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => { setActiveTab(item.id); onMobileClose() }}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left",
+                        isActive
+                          ? "bg-[#EBF1FF] text-[#1E4DD7]"
+                          : "text-[#4D4D56] hover:bg-[#F7F9FF] hover:text-[#1E4DD7]"
+                      )}
+                    >
+                      <Icon size={16} className="shrink-0" />
+                      {item.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Bottom: sign out only — avatar removed on desktop, My Profile is in nav */}
+        <div className="flex flex-col gap-3 px-4 mt-6">
+          <div className="h-px bg-[#ECEEFF]" />
           <button
-            onClick={() => { setActiveTab('profile'); onMobileClose() }}
-            className="flex items-center gap-3 py-2 group"
+            onClick={onSignOut}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-[#4D4D56] hover:bg-[#F7F9FF] hover:text-[#1E4DD7] transition-all text-left"
           >
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 transition-all group-hover:opacity-80" style={{ background: '#3b75ff' }}>
-              {userInitials}
-            </div>
-            <div className="flex-1 text-left min-w-0">
-              <p className="text-xs font-semibold text-[#202020] truncate">{userDisplayName}</p>
-              <p className="text-[10px] text-[#9E9E9E]">View profile</p>
-            </div>
+            <LogOut size={16} className="shrink-0" />
+            Sign out
           </button>
         </div>
       </aside>
@@ -423,193 +463,354 @@ function SearchBar({ answers, setActiveTab }) {
 
 // ── OVERVIEW TAB ─────────────────────────────────────────────────────────────
 function OverviewTab({ answers, score, flag, displayName, isNewUser, router, quizResult, setActiveTab }) {
-  const destinationFlag = COUNTRY_FLAGS[answers.destination] || '🌍'
   const visaRoute = answers.destination ? getVisaRoute(answers.destination, answers.segment) : null
+  const today = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
+  const greetingHour = new Date().getHours()
+  const greeting = greetingHour < 12 ? 'Good morning' : greetingHour < 17 ? 'Good afternoon' : 'Good evening'
 
-  const flagConfig = {
-    green:  { label: 'Strong Profile',    color: '#10b981', bg: 'rgba(16,185,129,0.12)'  },
-    yellow: { label: 'Developing Profile', color: '#3b75ff', bg: 'rgba(59,117,255,0.12)' },
-    red:    { label: 'Needs Improvement',  color: '#f43f5e', bg: 'rgba(244,63,94,0.12)'  },
-  }
-  const fc = flagConfig[flag] || flagConfig.yellow
+  // Score area tags — derived from real quiz answers
+  const scoreBreakdown = quizResult ? getScoreBreakdown(answers, score) : []
+  const areaStatus = (pct) => pct >= 70 ? 'ok' : pct >= 40 ? 'warn' : 'bad'
+  const heroTags = quizResult ? [
+    { label: 'Language',     status: areaStatus(Math.round(((scoreBreakdown.find(s=>s.label==='Language')?.score||0) / 20)*100)) },
+    { label: 'Work Exp.',    status: areaStatus(Math.round(((scoreBreakdown.find(s=>s.label==='Experience')?.score||0) / 30)*100)) },
+    { label: 'Education',    status: areaStatus(Math.round(((scoreBreakdown.find(s=>s.label==='Education')?.score||0) / 20)*100)) },
+    { label: 'Savings',      status: areaStatus(Math.round(((scoreBreakdown.find(s=>s.label==='Savings')?.score||0) / 10)*100)) },
+  ] : []
 
-  const aspirational = {
-    green:  `Strong profile, ${displayName}. You're closer to ${answers.destination || 'your destination'} than you think — keep the momentum.`,
-    yellow: `You're building something real, ${displayName}. Every lesson brings ${answers.destination || 'your destination'} closer.`,
-    red:    `Great journeys start here, ${displayName}. Let's build the profile that gets you to ${answers.destination || 'your destination'}.`,
-  }
+  // Score categories for breakdown section
+  const scoreCategories = quizResult ? scoreBreakdown.map(item => {
+    const pct = Math.round((item.score / item.max) * 100)
+    const st = areaStatus(pct)
+    return {
+      label: item.label,
+      score: pct,
+      color: st === 'ok' ? '#21C474' : st === 'warn' ? '#F59A0A' : '#EF4369',
+      bg:    st === 'ok' ? '#E8F9EE' : st === 'warn' ? '#FFF7E6' : '#FDECEC',
+      status: st,
+    }
+  }) : []
 
-  const milestones = [
-    {
-      icon: CheckCircle2,
-      status: quizResult ? 'Completed' : 'Not started',
-      label: 'Migration Assessment',
-      done: !!quizResult,
-      cta: !quizResult ? () => router.push('/quiz') : null,
+  // Priority actions — real state
+  const actions = [
+    !quizResult && {
+      icon: TrendingUp, title: 'Take Migration Assessment', desc: 'Understand your readiness score',
+      color: '#EF4369', bg: '#FDECEC', urgent: true, onClick: () => router.push('/quiz'),
+    },
+    quizResult && (!answers.language || answers.language === 'Not taken') && {
+      icon: Globe2, title: 'Register for Language Test', desc: 'IELTS / OET required for most visas',
+      color: '#EF4369', bg: '#FDECEC', urgent: true, onClick: () => setActiveTab('resources'),
+    },
+    quizResult && {
+      icon: BookOpen, title: 'Start Your Curriculum', desc: `Personalised for ${answers.destination || 'your destination'}`,
+      color: '#1E4DD7', bg: '#EBF1FF', urgent: false, onClick: () => setActiveTab('learning'),
     },
     {
-      icon: Globe2,
-      status: answers.language && answers.language !== 'Not taken' ? 'Registered' : 'Not started',
-      label: 'Language Test',
-      done: !!(answers.language && answers.language !== 'Not taken'),
-      cta: null,
+      icon: FolderOpen, title: 'Prepare Core Documents', desc: 'Passport, certificates & more',
+      color: '#F59A0A', bg: '#FFF7E6', urgent: false, onClick: () => setActiveTab('resources'),
     },
-    {
-      icon: FolderOpen,
-      status: 'Not started',
-      label: 'Core Documents',
-      done: false,
-      cta: null,
+    quizResult && {
+      icon: Map, title: 'Review Your Roadmap', desc: 'See your 12-month migration plan',
+      color: '#21C474', bg: '#E8F9EE', urgent: false, onClick: () => setActiveTab('roadmap'),
     },
-  ]
+  ].filter(Boolean).slice(0, 4)
 
-  const LEARNING_MODULES = [
-    { title: 'Immigration Pathways & Visa Routes', category: 'Foundation', progress: quizResult ? 15 : 0 },
-    { title: 'Language Test Preparation Guide',    category: 'Skills',     progress: 0 },
-    { title: 'Document Collection & Verification', category: 'Documents',  progress: 0 },
-  ]
-
-  const moduleGradients = ['from-blue-100 to-blue-50', 'from-sky-100 to-blue-50', 'from-blue-50 to-sky-50']
+  const scoreLabel = score >= 70 ? 'Strong' : score >= 45 ? 'Moderate' : 'Developing'
+  const isMobile = useIsMobile()
 
   return (
-    <div className="flex flex-col gap-6 pb-10">
+    <div className="flex flex-col gap-5 pb-10 max-w-[960px]">
 
-      {/* Search + Filter */}
-      <SearchBar answers={answers} setActiveTab={setActiveTab} />
+      {/* ── Greeting Header ── */}
+      <div>
+        <p style={{ margin: '0 0 3px', fontSize: 11, color: '#A0A3AB', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.07em', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <Calendar size={11} style={{ flexShrink: 0 }} />
+          <span>{today}{answers.destination ? ` · ${answers.destination} Pathway` : ''}</span>
+        </p>
+        <h1 style={{ margin: '0 0 4px', fontSize: isMobile ? 22 : 30, fontWeight: 800, color: '#18181B', letterSpacing: '-0.6px', fontFamily: 'DM Sans, sans-serif', lineHeight: 1.15 }}>
+          {isNewUser ? `Welcome, ${displayName}! 🎉` : `${greeting}, ${displayName} 👋`}
+        </h1>
+        {quizResult ? (
+          <p style={{ margin: 0, fontSize: 13, color: '#6B7280', lineHeight: 1.5 }}>
+            You&apos;re <strong style={{ color: score >= 70 ? '#21C474' : score >= 45 ? '#F59A0A' : '#EF4369' }}>{score}% ready</strong> — keep building your profile.
+          </p>
+        ) : (
+          <p style={{ margin: 0, fontSize: 13, color: '#6B7280' }}>Take the migration quiz to unlock your personalised roadmap.</p>
+        )}
+      </div>
 
-      {/* Hero banner */}
-      <div className="relative rounded-[20px] overflow-hidden px-6 py-5" style={{ background: '#3b75ff', minHeight: 181 }}>
-        <div className="absolute inset-0 pointer-events-none" style={{
-          backgroundImage: 'linear-gradient(rgba(255,255,255,0.08) 1px,transparent 1px),linear-gradient(to right,rgba(255,255,255,0.08) 1px,transparent 1px)',
-          backgroundSize: '28px 28px',
-        }} />
-        <div className="absolute right-[77px] top-[45px] w-20 h-20 bg-white opacity-20 rotate-45 rounded-lg pointer-events-none" />
-        <div className="absolute right-2 top-[93px] w-20 h-20 bg-white opacity-10 rotate-12 rounded-lg pointer-events-none" />
-        <div className="absolute right-[148px] top-[122px] w-20 h-20 bg-white opacity-10 -rotate-12 rounded-lg pointer-events-none" />
-        <div className="absolute right-[26px] -top-[20px] w-16 h-16 bg-white opacity-10 rotate-6 rounded-lg pointer-events-none" />
-
-        <div className="relative z-10 flex items-start justify-between gap-4">
-          <div className="flex-1">
-            <p className="text-white/60 text-[10px] uppercase tracking-widest mb-1">
-              {isNewUser ? 'Welcome to JapaLearn AI' : 'Welcome back'}
+      {isMobile ? (
+        <>
+          {/* ── MOBILE Hero Readiness Card ── */}
+          <div style={{ background: 'linear-gradient(135deg, #0F2E99 0%, #1E4DD7 50%, #3B75FF 100%)', borderRadius: 20, padding: 20, boxShadow: '0px 12px 40px rgba(30,77,215,0.3)' }}>
+            <p style={{ margin: '0 0 4px', fontSize: 10, color: 'rgba(255,255,255,0.6)', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <TrendingUp size={10} style={{ flexShrink: 0 }} /> Migration Readiness
             </p>
-            <h2 className="text-white font-bold text-xl sm:text-2xl leading-snug mb-2" style={{ fontFamily: 'DM Sans, sans-serif' }}>
-              {isNewUser ? `Welcome, ${displayName}! 🎉` : `Welcome back, ${displayName}! 👋`}
-            </h2>
-            {answers.destination && (
-              <div className="flex items-center gap-2 mb-3 flex-wrap">
-                <span>{destinationFlag}</span>
-                <span className="text-white/90 text-sm font-medium">{answers.destination}</span>
-                {visaRoute && <><span className="text-white/30">·</span><span className="text-white/60 text-xs truncate max-w-[160px]">{visaRoute}</span></>}
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, marginBottom: 10 }}>
+              <p style={{ margin: 0, fontSize: 48, fontWeight: 900, color: '#FFFFFF', letterSpacing: '-3px', fontFamily: 'DM Sans, sans-serif', lineHeight: 1 }}>
+                {quizResult ? score : '—'}
+              </p>
+              {quizResult && (
+                <div style={{ paddingBottom: 6 }}>
+                  <span style={{ fontSize: 18, fontWeight: 700, color: 'rgba(255,255,255,0.7)' }}>%</span>
+                  <p style={{ margin: 0, fontSize: 10, color: 'rgba(255,255,255,0.55)', fontWeight: 600 }}>{scoreLabel}</p>
+                </div>
+              )}
+              <div style={{ marginLeft: 'auto', paddingBottom: 4 }}>
+                <button
+                  onClick={() => quizResult ? setActiveTab('learning') : router.push('/quiz')}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 16px', background: '#FFFFFF', border: 'none', borderRadius: 10, color: '#1E4DD7', fontSize: 12, fontWeight: 700, cursor: 'pointer', boxShadow: '0px 4px 14px rgba(0,0,0,0.18)', fontFamily: 'Inter, sans-serif' }}
+                >
+                  <span>{quizResult ? 'Continue' : 'Start'}</span>
+                  <ArrowRight size={12} style={{ color: '#1E4DD7' }} />
+                </button>
+              </div>
+            </div>
+            <div style={{ height: 6, background: 'rgba(255,255,255,0.15)', borderRadius: 3, overflow: 'hidden', marginBottom: 8 }}>
+              <div style={{ width: `${quizResult ? Math.max(score, 5) : 0}%`, height: '100%', background: 'linear-gradient(90deg, rgba(255,255,255,0.6), #FFFFFF)', borderRadius: 3 }} />
+            </div>
+            {visaRoute && <p style={{ margin: '0 0 12px', fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>{visaRoute}</p>}
+            {heroTags.length > 0 && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                {heroTags.map(tag => (
+                  <div key={tag.label} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 10px', background: 'rgba(255,255,255,0.1)', borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)' }}>
+                    {tag.status === 'ok'   && <CheckCircle2 size={13} style={{ color: '#4ADE80', flexShrink: 0 }} />}
+                    {tag.status === 'warn' && <AlertTriangle size={13} style={{ color: '#FCD34D', flexShrink: 0 }} />}
+                    {tag.status === 'bad'  && <XCircle size={13} style={{ color: '#F87171', flexShrink: 0 }} />}
+                    <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.85)', fontWeight: 500, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tag.label}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, flexShrink: 0, color: tag.status === 'ok' ? '#4ADE80' : tag.status === 'warn' ? '#FCD34D' : '#F87171' }}>
+                      {tag.status === 'ok' ? '✓' : tag.status === 'warn' ? '!' : '✗'}
+                    </span>
+                  </div>
+                ))}
               </div>
             )}
-            <p className="text-white/70 text-sm leading-relaxed max-w-xs">
-              {aspirational[flag] || aspirational.yellow}
-            </p>
           </div>
-          {quizResult ? (
-            <div className="bg-white/15 border border-white/20 rounded-2xl px-4 py-3 text-center shrink-0 min-w-[90px]">
-              <p className="text-white/60 text-[9px] uppercase tracking-widest mb-0.5">Score</p>
-              <p className="text-white font-black text-3xl leading-none mb-0.5" style={{ fontFamily: 'DM Sans, sans-serif' }}>{score}</p>
-              <p className="text-[9px] font-bold" style={{ color: fc.bg === 'rgba(16,185,129,0.12)' ? '#86efac' : fc.bg === 'rgba(244,63,94,0.12)' ? '#fca5a5' : '#bfdbfe' }}>{fc.label}</p>
-            </div>
-          ) : (
-            <button onClick={() => router.push('/quiz')} className="text-white text-xs font-semibold px-4 py-2.5 rounded-full shrink-0" style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)' }}>
-              Take Quiz →
-            </button>
-          )}
-        </div>
-      </div>
 
-      {/* Milestone cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {milestones.map((m) => {
-          const Icon = m.icon
-          return (
-            <div
-              key={m.label}
-              onClick={!m.done && m.cta ? m.cta : undefined}
-              className={cn(
-                "bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-xl p-3 flex items-center gap-3",
-                !m.done && m.cta ? "cursor-pointer hover:shadow-md transition-shadow" : ""
-              )}
-            >
-              <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: m.done ? 'rgba(16,185,129,0.12)' : 'rgba(59,117,255,0.12)' }}>
-                <Icon size={16} style={{ color: m.done ? '#10b981' : '#3b75ff' }} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] text-[#9E9E9E]">{m.status}</p>
-                <p className="text-xs font-semibold text-[#202020] truncate">{m.label}</p>
-              </div>
-              {m.done && <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />}
-              {!m.done && m.cta && <ChevronRight size={14} className="text-[#9E9E9E] shrink-0" />}
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Continue Learning */}
-      <div>
-        <div className="flex items-center justify-between mb-5">
-          <h3 className="text-base font-semibold text-[#202020]">Continue Learning</h3>
-          <button onClick={() => setActiveTab('learning')} className="text-xs font-medium hover:opacity-70 transition-opacity" style={{ color: '#3b75ff' }}>See all →</button>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {LEARNING_MODULES.map((mod, i) => (
-            <div
-              key={i}
-              className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-3 relative cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => setActiveTab('learning')}
-            >
-              <div className={`h-[100px] bg-gradient-to-br ${moduleGradients[i]} rounded-xl mb-3 flex items-center justify-center`}>
-                <BookOpen size={26} className="text-blue-300" />
-              </div>
-              <span className="text-[8px] font-semibold uppercase px-2 py-1 rounded-lg" style={{ background: 'rgba(59,117,255,0.1)', color: '#3b75ff' }}>{mod.category}</span>
-              <h4 className="text-sm font-medium text-[#202020] mt-2 mb-2 leading-snug">{mod.title}</h4>
-              <div className="h-1.5 bg-[#F0F0F0] rounded-full mb-3">
-                <div className="h-1.5 rounded-full transition-all duration-700" style={{ width: `${mod.progress}%`, background: '#3b75ff' }} />
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full flex items-center justify-center text-[8px] font-bold text-white shrink-0" style={{ background: '#3b75ff' }}>J</div>
-                <div>
-                  <p className="text-[10px] font-medium text-[#202020]">JapaLearn AI</p>
-                  <p className="text-[8px] text-[#9E9E9E]">Migration Specialist</p>
-                </div>
-              </div>
-              <button className="absolute top-5 right-5 w-5 h-5 rounded-full flex items-center justify-center" style={{ background: 'rgba(59,117,255,0.15)' }}>
-                <Heart size={8} style={{ color: '#3b75ff' }} />
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Readiness score breakdown row */}
-      {quizResult && (
-        <div className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-[#202020]">Score Breakdown</h3>
-            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full" style={{ background: fc.bg, color: fc.color }}>{fc.label}</span>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {getScoreBreakdown(answers, score).map((item) => {
-              const pct = Math.round((item.score / item.max) * 100)
-              const barColor = pct >= 70 ? '#10b981' : pct < 40 ? '#f43f5e' : '#3b75ff'
+          {/* ── MOBILE 2×2 Stat Cards ── */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            {[
+              { icon: TrendingUp, val: quizResult ? `${score}%` : '—', label: 'Readiness Score', color: '#F59A0A', bg: '#FFF7E6' },
+              { icon: BookOpen,   val: quizResult && answers.destination ? '3' : '0', label: 'Modules Active', color: '#3B75FF', bg: '#EBF1FF' },
+              { icon: Flame,      val: '—', label: 'Day Streak',   color: '#21C474', bg: '#E8F9EE' },
+              { icon: FilesIcon,  val: '—', label: 'Docs Ready',   color: '#EF4369', bg: '#FDECEC' },
+            ].map(card => {
+              const Icon = card.icon
               return (
-                <div key={item.label} className="bg-slate-50 rounded-xl p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-[10px] font-semibold text-[#5F5F5F]">{item.label}</p>
-                    <p className="text-[10px] font-bold" style={{ color: barColor }}>{item.score}/{item.max}</p>
+                <div key={card.label} style={{ background: '#FFFFFF', borderRadius: 16, padding: 14, border: '1px solid #F0F2FF', boxShadow: '0px 2px 8px rgba(30,77,215,0.04)' }}>
+                  <div style={{ width: 30, height: 30, borderRadius: 9, background: card.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+                    <Icon size={14} style={{ color: card.color }} />
                   </div>
-                  <div className="w-full h-1.5 rounded-full bg-[#E8E8E8]">
-                    <div className="h-1.5 rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: barColor }} />
-                  </div>
+                  <p style={{ margin: '0 0 1px', fontSize: 20, fontWeight: 800, color: '#18181B', fontFamily: 'DM Sans, sans-serif', letterSpacing: '-0.5px', lineHeight: 1 }}>{card.val}</p>
+                  <p style={{ margin: 0, fontSize: 10, color: '#82858A', fontWeight: 500, lineHeight: 1.3 }}>{card.label}</p>
                 </div>
               )
             })}
           </div>
+        </>
+      ) : (
+        /* ── DESKTOP Hero Readiness Banner ── */
+        <div className="rounded-[24px] p-8 overflow-hidden" style={{ background: 'linear-gradient(135deg, #0F2E99 0%, #1E4DD7 45%, #3B75FF 80%, #6094FF 100%)', boxShadow: '0px 20px 60px rgba(30,77,215,0.3)' }}>
+          <div className="flex items-stretch gap-8 flex-wrap">
+            {/* Score column */}
+            <div className="flex-1 min-w-[160px]">
+              <p className="text-[10px] font-bold text-white/60 uppercase tracking-widest mb-2 flex items-center gap-1">
+                <TrendingUp size={10} className="shrink-0" /> Migration Readiness
+              </p>
+              {quizResult ? (
+                <>
+                  <div className="flex items-end gap-2 mb-3">
+                    <p className="text-[56px] font-black text-white leading-none" style={{ fontFamily: 'DM Sans, sans-serif', letterSpacing: '-3px' }}>{score}</p>
+                    <div className="pb-2">
+                      <span className="text-xl font-bold text-white/70">%</span>
+                      <p className="text-[11px] font-semibold text-white/55 leading-tight">{scoreLabel}</p>
+                    </div>
+                  </div>
+                  <div className="h-2 rounded-full mb-3 max-w-[220px] overflow-hidden" style={{ background: 'rgba(255,255,255,0.15)' }}>
+                    <div className="h-full rounded-full" style={{ width: `${score}%`, background: 'linear-gradient(90deg, rgba(255,255,255,0.6), #FFFFFF)' }} />
+                  </div>
+                  {visaRoute && <p className="text-[11px] text-white/50 mb-4">{visaRoute}</p>}
+                </>
+              ) : (
+                <div className="mb-4">
+                  <p className="text-white/70 text-sm mb-3">No assessment taken yet</p>
+                </div>
+              )}
+              <button
+                onClick={() => quizResult ? setActiveTab('learning') : router.push('/quiz')}
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold transition-all hover:shadow-lg"
+                style={{ background: '#FFFFFF', color: '#1E4DD7', boxShadow: '0px 6px 20px rgba(0,0,0,0.18)' }}
+              >
+                <span>{quizResult ? 'Continue Learning' : 'Take Assessment'}</span>
+                <ArrowRight size={14} style={{ color: '#1E4DD7' }} />
+              </button>
+            </div>
+            {/* Divider */}
+            {heroTags.length > 0 && <div className="w-px self-stretch" style={{ background: 'rgba(255,255,255,0.1)' }} />}
+            {/* Score by Area */}
+            {heroTags.length > 0 && (
+              <div className="flex flex-col justify-center gap-2.5 min-w-[150px]">
+                <p className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-1">Score by Area</p>
+                {heroTags.map(tag => (
+                  <div key={tag.label} className="flex items-center gap-2.5">
+                    {tag.status === 'ok'   && <CheckCircle2 size={14} style={{ color: '#4ADE80' }} className="shrink-0" />}
+                    {tag.status === 'warn' && <AlertTriangle size={14} style={{ color: '#FCD34D' }} className="shrink-0" />}
+                    {tag.status === 'bad'  && <XCircle size={14} style={{ color: '#F87171' }} className="shrink-0" />}
+                    <span className="text-[13px] text-white/85 font-medium flex-1">{tag.label}</span>
+                    <span className="text-[11px] font-bold ml-auto" style={{ color: tag.status === 'ok' ? '#4ADE80' : tag.status === 'warn' ? '#FCD34D' : '#F87171' }}>
+                      {tag.status === 'ok' ? 'Strong' : tag.status === 'warn' ? 'Improve' : 'Urgent'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {/* Divider */}
+            <div className="w-px self-stretch" style={{ background: 'rgba(255,255,255,0.1)' }} />
+            {/* Quick stats */}
+            <div className="grid grid-cols-2 gap-2.5 content-center">
+              {[
+                { icon: TrendingUp, val: quizResult ? `${score}%` : '—', label: 'Readiness Score', color: '#F59A0A' },
+                { icon: BookOpen,   val: quizResult && answers.destination ? '3' : '0', label: 'Modules Active', color: '#3B75FF' },
+                { icon: Flame,      val: '—', label: 'Day Streak',    color: '#21C474' },
+                { icon: FilesIcon,  val: '—', label: 'Docs Ready',    color: '#EF4369' },
+              ].map(s => {
+                const Icon = s.icon
+                return (
+                  <div key={s.label} className="px-4 py-3 rounded-[14px]" style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)', minWidth: '90px' }}>
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center mb-2" style={{ background: 'rgba(255,255,255,0.15)' }}>
+                      <Icon size={14} style={{ color: 'rgba(255,255,255,0.85)' }} />
+                    </div>
+                    <p className="text-xl font-black text-white leading-none mb-0.5" style={{ fontFamily: 'DM Sans, sans-serif', letterSpacing: '-0.5px' }}>{s.val}</p>
+                    <p className="text-[10px] text-white/55 font-medium leading-tight">{s.label}</p>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
         </div>
       )}
+
+      {/* ── Priority Actions ── */}
+      <div className="bg-white rounded-[20px] p-5 sm:p-6" style={{ border: '1px solid #F0F2FF', boxShadow: '0px 2px 16px rgba(30,77,215,0.06)' }}>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-[15px] font-bold text-[#18181B] flex items-center gap-2" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+            <span className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #FF6B35, #FF8C42)' }}>
+              <Flame size={13} className="text-white" />
+            </span>
+            Priority Actions
+          </h2>
+          {actions.some(a => a.urgent) && (
+            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full" style={{ color: '#EF4369', background: '#FDECEC' }}>
+              {actions.filter(a => a.urgent).length} urgent
+            </span>
+          )}
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          {actions.map((action) => {
+            const Icon = action.icon
+            return (
+              <button
+                key={action.title}
+                onClick={action.onClick}
+                className="flex items-start gap-3 p-3.5 rounded-[14px] text-left w-full transition-all hover:-translate-y-[1px]"
+                style={{ background: action.urgent ? `linear-gradient(135deg, ${action.bg}, #fff)` : '#FAFBFF', border: `1.5px solid ${action.urgent ? action.color + '44' : '#F0F2FF'}`, cursor: 'pointer' }}
+              >
+                <div className="w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0" style={{ background: action.bg }}>
+                  <Icon size={16} style={{ color: action.color }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-bold text-[#18181B] mb-0.5 leading-snug">{action.title}</p>
+                  <p className="text-[11px] text-[#82858A] leading-tight">{action.desc}</p>
+                </div>
+                {action.urgent && (
+                  <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded shrink-0 mt-0.5" style={{ color: action.color, background: action.bg, letterSpacing: '0.05em' }}>Urgent</span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* ── Two column ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-5">
+
+        {/* Score Breakdown */}
+        <div className="bg-white rounded-[20px] p-5 sm:p-6" style={{ border: '1px solid #F0F2FF', boxShadow: '0px 2px 12px rgba(30,77,215,0.05)' }}>
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-[15px] font-bold text-[#18181B]" style={{ fontFamily: 'DM Sans, sans-serif' }}>Readiness Score Breakdown</h2>
+            <button onClick={() => setActiveTab('roadmap')} className="flex items-center gap-1 text-[12px] font-semibold transition-opacity hover:opacity-70" style={{ color: '#1E4DD7', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+              <span>View Roadmap</span>
+              <ArrowRight size={12} style={{ color: '#1E4DD7' }} />
+            </button>
+          </div>
+          {quizResult ? (
+            <div className="flex flex-col gap-4">
+              {scoreCategories.map(cat => (
+                <div key={cat.label}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-[26px] h-[26px] rounded-[7px] flex items-center justify-center shrink-0" style={{ background: cat.bg }}>
+                        {cat.status === 'ok'   && <CheckCircle2 size={13} style={{ color: cat.color }} />}
+                        {cat.status === 'warn' && <AlertTriangle size={13} style={{ color: cat.color }} />}
+                        {cat.status === 'bad'  && <XCircle size={13} style={{ color: cat.color }} />}
+                      </div>
+                      <span className="text-[13px] font-medium text-[#2D2D35]">{cat.label}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-full" style={{ color: cat.color, background: cat.bg }}>
+                        {cat.status === 'ok' ? 'Strong' : cat.status === 'warn' ? 'Improve' : 'Urgent'}
+                      </span>
+                      <span className="text-[13px] font-black text-[#18181B] min-w-[36px] text-right">{cat.score}%</span>
+                    </div>
+                  </div>
+                  <div className="h-[7px] rounded-full overflow-hidden" style={{ background: '#F0F2FF' }}>
+                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${cat.score}%`, background: `linear-gradient(90deg, ${cat.color}cc, ${cat.color})` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <TrendingUp size={28} style={{ color: '#E4E8FF' }} className="mx-auto mb-3" />
+              <p className="text-[13px] text-[#82858A] mb-4">Take the migration assessment to see your score breakdown.</p>
+              <button onClick={() => router.push('/quiz')} className="px-5 py-2.5 rounded-full text-sm font-semibold text-white" style={{ background: '#1E4DD7' }}>
+                Take Assessment →
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Recent Activity (placeholder) */}
+        <div className="bg-white rounded-[18px] p-5" style={{ border: '1px solid #F0F2FF', boxShadow: '0px 2px 12px rgba(30,77,215,0.05)' }}>
+          <h2 className="text-[13px] font-bold text-[#18181B] mb-4" style={{ fontFamily: 'DM Sans, sans-serif' }}>Recent Activity</h2>
+          {quizResult ? (
+            <ul className="flex flex-col divide-y divide-[#F4F6FF]">
+              {[
+                { icon: CheckCircle2, title: 'Completed Migration Assessment', time: 'Recently',  color: '#21C474', bg: '#E8F9EE' },
+                { icon: TrendingUp,   title: `Readiness score: ${score}/100`,  time: 'Recently',  color: '#1E4DD7', bg: '#EBF1FF' },
+                { icon: Map,          title: 'Roadmap generated',              time: 'Recently',  color: '#F59A0A', bg: '#FFF7E6' },
+              ].map((item, i) => {
+                const Icon = item.icon
+                return (
+                  <li key={i} className="flex items-center gap-2.5 py-2.5">
+                    <div className="w-8 h-8 rounded-[8px] flex items-center justify-center shrink-0" style={{ background: item.bg }}>
+                      <Icon size={14} style={{ color: item.color }} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12px] font-medium text-[#18181B] leading-snug truncate">{item.title}</p>
+                      <p className="text-[10px] text-[#B0B4C4]">{item.time}</p>
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          ) : (
+            <div className="text-center py-6">
+              <p className="text-[12px] text-[#B0B4C4]">Your activity will appear here once you get started.</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
@@ -695,34 +896,70 @@ function LearningTab({ answers, userId }) {
 
   if (!curriculum) {
     return (
-      <div className="flex flex-col gap-6 pb-10">
+      <div className="flex flex-col gap-6 pb-10 max-w-[820px]">
         <div>
-          <h2 className="text-xl font-bold text-[#202020] mb-1">Learning</h2>
-          <p className="text-sm text-[#5F5F5F]">Your AI-generated, structured learning path</p>
+          <h1 className="text-2xl font-extrabold text-[#18181B] mb-1" style={{ fontFamily: 'DM Sans, sans-serif', letterSpacing: '-0.6px' }}>Your AI Curriculum</h1>
+          <p className="text-[15px] text-[#82858A] leading-relaxed">Personalised, structured and built specifically for your migration profile — generated in seconds.</p>
         </div>
-        <div className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-10 text-center">
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ background: 'rgba(59,117,255,0.12)' }}>
-            <BookOpen size={24} style={{ color: '#3b75ff' }} />
+
+        {/* Generate card */}
+        <div className="rounded-[22px] p-8" style={{ background: 'linear-gradient(135deg, #1A42C2 0%, #2F67F8 55%, #5C8AFF 100%)', boxShadow: '0px 16px 48px rgba(30,77,215,0.3)' }}>
+          <p className="text-[11px] font-bold text-white/65 uppercase tracking-widest mb-2">What you&apos;ll get</p>
+          <h2 className="text-xl font-extrabold text-white mb-5 leading-snug" style={{ fontFamily: 'DM Sans, sans-serif', letterSpacing: '-0.4px' }}>
+            A complete {answers.destination || 'migration'} learning path, built around your profile
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-7">
+            {[
+              { icon: BookOpen,  title: '5–8 modules',       desc: 'Covering visa, language, docs & finance' },
+              { icon: TrendingUp, title: 'Personalised roadmap', desc: 'Matched to your readiness gaps' },
+              { icon: Sparkles,  title: 'AI-generated fast',  desc: 'Built in under 10 seconds' },
+              { icon: CheckCircle2, title: 'Fully unlocked', desc: 'Every lesson available to you' },
+            ].map(item => {
+              const Icon = item.icon
+              return (
+                <div key={item.title} className="rounded-[14px] p-4" style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)' }}>
+                  <div className="w-8 h-8 rounded-[9px] flex items-center justify-center mb-2.5" style={{ background: 'rgba(255,255,255,0.18)' }}>
+                    <Icon size={16} className="text-white" />
+                  </div>
+                  <p className="text-[13px] font-bold text-white mb-1">{item.title}</p>
+                  <p className="text-[11px] leading-snug" style={{ color: 'rgba(255,255,255,0.65)' }}>{item.desc}</p>
+                </div>
+              )
+            })}
           </div>
-          <h3 className="text-[#202020] font-bold text-xl mb-2">Generate Your Learning Path</h3>
-          <p className="text-[#5F5F5F] text-sm mb-7 max-w-sm mx-auto leading-relaxed">
-            Get a personalised {answers.destination || ''} learning path — structured modules, detailed lessons, and official sources built for your exact profile.
-          </p>
           <button
             onClick={generateCurriculum}
             disabled={loading || !answers.destination}
-            className="inline-flex items-center gap-2.5 text-white font-semibold py-3.5 px-8 rounded-full transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ background: '#3b75ff' }}
+            className="flex items-center gap-2.5 px-8 py-4 rounded-[14px] text-[16px] font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ background: '#FFFFFF', color: '#1E4DD7', boxShadow: '0px 8px 24px rgba(0,0,0,0.2)' }}
           >
             {loading ? (
-              <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Generating your curriculum...</>
+              <><span className="w-4 h-4 border-2 border-blue-200 border-t-[#1E4DD7] rounded-full animate-spin" /> Generating your curriculum…</>
             ) : (
-              <><Sparkles size={15} /> Generate My Learning Path</>
+              <><BookOpen size={18} style={{ color: '#1E4DD7' }} /><span>Generate My Curriculum</span><ArrowRight size={16} style={{ color: '#1E4DD7' }} /></>
             )}
           </button>
-          {genError && <p className="text-rose-500 text-xs mt-4">{genError}</p>}
-          {!answers.destination && <p className="text-[#9E9E9E] text-xs mt-4">Complete the quiz first to generate a learning path.</p>}
+          {genError && <p className="text-rose-200 text-xs mt-4">{genError}</p>}
         </div>
+
+        {/* Profile tags */}
+        {answers.destination && (
+          <div className="bg-white rounded-[18px] p-5 sm:p-6" style={{ border: '1px solid #F0F2FF', boxShadow: '0px 2px 12px rgba(30,77,215,0.05)' }}>
+            <h3 className="text-[14px] font-bold text-[#18181B] mb-3" style={{ fontFamily: 'DM Sans, sans-serif' }}>Your curriculum will be based on</h3>
+            <div className="flex flex-wrap gap-2">
+              {[
+                answers.destination,
+                answers.segment,
+                answers.language && answers.language !== 'Not taken' ? answers.language : 'Language Test Pending',
+                answers.experience ? `${answers.experience} Experience` : null,
+                answers.education || null,
+              ].filter(Boolean).map(tag => (
+                <span key={tag} className="px-3.5 py-1.5 rounded-full text-[13px] font-medium" style={{ background: '#F4F6FF', border: '1px solid #E0E8FF', color: '#1E4DD7' }}>{tag}</span>
+              ))}
+            </div>
+            {!answers.destination && <p className="text-[#9E9E9E] text-xs mt-2">Complete the quiz first to generate a learning path.</p>}
+          </div>
+        )}
       </div>
     )
   }
@@ -732,25 +969,27 @@ function LearningTab({ answers, userId }) {
   const progressPct = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0
 
   return (
-    <div className="flex flex-col gap-5 pb-10">
-      <div>
-        <h2 className="text-xl font-bold text-[#202020] mb-1">Learning</h2>
-        <p className="text-sm text-[#5F5F5F]">Your AI-generated learning path for {answers.destination}</p>
-      </div>
+    <div className="flex flex-col gap-5 pb-10 max-w-[820px]">
 
-      <div className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-5">
-        <div className="flex items-start justify-between gap-4 mb-4">
-          <div>
-            <p className="text-[#9E9E9E] text-xs uppercase tracking-widest mb-1">Your Learning Path</p>
-            <h3 className="text-[#202020] font-bold text-base">{curriculum.title}</h3>
-          </div>
-          <div className="text-right shrink-0">
-            <div className="text-2xl font-black" style={{ color: '#3b75ff' }}>{progressPct}%</div>
-            <div className="text-[#9E9E9E] text-xs">{completedCount}/{totalLessons} lessons</div>
-          </div>
-        </div>
-        <div className="w-full bg-[#D9D9D9] rounded-full h-2">
-          <div className="h-2 rounded-full transition-all duration-700" style={{ width: `${progressPct}%`, background: '#3b75ff' }} />
+      {/* Curriculum header card */}
+      <div className="rounded-[20px] p-6 sm:p-7" style={{ background: 'linear-gradient(135deg, #1A42C2 0%, #2F67F8 100%)', boxShadow: '0px 10px 36px rgba(30,77,215,0.28)' }}>
+        <p className="text-[11px] font-bold text-white/65 uppercase tracking-widest mb-1">Your Learning Path</p>
+        <h1 className="text-xl font-extrabold text-white mb-2 leading-snug" style={{ fontFamily: 'DM Sans, sans-serif', letterSpacing: '-0.4px' }}>{curriculum.title}</h1>
+        <p className="text-[13px] text-white/70 mb-5 leading-relaxed max-w-lg">
+          Complete this curriculum to confidently navigate your {answers.destination} migration — every module is built around your profile.
+        </p>
+        <div className="flex gap-3 flex-wrap">
+          {[
+            { label: 'Modules',   val: curriculum.modules.length },
+            { label: 'Lessons',   val: totalLessons },
+            { label: 'Progress',  val: `${progressPct}%` },
+            { label: 'Complete',  val: `${completedCount}/${totalLessons}` },
+          ].map(s => (
+            <div key={s.label} className="px-3.5 py-2.5 rounded-[12px] bg-white" style={{ border: '1px solid #E0E8FF', boxShadow: '0px 2px 8px rgba(30,77,215,0.04)' }}>
+              <p className="text-[11px] font-medium text-[#1E4DD7]">{s.label}</p>
+              <p className="text-[18px] font-black text-[#18181B]">{s.val}</p>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -763,40 +1002,63 @@ function LearningTab({ answers, userId }) {
         const quizPassedForModule = quizPassed[mi] === true
         const allLessonsDone = module.lessons.every((_, li) => progress[`${mi}-${li}`])
         const canTakeQuiz = moduleUnlocked && allLessonsDone && !quizPassedForModule
+        const modPct = module.lessons.length > 0 ? Math.round((completedInModule / module.lessons.length) * 100) : 0
 
         return (
-          <div key={mi} className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] overflow-hidden">
+          <div key={mi} className="bg-white rounded-[20px] overflow-hidden transition-all"
+            style={{ border: '1px solid #E0E8FF', boxShadow: isOpen ? '0px 8px 28px rgba(30,77,215,0.10)' : '0px 2px 10px rgba(8,15,52,0.05)' }}>
+
+            {/* Module header */}
             <button
               onClick={() => moduleUnlocked && setExpandedModule(isOpen ? -1 : mi)}
-              className={cn("w-full px-5 py-4 flex items-center justify-between transition-colors", moduleUnlocked ? "hover:bg-slate-50 cursor-pointer" : "cursor-not-allowed opacity-60")}
+              className={cn("w-full px-5 py-4 flex items-start gap-4 text-left transition-colors", moduleUnlocked ? "hover:bg-[#F7F9FF] cursor-pointer" : "cursor-not-allowed")}
             >
-              <div className="flex items-center gap-3">
-                <div className={cn(
-                  "w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold shrink-0",
-                  quizPassedForModule ? "bg-emerald-100 text-emerald-600" :
-                  !moduleUnlocked     ? "bg-slate-100 text-slate-400" :
-                  moduleStarted       ? "text-white" : "bg-slate-100 text-slate-500"
-                )} style={moduleStarted && !quizPassedForModule && moduleUnlocked ? { background: '#3b75ff' } : {}}>
-                  {quizPassedForModule ? <CircleCheck size={16} /> : !moduleUnlocked ? <Lock size={14} /> : mi + 1}
+              {/* Number badge */}
+              <div className={cn(
+                "w-9 h-9 rounded-[10px] flex items-center justify-center text-sm font-black shrink-0 mt-0.5",
+                quizPassedForModule ? "bg-emerald-50 text-emerald-600" :
+                !moduleUnlocked     ? "bg-[#F1F1F5] text-[#ADADBE]" :
+                moduleStarted       ? "text-white" : "bg-[#EBF1FF] text-[#1E4DD7]"
+              )} style={moduleStarted && !quizPassedForModule && moduleUnlocked ? { background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)' } : {}}>
+                {quizPassedForModule ? <CircleCheck size={15} /> : !moduleUnlocked ? <Lock size={13} /> : String(mi + 1).padStart(2, '0')}
+              </div>
+
+              {/* Title + meta */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap mb-1">
+                  <span className={cn("font-bold text-[14px] leading-snug", !moduleUnlocked ? "text-[#ADADBE]" : "text-[#18181B]")}>{module.title}</span>
+                  {module.urgent && moduleUnlocked && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full text-rose-600" style={{ background: 'rgba(239,68,68,0.08)' }}>Urgent</span>
+                  )}
+                  {quizPassedForModule && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full text-emerald-600" style={{ background: 'rgba(16,185,129,0.08)' }}>Complete</span>
+                  )}
                 </div>
-                <div className="text-left">
-                  <div className="text-[#202020] font-semibold text-sm">{module.title}</div>
-                  <div className="text-[#9E9E9E] text-xs mt-0.5">
-                    {moduleUnlocked ? `${completedInModule}/${module.lessons.length} lessons` : 'Pass previous module quiz to unlock'}
-                    {quizPassedForModule && <span className="text-emerald-600 ml-2">· Quiz passed ✓</span>}
+                <div className="flex items-center gap-3">
+                  <span className={cn("text-xs", !moduleUnlocked ? "text-[#ADADBE]" : "text-[#8C8C9D]")}>
+                    {!moduleUnlocked ? 'Pass previous module quiz to unlock' : `${completedInModule} of ${module.lessons.length} lessons`}
+                  </span>
+                </div>
+                {/* Progress bar */}
+                {moduleUnlocked && module.lessons.length > 0 && (
+                  <div className="mt-2.5 h-1.5 rounded-full bg-[#EBF1FF] overflow-hidden w-full max-w-[180px]">
+                    <div className="h-full rounded-full transition-all duration-500"
+                      style={{ width: `${modPct}%`, background: quizPassedForModule ? '#10b981' : 'linear-gradient(90deg, #1E4DD7, #3B75FF)' }} />
                   </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {module.urgent && moduleUnlocked && (
-                  <span className="bg-rose-50 text-rose-600 text-xs px-2 py-0.5 rounded-full font-semibold">Urgent</span>
                 )}
-                {moduleUnlocked && (isOpen ? <ChevronUp size={16} className="text-[#9E9E9E]" /> : <ChevronDown size={16} className="text-[#9E9E9E]" />)}
               </div>
+
+              {/* Chevron */}
+              {moduleUnlocked && (
+                <div className="shrink-0 mt-1 text-[#ADADBE]">
+                  {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </div>
+              )}
             </button>
 
+            {/* Expanded lesson list */}
             {isOpen && moduleUnlocked && (
-              <div className="border-t border-slate-100 divide-y divide-slate-100">
+              <div className="border-t divide-y" style={{ borderColor: '#F0F2FF', '--tw-divide-opacity': 1 }}>
                 {module.lessons.map((lesson, li) => {
                   const done = progress[`${mi}-${li}`]
                   const unlocked = isLessonUnlocked(mi, li)
@@ -806,58 +1068,76 @@ function LearningTab({ answers, userId }) {
                       onClick={() => openLesson(mi, li)}
                       disabled={!unlocked}
                       className={cn(
-                        "w-full px-5 py-3.5 flex items-center gap-4 text-left transition-all",
-                        unlocked && !done ? "hover:bg-blue-50 cursor-pointer" :
-                        done             ? "hover:bg-slate-50 cursor-pointer" :
+                        "w-full px-5 py-3.5 flex items-center gap-3.5 text-left transition-all",
+                        unlocked && !done ? "hover:bg-[#F7F9FF] cursor-pointer" :
+                        done             ? "hover:bg-[#F7F9FF] cursor-pointer" :
                                            "opacity-40 cursor-not-allowed"
                       )}
                     >
+                      {/* Lesson icon */}
                       <div className={cn(
-                        "w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-xs font-bold border",
-                        done     ? "bg-emerald-100 border-emerald-200 text-emerald-600" :
-                        unlocked ? "border-blue-200 text-white" :
-                                   "bg-slate-100 border-slate-200 text-slate-400"
-                      )} style={unlocked && !done ? { background: 'rgba(59,117,255,0.12)', borderColor: '#3b75ff' } : {}}>
-                        {done ? <CircleCheck size={14} /> : unlocked ? <PlayCircle size={14} style={{ color: '#3b75ff' }} /> : <Lock size={11} />}
+                        "w-7 h-7 rounded-full flex items-center justify-center shrink-0",
+                        done     ? "bg-emerald-50" :
+                        unlocked ? "bg-[#EBF1FF]" :
+                                   "bg-[#F1F1F5]"
+                      )}>
+                        {done
+                          ? <CircleCheck size={13} className="text-emerald-500" />
+                          : unlocked
+                            ? <PlayCircle size={13} style={{ color: '#1E4DD7' }} />
+                            : <Lock size={11} className="text-[#ADADBE]" />}
                       </div>
+
                       <div className="flex-1 min-w-0">
-                        <div className={cn("font-medium text-sm", done ? "text-[#9E9E9E] line-through" : "text-[#202020]")}>{lesson.title}</div>
-                        <p className="text-[#9E9E9E] text-xs mt-0.5 truncate">{lesson.summary}</p>
+                        <div className={cn("font-semibold text-[13px]",
+                          done ? "text-[#ADADBE] line-through" : unlocked ? "text-[#18181B]" : "text-[#ADADBE]"
+                        )}>{lesson.title}</div>
+                        <p className="text-[11px] text-[#9E9E9E] mt-0.5 truncate">{lesson.summary}</p>
                       </div>
-                      {done && <span className="text-emerald-600 text-xs font-medium shrink-0">Done</span>}
-                      {unlocked && !done && <ChevronRight size={14} className="text-[#9E9E9E] shrink-0" />}
+
+                      {done
+                        ? <span className="text-[11px] font-bold text-emerald-500 shrink-0 bg-emerald-50 px-2 py-0.5 rounded-full">Done</span>
+                        : unlocked
+                          ? <ChevronRight size={14} className="text-[#ADADBE] shrink-0" />
+                          : null}
                     </button>
                   )
                 })}
 
                 {/* Module Quiz row */}
-                <div className={cn(
-                  "px-5 py-3.5 flex items-center gap-4",
-                  canTakeQuiz ? "bg-[#3b75ff]/5 cursor-pointer hover:bg-[#3b75ff]/10 transition-colors" : ""
-                )}
+                <div
                   onClick={canTakeQuiz ? () => openQuiz(mi) : undefined}
+                  className={cn(
+                    "px-5 py-3.5 flex items-center gap-3.5 transition-all",
+                    canTakeQuiz ? "cursor-pointer hover:bg-[#EBF1FF]" : "opacity-60 cursor-default"
+                  )}
+                  style={canTakeQuiz ? { background: 'rgba(30,77,215,0.04)' } : {}}
                 >
                   <div className={cn(
-                    "w-7 h-7 rounded-full flex items-center justify-center shrink-0 border",
-                    quizPassedForModule ? "bg-emerald-100 border-emerald-200" :
-                    canTakeQuiz        ? "border-[#3b75ff]" :
-                                         "bg-slate-100 border-slate-200"
-                  )} style={canTakeQuiz && !quizPassedForModule ? { background: 'rgba(59,117,255,0.12)' } : {}}>
+                    "w-7 h-7 rounded-full flex items-center justify-center shrink-0",
+                    quizPassedForModule ? "bg-emerald-50" :
+                    canTakeQuiz        ? "bg-[#EBF1FF]" :
+                                         "bg-[#F1F1F5]"
+                  )}>
                     {quizPassedForModule
-                      ? <CircleCheck size={14} className="text-emerald-600" />
-                      : <Sparkles size={12} style={{ color: canTakeQuiz ? '#3b75ff' : '#9E9E9E' }} />}
+                      ? <CircleCheck size={13} className="text-emerald-500" />
+                      : <Sparkles size={12} style={{ color: canTakeQuiz ? '#1E4DD7' : '#ADADBE' }} />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className={cn("font-semibold text-sm", quizPassedForModule ? "text-emerald-600" : canTakeQuiz ? "text-[#3b75ff]" : "text-[#9E9E9E]")}>
-                      Module Quiz — {module.title}
+                    <div className={cn("font-bold text-[13px]",
+                      quizPassedForModule ? "text-emerald-600" : canTakeQuiz ? "text-[#1E4DD7]" : "text-[#ADADBE]"
+                    )}>
+                      Module Quiz
                     </div>
-                    <p className="text-[#9E9E9E] text-xs mt-0.5">
-                      {quizPassedForModule ? 'Passed · Module unlocks next module' : canTakeQuiz ? '10 questions · Score 70%+ to continue' : 'Complete all lessons first'}
+                    <p className="text-[11px] text-[#9E9E9E] mt-0.5">
+                      {quizPassedForModule ? 'Passed — next module unlocked' : canTakeQuiz ? '10 questions · Score 70%+ to continue' : 'Complete all lessons first'}
                     </p>
                   </div>
-                  {quizPassedForModule && <span className="text-emerald-600 text-xs font-semibold shrink-0">Passed ✓</span>}
-                  {canTakeQuiz && <ChevronRight size={14} style={{ color: '#3b75ff' }} className="shrink-0" />}
-                  {!quizPassedForModule && !canTakeQuiz && <Lock size={12} className="text-[#9E9E9E] shrink-0" />}
+                  {quizPassedForModule
+                    ? <span className="text-[11px] font-bold text-emerald-500 shrink-0 bg-emerald-50 px-2 py-0.5 rounded-full">Passed</span>
+                    : canTakeQuiz
+                      ? <ChevronRight size={14} style={{ color: '#1E4DD7' }} className="shrink-0" />
+                      : <Lock size={11} className="text-[#ADADBE] shrink-0" />}
                 </div>
               </div>
             )}
@@ -869,97 +1149,396 @@ function LearningTab({ answers, userId }) {
 }
 
 // ── ROADMAP TAB ────────────────────────────────────────────────────────────────
-function RoadmapTab({ answers, score }) {
-  const destination = answers.destination || 'your destination'
-  const months = score >= 70 ? 12 : score >= 40 ? 18 : 24
+// ── Generate dynamic roadmap milestones ──────────────────────────────────────
+function generateMilestones(answers, score) {
+  const dest = answers.destination || ''
+  const seg  = answers.segment || ''
+  const lang = answers.language || 'Not taken'
+  const visaRoute = getVisaRoute(dest || 'your destination', seg)
+  const destLabel = dest || 'your destination'
+
+  const hasLangScore = lang !== 'Not taken' && lang !== 'Registered / scheduled'
+  const hasGoodLang  = lang.includes('7.') || lang.includes('8.') ||
+    lang.startsWith('OET') || lang.startsWith('CELPIP')
+
+  const m1Done = true
+  const m2Done = false
+  const m3Done = hasGoodLang
+  const m4Done = false; const m5Done = false; const m6Done = false
+
+  const currentIdx = m1Done && m2Done && m3Done && m4Done && m5Done ? 5
+    : m1Done && m2Done && m3Done && m4Done ? 4
+    : m1Done && m2Done && m3Done ? 3
+    : m1Done && m2Done ? 2
+    : m1Done ? 1 : 0
+
+  const totalWeeks = score >= 70 ? 16 : score >= 40 ? 20 : 24
+  const completedCount = [m1Done, m2Done, m3Done, m4Done, m5Done, m6Done].filter(Boolean).length
+  const pct = Math.round((completedCount / 6) * 100)
+
+  // Destination-specific content
+  const docEvalText =
+    dest === 'Canada'    ? 'Get degree evaluation from WES (World Education Services)' :
+    dest === 'UK'        ? 'Get degree evaluated by NARIC / ENIC UK' :
+    dest === 'Australia' ? 'Get skills assessed (ACS for tech, AHPRA for healthcare)' :
+    dest === 'Germany'   ? 'Get qualification recognised via anabin / KMK database' :
+    dest === 'Ireland'   ? 'Get qualifications assessed by Quality and Qualifications Ireland' :
+                           `Research qualification recognition requirements for ${destLabel}`
+
+  const portalText =
+    dest === 'Canada'    ? 'Create your Express Entry profile on the IRCC portal' :
+    dest === 'UK'        ? 'Submit your application on the UK Visas & Immigration online portal' :
+    dest === 'Australia' ? 'Lodge an Expression of Interest on SkillSelect' :
+    dest === 'Germany'   ? 'Apply through the German Federal Employment Agency (BA) portal' :
+    dest === 'Ireland'   ? 'Apply via the Employment Permits Online System (EPOS)' :
+    dest === 'UAE'       ? 'Apply through the UAE GDRFA or ICP online portal' :
+                           `Submit your visa application via the ${destLabel} immigration portal`
+
+  const jobText =
+    seg.includes('Tech')       ? `Apply to 10+ tech employers in ${destLabel} that offer visa sponsorship` :
+    seg.includes('Healthcare') ? `Apply to hospitals / health trusts in ${destLabel} that sponsor overseas workers` :
+    seg.includes('Student')    ? `Apply to accredited universities or colleges in ${destLabel}` :
+    seg.includes('Freelance')  ? `Build a client base or remote work portfolio for ${destLabel}` :
+                                  `Apply to sponsored roles on LinkedIn and ${destLabel}-specific job boards`
+
+  const m4Phase =
+    dest === 'UK'     ? 'Employment' :
+    dest === 'Canada' ? 'Express Entry' :
+                        'Preparation'
+
+  const m4Title =
+    dest === 'UK'     ? 'Obtain job offer & Certificate of Sponsorship' :
+    dest === 'Canada' ? 'Build CRS score & receive Invitation to Apply' :
+                        'Build your professional profile'
+
+  const m4Desc =
+    dest === 'UK'     ? 'Secure a licensed UK employer to sponsor your Skilled Worker Visa.' :
+    dest === 'Canada' ? 'Improve your CRS score and wait for an ITA from the Express Entry pool.' :
+                        'Strengthen your profile to meet destination-specific requirements.'
+
+  const m4Actions =
+    dest === 'UK' ? [
+      docEvalText,
+      'Search the GOV.UK licensed sponsor register for your sector',
+      jobText,
+      `Prepare a UK-format CV and Statement of Purpose (SOP)`,
+    ] : dest === 'Canada' ? [
+      docEvalText,
+      'Complete your Provincial Nominee Programme (PNP) application if applicable',
+      jobText,
+      'Boost CRS score — additional language scores, provincial nomination, or job offer',
+    ] : [
+      docEvalText,
+      jobText,
+      seg.includes('Tech') ? 'Obtain a cloud certification (AWS / GCP / Azure)' :
+      seg.includes('Healthcare') ? `Register with the relevant professional body in ${destLabel}` :
+      'Update your LinkedIn and CV to international format',
+      'Build savings to meet proof-of-funds threshold',
+    ]
+
+  const langTestName =
+    seg.includes('Healthcare')                ? 'OET / IELTS Academic' :
+    dest === 'Canada'                          ? 'IELTS General / CELPIP' :
+    dest === 'Australia' || dest === 'Ireland' ? 'IELTS Academic' :
+                                                 'IELTS Academic / General'
 
   const phases = [
+    'Foundation',
+    'Language',
+    m4Phase,
+    'Application',
+    'Relocation',
+  ]
+
+  const milestones = [
     {
-      icon: BookOpen, phase: 'Phase 1', title: 'Foundation', duration: 'Month 1–2',
-      color: '#3b75ff', bg: 'rgba(59,117,255,0.08)', border: 'rgba(59,117,255,0.2)',
-      tasks: [
-        `Complete full JapaLearn learning path for ${destination}`,
-        'Register for and pass language test (IELTS / OET / TOEFL)',
-        'Begin document collection: passport, degree certificates, NYSC discharge',
-        'Open a dedicated migration savings account',
+      id: 'mi1', week: 'Week 1–2', phase: 'Foundation',
+      title: 'Complete eligibility assessment',
+      desc: `Understand exactly where you stand against ${visaRoute} criteria.`,
+      actions: [
+        `Reviewed your JapaLearn readiness score for ${destLabel}`,
+        `Identified key requirements for the ${visaRoute}`,
+        'Profile gaps and priorities documented',
       ],
+      done: m1Done, current: currentIdx === 0,
     },
     {
-      icon: Briefcase, phase: 'Phase 2', title: 'Preparation', duration: 'Month 3–6',
-      color: '#3b82f6', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.2)',
-      tasks: [
-        'Get degree evaluation (WES for Canada, NARIC for UK)',
-        'Request employment reference letters from employers',
-        'Build migration savings to meet proof-of-funds threshold',
-        'Update LinkedIn and create an international-format CV',
-        answers.segment?.includes('Tech') ? 'Obtain cloud certifications (AWS, GCP, Azure)' : 'Research specific eligibility requirements for your route',
+      id: 'mi2', week: 'Week 3–4', phase: 'Foundation',
+      title: 'Gather your core documents',
+      desc: 'Collect and organise the primary documents needed for your application.',
+      actions: [
+        'Obtain / renew your international passport (must be valid 6+ months beyond travel)',
+        'Request degree certificate & certified transcripts from your institution',
+        'Collect NYSC discharge certificate or exemption letter',
+        'Gather employment reference letters (on letterhead, signed)',
       ],
+      done: m2Done, current: currentIdx === 1,
     },
     {
-      icon: Globe2, phase: 'Phase 3', title: 'Application', duration: 'Month 7–10',
-      color: '#10b981', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.2)',
-      tasks: [
-        `Create account on official immigration portal for ${destination}`,
-        'Submit Expression of Interest / Initial Application',
-        'Book and attend biometrics appointment',
-        'Engage a verified consultant for document review',
-        'Track application status weekly',
-      ],
+      id: 'mi3', week: 'Week 5–8', phase: 'Language',
+      title: hasGoodLang
+        ? `Language requirement met — ${lang.split('—')[0].trim()}`
+        : hasLangScore
+          ? `Improve your ${langTestName} score`
+          : `Book ${langTestName} & begin preparation`,
+      desc: hasGoodLang
+        ? 'Your language score meets the requirement. Keep your certificate ready.'
+        : `English language is your most time-sensitive requirement for ${destLabel} — start now.`,
+      actions: hasGoodLang
+        ? [
+            'Request your official score report from the test body',
+            `Send results directly to your ${destLabel} employer or visa body`,
+            'Keep a copy certified for your visa application file',
+          ]
+        : [
+            `Register with British Council, IDP, or CELPIP (for Canada)`,
+            `Follow a 6-week ${langTestName} structured study plan`,
+            'Target Band 7.0+ in all four skills (or OET Grade B for healthcare)',
+            'Book your exam slot at least 4–6 weeks in advance',
+          ],
+      done: m3Done, current: currentIdx === 2,
     },
     {
-      icon: TrendingUp, phase: 'Phase 4', title: 'Pre-Departure', duration: `Month 11–${months}`,
-      color: '#0ea5e9', bg: 'rgba(14,165,233,0.08)', border: 'rgba(14,165,233,0.2)',
-      tasks: [
-        'Receive visa decision — appeal or proceed',
-        'Book flights and arrange temporary accommodation',
-        `Complete JapaLearn Arrival Pack for ${destination}`,
-        'Notify bank, FRSC, and relevant Nigerian authorities',
-        `Connect with Nigerian diaspora community in ${destination}`,
+      id: 'mi4', week: 'Week 9–12', phase: m4Phase,
+      title: m4Title,
+      desc: m4Desc,
+      actions: m4Actions,
+      done: m4Done, current: currentIdx === 3,
+    },
+    {
+      id: 'mi5', week: `Week 13–${Math.round(totalWeeks * 0.8)}`, phase: 'Application',
+      title: `Submit your ${visaRoute} application`,
+      desc: `Compile every document and submit your formal application to ${dest || 'the immigration authority'}.`,
+      actions: [
+        portalText,
+        dest === 'UK' ? 'Pay the Immigration Health Surcharge (IHS) — required for most UK visas' :
+        dest === 'Canada' ? 'Pay IRCC application and biometrics fees' :
+        'Pay the required application and processing fees',
+        'Book and attend your biometrics appointment at a UKVCAS / VFS centre',
+        'Engage a verified immigration consultant for a final application review',
       ],
+      done: m5Done, current: currentIdx === 4,
+    },
+    {
+      id: 'mi6', week: `Week ${Math.round(totalWeeks * 0.8) + 1}–${totalWeeks}`, phase: 'Relocation',
+      title: 'Await visa decision & prepare your move',
+      desc: `Use this window to plan your arrival, accommodation, and first weeks in ${destLabel}.`,
+      actions: [
+        `Research housing and neighbourhoods in your target city in ${destLabel}`,
+        'Open an international bank account (Wise, Monzo, or Revolut) before you travel',
+        `Connect with Nigerian diaspora communities in ${destLabel} for on-ground support`,
+        'Notify your Nigerian bank, FRSC, and relevant institutions of your move',
+      ],
+      done: m6Done, current: currentIdx === 5,
     },
   ]
 
-  return (
-    <div className="flex flex-col gap-5 pb-10">
-      <div>
-        <h2 className="text-xl font-bold text-[#202020] mb-1">My Roadmap</h2>
-        <p className="text-sm text-[#5F5F5F]">Your 12–24 month personalised migration roadmap</p>
-      </div>
+  return { milestones, totalWeeks, completedCount, pct, visaRoute, destLabel, phases }
+}
 
-      <div className="flex items-center gap-3 rounded-xl px-4 py-3" style={{ background: 'rgba(59,117,255,0.08)', border: '1px solid rgba(59,117,255,0.2)' }}>
-        <Clock size={15} style={{ color: '#3b75ff' }} className="shrink-0" />
-        <p className="text-[#202020] text-sm">
-          Estimated timeline to visa: <strong>{months} months</strong>
-          <span className="text-[#9E9E9E]"> · Based on your readiness score of {score}/100</span>
-        </p>
-      </div>
+function RoadmapTab({ answers, score }) {
+  const [expandedMilestone, setExpandedMilestone] = useState('mi2')
+  const { milestones, totalWeeks, completedCount, pct, visaRoute, destLabel, phases } = generateMilestones(answers, score)
+  const currentMilestone = milestones.find(m => m.current) || milestones.find(m => !m.done) || milestones[milestones.length - 1]
+  const weeksLeft = Math.round(totalWeeks * (1 - pct / 100))
+  const isMobile = useIsMobile()
 
-      <div className="grid sm:grid-cols-2 gap-4">
-        {phases.map((p, i) => (
-          <div key={i} className="bg-white shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-5" style={{ border: `1px solid ${p.border}` }}>
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: p.bg, border: `1px solid ${p.border}` }}>
-                  <p.icon size={16} style={{ color: p.color }} />
+  // Shared milestone timeline JSX (same for mobile + desktop)
+  const MilestoneTimeline = (
+    <div className="bg-white rounded-[18px]" style={{ padding: isMobile ? 16 : 24, boxShadow: '0px 2px 16px rgba(30,77,215,0.06)', border: '1px solid #F0F2FF' }}>
+      <div className="flex items-center justify-between mb-5">
+        <h2 className="text-[15px] font-bold text-[#18181B]" style={{ fontFamily: 'DM Sans, sans-serif' }}>Milestone Timeline</h2>
+        <span className="text-[12px] text-[#82858A]">Tap to expand action steps</span>
+      </div>
+      <div className="flex flex-col gap-0">
+        {milestones.map((milestone, idx) => {
+          const isOpen = expandedMilestone === milestone.id
+          return (
+            <div key={milestone.id} className="flex gap-0">
+              {/* Timeline spine */}
+              <div className="flex flex-col items-center shrink-0" style={{ width: isMobile ? 36 : 44 }}>
+                <div className="rounded-full flex items-center justify-center shrink-0 z-10"
+                  style={{
+                    width: isMobile ? 28 : 32, height: isMobile ? 28 : 32,
+                    background: milestone.done ? 'linear-gradient(135deg, #1E4DD7, #3B75FF)' : milestone.current ? '#FFFFFF' : '#F4F6FF',
+                    border: milestone.current ? '2.5px solid #1E4DD7' : milestone.done ? 'none' : '2px solid #E0E4F5',
+                    boxShadow: milestone.current ? '0 0 0 4px rgba(30,77,215,0.1)' : 'none',
+                  }}>
+                  {milestone.done
+                    ? <CheckCircle2 size={isMobile ? 12 : 14} className="text-white" />
+                    : milestone.current
+                      ? <div style={{ width: isMobile ? 9 : 10, height: isMobile ? 9 : 10, borderRadius: '50%', background: '#1E4DD7' }} />
+                      : <span style={{ fontSize: 10, fontWeight: 700, color: '#C0C4D4' }}>{idx + 1}</span>}
                 </div>
-                <div>
-                  <div className="text-xs font-bold uppercase tracking-widest" style={{ color: p.color }}>{p.phase}</div>
-                  <div className="text-[#202020] font-semibold text-sm">{p.title}</div>
-                </div>
+                {idx < milestones.length - 1 && (
+                  <div className="w-0.5 flex-1 min-h-3 my-1" style={{ background: milestone.done ? 'linear-gradient(180deg, #3B75FF, #9BB3FF)' : milestone.current ? 'linear-gradient(180deg, #3B75FF 40%, #E8EBF8 100%)' : '#E8EBF8' }} />
+                )}
               </div>
-              <span className="text-[#9E9E9E] text-xs">{p.duration}</span>
+
+              {/* Milestone card */}
+              <div className="flex-1 pl-3" style={{ paddingBottom: idx < milestones.length - 1 ? '14px' : '0' }}>
+                <button
+                  onClick={() => setExpandedMilestone(isOpen ? null : milestone.id)}
+                  className="w-full text-left rounded-xl transition-all"
+                  style={{
+                    padding: isMobile ? '10px 12px' : '12px 14px',
+                    background: isOpen ? (milestone.current ? 'linear-gradient(135deg, #EBF1FF, #E4EEFF)' : '#FAFBFF') : 'transparent',
+                    border: isOpen ? '1.5px solid #D4DCFF' : '1.5px solid transparent',
+                  }}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                        <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: milestone.done ? '#21C474' : milestone.current ? '#1E4DD7' : '#B0B4C4' }}>
+                          {milestone.week}
+                        </span>
+                        <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 5, background: milestone.done ? '#E8F9EE' : milestone.current ? '#EBF1FF' : '#F4F4F6', color: milestone.done ? '#21C474' : milestone.current ? '#1E4DD7' : '#B0B4C4' }}>
+                          {milestone.phase}
+                        </span>
+                        {milestone.current && (
+                          <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 5, background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)', color: '#FFFFFF' }}>▸ You are here</span>
+                        )}
+                        {milestone.done && (
+                          <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 5, background: '#E8F9EE', color: '#21C474' }}>Done ✓</span>
+                        )}
+                      </div>
+                      <p style={{ margin: '0 0 3px', fontSize: 13, fontWeight: milestone.current ? 700 : milestone.done ? 500 : 600, color: milestone.done ? '#82858A' : '#18181B', textDecoration: milestone.done ? 'line-through' : 'none', lineHeight: 1.35 }}>
+                        {milestone.title}
+                      </p>
+                      <p style={{ margin: 0, fontSize: 12, color: '#82858A', lineHeight: 1.4 }}>{milestone.desc}</p>
+                    </div>
+                    <ChevronDown size={14} style={{ color: '#B0B4C4', flexShrink: 0, marginTop: 2, transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+                  </div>
+
+                  {isOpen && (
+                    <div className="mt-3 pt-3" style={{ borderTop: '1px solid rgba(30,77,215,0.1)' }}>
+                      <p style={{ margin: '0 0 8px', fontSize: 11, fontWeight: 700, color: '#82858A', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Action Steps</p>
+                      <ul className="flex flex-col gap-1.5">
+                        {milestone.actions.map((action, ai) => (
+                          <li key={ai} className="flex items-start gap-2 rounded-lg"
+                            style={{ padding: isMobile ? '8px 10px' : '9px 12px', background: milestone.done ? '#F8FFF9' : milestone.current ? '#F0F5FF' : '#FAFBFF', border: `1px solid ${milestone.done ? '#D8F5E6' : milestone.current ? '#D4DCFF' : '#ECEEFF'}` }}>
+                            <div className="rounded-full flex items-center justify-center shrink-0 mt-0.5"
+                              style={{ width: 18, height: 18, background: milestone.done ? 'linear-gradient(135deg, #21C474, #10B981)' : milestone.current ? '#EBF1FF' : '#F0F2FF' }}>
+                              {milestone.done
+                                ? <CheckCircle2 size={9} className="text-white" />
+                                : <span style={{ fontSize: 8, fontWeight: 700, color: milestone.current ? '#1E4DD7' : '#B0B4C4' }}>{ai + 1}</span>}
+                            </div>
+                            <span style={{ fontSize: 12, lineHeight: 1.5, color: milestone.done ? '#6B7280' : '#2D2D35', textDecoration: milestone.done ? 'line-through' : 'none' }}>{action}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      {milestone.current && (
+                        <button className="w-full mt-3 py-2.5 rounded-[10px] text-white text-[12px] font-semibold flex items-center justify-center gap-1.5"
+                          style={{ background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)' }}>
+                          <span>Work on this milestone</span>
+                          <ArrowRight size={12} className="text-white" />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </button>
+              </div>
             </div>
-            <ul className="space-y-2">
-              {p.tasks.map((task, ti) => (
-                <li key={ti} className="flex items-start gap-2 text-[#5F5F5F] text-sm">
-                  <ChevronRight size={13} style={{ color: p.color }} className="mt-0.5 shrink-0" />
-                  {task}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+          )
+        })}
       </div>
+    </div>
+  )
+
+  if (isMobile) {
+    return (
+      <div className="flex flex-col gap-4 pb-10 w-full">
+        {/* Mobile sub-header */}
+        <div>
+          <p style={{ margin: '0 0 3px', fontSize: 11, color: '#82858A', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Calendar size={11} style={{ color: '#82858A' }} />
+            <span>{visaRoute} · {totalWeeks}-Week Plan</span>
+          </p>
+          <h1 style={{ margin: '0 0 3px', fontSize: 22, fontWeight: 700, color: '#18181B', letterSpacing: '-0.5px', fontFamily: 'DM Sans, sans-serif' }}>My Roadmap</h1>
+          <p style={{ margin: 0, fontSize: 13, color: '#82858A' }}>Tap any milestone to see action steps.</p>
+        </div>
+
+        {/* Mobile hero */}
+        <div style={{ background: 'linear-gradient(135deg, #1A42C2 0%, #2F67F8 60%, #5C8AFF 100%)', borderRadius: 18, padding: 18, boxShadow: '0px 10px 32px rgba(30,77,215,0.25)' }}>
+          <p style={{ margin: '0 0 2px', fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.65)', letterSpacing: '0.09em', textTransform: 'uppercase' }}>Current Phase</p>
+          <p style={{ margin: '0 0 2px', fontSize: 20, fontWeight: 800, color: '#FFFFFF', fontFamily: 'DM Sans, sans-serif', letterSpacing: '-0.4px' }}>{currentMilestone.phase}</p>
+          <p style={{ margin: '0 0 10px', fontSize: 12, color: 'rgba(255,255,255,0.65)' }}>{currentMilestone.week} · {currentMilestone.title}</p>
+          <div style={{ height: 7, background: 'rgba(255,255,255,0.18)', borderRadius: 4, overflow: 'hidden', marginBottom: 6 }}>
+            <div style={{ width: `${Math.max(pct, 5)}%`, height: '100%', background: 'linear-gradient(90deg, rgba(255,255,255,0.8), #FFFFFF)', borderRadius: 4 }} />
+          </div>
+          <p style={{ margin: '0 0 14px', fontSize: 11, color: 'rgba(255,255,255,0.55)' }}>{completedCount} of 6 milestones completed · {pct}% done</p>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {[{ val: `${weeksLeft}`, label: 'Weeks left' }, { val: `${pct}%`, label: 'Complete' }, { val: `${6 - completedCount}`, label: 'Actions due' }].map(s => (
+              <div key={s.label} style={{ flex: 1, textAlign: 'center', padding: '10px 8px', background: 'rgba(255,255,255,0.14)', borderRadius: 10, border: '1px solid rgba(255,255,255,0.2)' }}>
+                <p style={{ margin: '0 0 1px', fontSize: 16, fontWeight: 800, color: '#FFFFFF', fontFamily: 'DM Sans, sans-serif' }}>{s.val}</p>
+                <p style={{ margin: 0, fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{s.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {MilestoneTimeline}
+      </div>
+    )
+  }
+
+  // ── DESKTOP ──
+  return (
+    <div className="flex flex-col gap-5 pb-10" style={{ maxWidth: 700 }}>
+      {/* Desktop sub-header */}
+      <div>
+        <p className="text-[13px] text-[#82858A] font-medium flex items-center gap-1.5 mb-1">
+          <Calendar size={13} className="text-[#82858A]" />
+          <span>{visaRoute} · {totalWeeks}-Week Plan</span>
+        </p>
+        <h1 className="text-[26px] font-bold text-[#18181B] mb-1" style={{ letterSpacing: '-0.6px', fontFamily: 'DM Sans, sans-serif' }}>My Roadmap</h1>
+        <p className="text-[14px] text-[#82858A]">Your personalised week-by-week migration plan. Click any milestone to see your action steps.</p>
+      </div>
+
+      {/* Desktop hero — left: phase info + right: stats + bottom: phase strip */}
+      <div className="rounded-[22px] overflow-hidden" style={{ background: 'linear-gradient(135deg, #1A42C2 0%, #2F67F8 60%, #5C8AFF 100%)', boxShadow: '0px 16px 48px rgba(30,77,215,0.28)' }}>
+        {/* Top section */}
+        <div className="flex items-start gap-5 flex-wrap" style={{ padding: '28px 28px 24px' }}>
+          {/* Left: Phase + progress */}
+          <div className="flex-1 min-w-[160px]">
+            <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.65)', letterSpacing: '0.09em', textTransform: 'uppercase' }}>Current Phase</p>
+            <p style={{ margin: '0 0 2px', fontSize: 22, fontWeight: 800, color: '#FFFFFF', fontFamily: 'DM Sans, sans-serif', letterSpacing: '-0.5px' }}>{currentMilestone.phase}</p>
+            <p style={{ margin: '0 0 18px', fontSize: 13, color: 'rgba(255,255,255,0.65)' }}>{currentMilestone.week} · {currentMilestone.title}</p>
+            <div style={{ height: 8, background: 'rgba(255,255,255,0.18)', borderRadius: 4, overflow: 'hidden', marginBottom: 8, maxWidth: 280 }}>
+              <div style={{ width: `${Math.max(pct, 5)}%`, height: '100%', background: 'linear-gradient(90deg, rgba(255,255,255,0.8), #FFFFFF)', borderRadius: 4 }} />
+            </div>
+            <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>{completedCount} of 6 milestones completed · {pct}% done</p>
+          </div>
+
+          {/* Right: 3 stat chips */}
+          <div className="flex gap-2.5 shrink-0 flex-wrap">
+            {[{ val: `${weeksLeft}`, label: 'Weeks left' }, { val: `${pct}%`, label: 'Complete' }, { val: `${6 - completedCount}`, label: 'Actions due' }].map(s => (
+              <div key={s.label} style={{ padding: '12px 16px', background: 'rgba(255,255,255,0.14)', borderRadius: 14, border: '1px solid rgba(255,255,255,0.2)', textAlign: 'center', backdropFilter: 'blur(10px)', minWidth: 72 }}>
+                <p style={{ margin: '0 0 2px', fontSize: 22, fontWeight: 800, color: '#FFFFFF', fontFamily: 'DM Sans, sans-serif' }}>{s.val}</p>
+                <p style={{ margin: 0, fontSize: 10, color: 'rgba(255,255,255,0.6)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>{s.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Phase strip */}
+        <div style={{ display: 'flex', borderTop: '1px solid rgba(255,255,255,0.12)' }}>
+          {phases.map((phase, pi) => {
+            const isActive = phase === currentMilestone.phase
+            const isDone = pi < milestones.findIndex(m => m.phase === currentMilestone.phase && !m.done && !m.done)
+              && milestones.filter(m => m.phase === phase).every(m => m.done)
+            return (
+              <div key={phase} style={{ flex: 1, padding: '10px 8px', textAlign: 'center', borderRight: pi < phases.length - 1 ? '1px solid rgba(255,255,255,0.1)' : 'none', background: isActive ? 'rgba(255,255,255,0.1)' : 'transparent' }}>
+                <p style={{ margin: 0, fontSize: 10, fontWeight: isActive ? 700 : 500, color: isDone ? 'rgba(255,255,255,0.9)' : isActive ? '#FFFFFF' : 'rgba(255,255,255,0.45)', letterSpacing: '0.04em' }}>{phase}</p>
+                {isActive && <div style={{ width: 20, height: 3, background: '#FFFFFF', borderRadius: 2, margin: '4px auto 0' }} />}
+                {isDone && <p style={{ margin: '2px 0 0', fontSize: 9, color: '#4ADE80', fontWeight: 700 }}>✓ Done</p>}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {MilestoneTimeline}
     </div>
   )
 }
@@ -1025,22 +1604,21 @@ function ResourcesTab({ answers, userId }) {
   return (
     <div className="flex flex-col gap-5 pb-10">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h2 className="text-xl font-bold text-[#202020] dark:text-[#f1f5f9] mb-1">Resources</h2>
-          <p className="text-sm text-[#5F5F5F] dark:text-slate-400">
-            {profileFiltered && answers.destination
-              ? `Showing resources for ${answers.destination}${answers.segment ? ` · ${answers.segment}` : ''}`
-              : 'All available resources'}
-          </p>
-        </div>
+      <div className="rounded-[20px] p-6" style={{ background: 'linear-gradient(135deg, #0F2E99 0%, #1E4DD7 50%, #3B75FF 100%)', boxShadow: '0px 10px 36px rgba(30,77,215,0.28)' }}>
+        <p className="text-[11px] font-bold text-white/60 uppercase tracking-widest mb-1">Resources</p>
+        <h2 className="text-xl font-extrabold text-white mb-1">Learning Resources</h2>
+        <p className="text-sm text-white/70 mb-4">
+          {profileFiltered && answers.destination
+            ? `Curated for ${answers.destination}${answers.segment ? ` · ${answers.segment}` : ''}`
+            : 'All available resources'}
+        </p>
         {answers.destination && (
           <button
             onClick={() => { setProfileFiltered(f => !f); setFallback(false) }}
-            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition-all"
+            className="flex items-center gap-1.5 text-xs font-bold px-3.5 py-1.5 rounded-full transition-all"
             style={profileFiltered
-              ? { background: 'rgba(59,117,255,0.1)', color: '#3b75ff', borderColor: 'rgba(59,117,255,0.3)' }
-              : { background: '#f8fafc', color: '#64748b', borderColor: '#e2e8f0' }}
+              ? { background: 'rgba(255,255,255,0.2)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)' }
+              : { background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.15)' }}
           >
             <Filter size={11} />
             {profileFiltered ? `My Profile (${answers.destination})` : 'All Resources'}
@@ -1062,23 +1640,23 @@ function ResourcesTab({ answers, userId }) {
           <button
             key={cat.value}
             onClick={() => setCategoryFilter(cat.value)}
-            className="px-3 py-1.5 rounded-full text-xs font-semibold border transition-all"
+            className="px-3 py-1.5 rounded-full text-xs font-bold border transition-all"
             style={categoryFilter === cat.value
-              ? { background: cat.color || '#3b75ff', color: '#fff', borderColor: cat.color || '#3b75ff' }
-              : { background: '#f8fafc', color: '#64748b', borderColor: '#e2e8f0' }}
+              ? { background: cat.color || '#1E4DD7', color: '#fff', borderColor: cat.color || '#1E4DD7' }
+              : { background: '#F7F9FF', color: '#8C8C9D', borderColor: '#E0E8FF' }}
           >
             {cat.label}
           </button>
         ))}
-        <div className="h-5 w-px bg-slate-200 mx-1" />
+        <div className="h-5 w-px bg-[#E0E8FF] mx-1" />
         {['all', 'pdf', 'docx', 'xlsx'].map(ft => (
           <button
             key={ft}
             onClick={() => setFileTypeFilter(ft)}
-            className="px-3 py-1.5 rounded-full text-xs font-semibold border transition-all"
+            className="px-3 py-1.5 rounded-full text-xs font-bold border transition-all"
             style={fileTypeFilter === ft
-              ? { background: '#1e293b', color: '#fff', borderColor: '#1e293b' }
-              : { background: '#f8fafc', color: '#64748b', borderColor: '#e2e8f0' }}
+              ? { background: '#18181B', color: '#fff', borderColor: '#18181B' }
+              : { background: '#F7F9FF', color: '#8C8C9D', borderColor: '#E0E8FF' }}
           >
             {ft === 'all' ? 'All Types' : ft.toUpperCase()}
           </button>
@@ -1114,7 +1692,8 @@ function ResourcesTab({ answers, userId }) {
             const FileIcon = fi.icon
             const cat = RESOURCE_CATEGORIES.find(c => c.value === r.category)
             return (
-              <div key={r.id} className="bg-white dark:bg-[#1e293b] shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-5 flex flex-col gap-3 hover:shadow-lg transition-shadow">
+              <div key={r.id} className="bg-white rounded-[20px] p-5 flex flex-col gap-3 transition-all hover:shadow-[0px_8px_28px_rgba(30,77,215,0.12)]"
+                style={{ border: '1px solid #E0E8FF', boxShadow: '0px 2px 10px rgba(8,15,52,0.05)' }}>
                 {/* File type + category badges */}
                 <div className="flex items-center gap-2 flex-wrap">
                   <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style={{ background: fi.bg }}>
@@ -1122,19 +1701,19 @@ function ResourcesTab({ answers, userId }) {
                     <span className="text-[10px] font-bold" style={{ color: fi.color }}>{fi.label}</span>
                   </div>
                   {cat && cat.value !== 'all' && (
-                    <span className="text-[10px] font-semibold px-2.5 py-1 rounded-lg" style={{ background: (cat.color || '#3b75ff') + '1a', color: cat.color || '#3b75ff' }}>
+                    <span className="text-[10px] font-semibold px-2.5 py-1 rounded-lg" style={{ background: (cat.color || '#1E4DD7') + '1a', color: cat.color || '#1E4DD7' }}>
                       {cat.label}
                     </span>
                   )}
                   {r.country?.slice(0, 2).map(c => (
-                    <span key={c} className="text-[10px] font-medium text-[#9E9E9E] bg-slate-100 dark:bg-slate-700 dark:text-slate-400 px-2 py-0.5 rounded-full">{c}</span>
+                    <span key={c} className="text-[10px] font-medium text-[#9E9E9E] bg-[#F7F9FF] px-2 py-0.5 rounded-full">{c}</span>
                   ))}
                 </div>
 
                 {/* Title + description */}
                 <div className="flex-1">
-                  <h4 className="font-semibold text-[#202020] dark:text-[#f1f5f9] text-sm leading-snug mb-1">{r.title}</h4>
-                  {r.description && <p className="text-[#9E9E9E] dark:text-slate-400 text-xs leading-relaxed">{r.description}</p>}
+                  <h4 className="font-bold text-[#18181B] text-[14px] leading-snug mb-1">{r.title}</h4>
+                  {r.description && <p className="text-[#9E9E9E] text-xs leading-relaxed">{r.description}</p>}
                 </div>
 
                 {/* Download button */}
@@ -1143,8 +1722,8 @@ function ResourcesTab({ answers, userId }) {
                   download
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-semibold transition-all hover:opacity-90"
-                  style={{ background: '#3b75ff', color: '#fff' }}
+                  className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-bold transition-all hover:opacity-90"
+                  style={{ background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)', color: '#fff' }}
                 >
                   <Download size={14} /> Download
                 </a>
@@ -1162,92 +1741,543 @@ function ResourcesTab({ answers, userId }) {
 }
 
 // ── DOCUMENTS TAB ─────────────────────────────────────────────────────────────
-function DocumentsTab() {
+// ── CONVERSATIONS TAB ──────────────────────────────────────────────────────────
+function ConversationsTab({ user, profile, answers }) {
+  const firstName = (profile?.full_name || user?.user_metadata?.full_name || 'there').split(' ')[0]
+  const dest = answers.destination || 'your destination'
+  const visaRoute = getVisaRoute(dest, answers.segment || '')
+
+  const messages = [
+    { id: 1, role: 'ai', text: `Hi ${firstName}! I'm your JapaLearn AI assistant. Ask me anything about your ${dest} migration journey — visa requirements, language tests, costs, documents and more.`, time: '9:01 AM' },
+    { id: 2, role: 'user', text: `What documents do I need for a ${visaRoute}?`, time: '9:03 AM' },
+    { id: 3, role: 'ai', text: `For a ${visaRoute} you'll typically need: a valid passport, proof of qualifications, language test results, financial evidence (proof of funds), employment references, and any professional registration certificates relevant to your field.`, time: '9:03 AM' },
+    { id: 4, role: 'user', text: 'How much money do I need to show in my bank account?', time: '9:05 AM' },
+    { id: 5, role: 'ai', text: `Proof of funds requirements vary by destination. For ${dest}, you'll need to demonstrate you can support yourself during the transition period. I'll help you calculate exactly how much based on your route once this feature is fully live.`, time: '9:05 AM' },
+  ]
+
+  const initials = firstName[0]?.toUpperCase() || 'U'
+
   return (
-    <div className="flex flex-col gap-5 pb-10">
-      <div>
-        <h2 className="text-xl font-bold text-[#202020] dark:text-[#f1f5f9] mb-1">Documents</h2>
-        <p className="text-sm text-[#5F5F5F] dark:text-slate-400">Your personal document vault</p>
+    <div className="flex flex-col gap-4 pb-10 max-w-2xl w-full">
+      {/* Header */}
+      <div className="flex items-center gap-2">
+        <h1 className="text-[20px] font-bold text-[#18181B]" style={{ letterSpacing: '-0.4px', fontFamily: 'DM Sans, sans-serif' }}>AI Conversations</h1>
+        <span className="text-[10px] font-bold text-[#7C6AF7] px-2 py-0.5 rounded-full" style={{ background: '#F0EEFF', border: '1px solid #DDD6FE' }}>Coming Soon</span>
       </div>
 
-      <div className="bg-white dark:bg-[#1e293b] shadow-[0px_14px_42px_rgba(8,15,52,0.06)] rounded-[20px] p-10 sm:p-16 flex flex-col items-center text-center gap-5">
-        <div className="relative">
-          <div className="w-20 h-20 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(59,117,255,0.08)', border: '1px solid rgba(59,117,255,0.15)' }}>
-            <Upload size={28} style={{ color: '#3b75ff' }} />
+      {/* Chat window */}
+      <div className="bg-white rounded-[18px] flex flex-col overflow-hidden" style={{ boxShadow: '0px 4px 20px rgba(30,77,215,0.08)', border: '1px solid #ECEEFF', height: 'calc(100vh - 220px)', minHeight: '400px' }}>
+        {/* Chat header */}
+        <div className="flex items-center gap-2.5 px-4 py-3" style={{ borderBottom: '1px solid #F0F2FF', background: 'linear-gradient(135deg, #FAFBFF, #F4F7FF)' }}>
+          <div className="w-[34px] h-[34px] rounded-[10px] flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)' }}>
+            <Logo size={20} />
           </div>
-          <span className="absolute -top-2 -right-2 text-[10px] font-bold px-2 py-0.5 rounded-full text-white" style={{ background: '#3b75ff' }}>
-            Coming Soon
-          </span>
+          <div>
+            <p className="text-[13px] font-bold text-[#18181B] leading-none mb-0.5">JapaLearn AI Assistant</p>
+            <p className="text-[11px] font-medium flex items-center gap-1" style={{ color: '#21C474' }}>
+              <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: '#21C474' }} />
+              Online · Migration specialist
+            </p>
+          </div>
         </div>
 
-        <div>
-          <h3 className="font-bold text-[#202020] dark:text-[#f1f5f9] text-xl mb-2" style={{ fontFamily: 'DM Sans, sans-serif' }}>
-            Document Upload
-          </h3>
-          <p className="text-[#5F5F5F] dark:text-slate-400 text-sm max-w-sm leading-relaxed">
-            Upload your CV, certificates, and supporting documents — our AI will analyse them to strengthen your profile and flag gaps in your application.
-          </p>
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto flex flex-col gap-3 p-3.5" style={{ background: '#FAFBFF' }}>
+          {messages.map(msg => (
+            <div key={msg.id} className="flex gap-2 items-end" style={{ flexDirection: msg.role === 'user' ? 'row-reverse' : 'row' }}>
+              {msg.role === 'ai' && (
+                <div className="w-[26px] h-[26px] rounded-[8px] flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)' }}>
+                  <Logo size={16} />
+                </div>
+              )}
+              {msg.role === 'user' && (
+                <div className="w-[26px] h-[26px] rounded-full flex items-center justify-center shrink-0 text-[11px] font-bold text-white" style={{ background: 'linear-gradient(135deg, #9BB3FF, #3B75FF)' }}>
+                  {initials}
+                </div>
+              )}
+              <div style={{ maxWidth: '75%' }}>
+                <div className="px-3.5 py-2.5 text-[13px] leading-relaxed"
+                  style={{
+                    borderRadius: msg.role === 'ai' ? '4px 14px 14px 14px' : '14px 4px 14px 14px',
+                    background: msg.role === 'ai' ? '#FFFFFF' : 'linear-gradient(135deg, #1E4DD7, #3B75FF)',
+                    color: msg.role === 'ai' ? '#18181B' : '#FFFFFF',
+                    boxShadow: msg.role === 'ai' ? '0px 2px 6px rgba(30,77,215,0.06)' : '0px 4px 12px rgba(30,77,215,0.3)',
+                    border: msg.role === 'ai' ? '1px solid #ECEEFF' : 'none',
+                  }}>
+                  <p className="m-0">{msg.text}</p>
+                </div>
+                <p className="text-[10px] text-[#B0B4C4] mt-0.5" style={{ textAlign: msg.role === 'user' ? 'right' : 'left' }}>{msg.time}</p>
+              </div>
+            </div>
+          ))}
+          {/* Coming soon overlay */}
+          <div className="mt-2 mx-auto text-center px-4 py-3 rounded-[12px] max-w-xs" style={{ background: 'rgba(124,106,247,0.07)', border: '1px solid #DDD6FE' }}>
+            <p className="text-[11px] font-bold text-[#7C6AF7] mb-0.5">Full AI Chat — Coming in Coming Soon</p>
+            <p className="text-[11px] text-[#82858A]">Two-way conversation, live answers, and personalised advice.</p>
+          </div>
         </div>
 
-        <div className="w-full max-w-xs space-y-3">
-          {['CV / Resume', 'Degree Certificate', 'Language Test Result', 'Professional Licence'].map((doc) => (
-            <div key={doc} className="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-600 opacity-50">
-              <FileText size={15} className="text-[#9E9E9E] shrink-0" />
-              <span className="text-sm text-[#5F5F5F] dark:text-slate-400 flex-1 text-left">{doc}</span>
-              <span className="text-[10px] text-[#9E9E9E]">Not uploaded</span>
+        {/* Input area */}
+        <div className="px-3.5 py-3" style={{ borderTop: '1px solid #F0F2FF', background: '#FFFFFF' }}>
+          <div className="flex gap-2 items-center rounded-xl px-3 py-2.5" style={{ background: '#F4F6FF', border: '1.5px solid #E4E8FF' }}>
+            <input
+              type="text"
+              disabled
+              placeholder="Ask about visa, language tests, costs..."
+              className="flex-1 border-none bg-transparent outline-none text-[13px] text-[#18181B] placeholder-[#B0B4C4]"
+            />
+            <button
+              disabled
+              className="w-8 h-8 rounded-[9px] flex items-center justify-center shrink-0 opacity-50 cursor-not-allowed"
+              style={{ background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)' }}
+            >
+              <ArrowRight size={14} className="text-white" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── PEERS TAB ──────────────────────────────────────────────────────────────────
+const PEER_PROFILES_DATA = [
+  { id: 'p1', name: 'Chukwuemeka Obi',   initials: 'CO', city: 'Lagos → Manchester', score: 68, bg: 'linear-gradient(135deg, #6366F1, #8B5CF6)', mutual: 3 },
+  { id: 'p2', name: 'Fatima Al-Hassan',  initials: 'FA', city: 'Abuja → Birmingham', score: 74, bg: 'linear-gradient(135deg, #EC4899, #F43F5E)', mutual: 5 },
+  { id: 'p3', name: 'Tolu Adeyemi',      initials: 'TA', city: 'Lagos → London',     score: 81, bg: 'linear-gradient(135deg, #14B8A6, #0EA5E9)', mutual: 2 },
+  { id: 'p4', name: 'Blessing Nwachukwu',initials: 'BN', city: 'Port Harcourt → Leeds', score: 65, bg: 'linear-gradient(135deg, #F59E0B, #EF4444)', mutual: 1 },
+]
+const PEER_THREADS = [
+  { id: 'th1', initials: 'TA', name: 'Tolu Adeyemi',   bg: 'linear-gradient(135deg, #14B8A6, #0EA5E9)', title: "Just got my COS! Here's what actually helped me", replies: 14, likes: 31, tag: 'Success Story', tagColor: '#21C474', tagBg: '#E8F9EE', timeAgo: '2h ago' },
+  { id: 'th2', initials: 'CO', name: 'Chukwuemeka Obi', bg: 'linear-gradient(135deg, #6366F1, #8B5CF6)', title: 'IELTS Academic vs General — which for Skilled Worker?', replies: 9, likes: 17, tag: 'Question', tagColor: '#3B75FF', tagBg: '#EBF1FF', timeAgo: '5h ago' },
+  { id: 'th3', initials: 'FA', name: 'Fatima Al-Hassan', bg: 'linear-gradient(135deg, #EC4899, #F43F5E)', title: 'Bank statement — which bank accepted for ₦ to £ proof?', replies: 22, likes: 28, tag: 'Documents', tagColor: '#F59A0A', tagBg: '#FFF7E6', timeAgo: 'Yesterday' },
+]
+
+function PeersTab({ answers }) {
+  const dest = answers.destination || 'your destination'
+  const pathway = getVisaRoute(dest, answers.segment || '')
+
+  return (
+    <div className="flex flex-col gap-4 pb-10 max-w-2xl w-full">
+      {/* Header */}
+      <div className="flex items-center gap-2">
+        <h1 className="text-[20px] font-bold text-[#18181B]" style={{ letterSpacing: '-0.4px', fontFamily: 'DM Sans, sans-serif' }}>Peer Network</h1>
+        <span className="text-[10px] font-bold text-[#7C6AF7] px-2 py-0.5 rounded-full" style={{ background: '#F0EEFF', border: '1px solid #DDD6FE' }}>Coming Soon</span>
+      </div>
+
+      {/* Hero banner */}
+      <div className="rounded-[18px] p-[18px]" style={{ background: 'linear-gradient(135deg, #1A42C2 0%, #2F67F8 55%, #5C8AFF 100%)', boxShadow: '0px 10px 30px rgba(30,77,215,0.25)' }}>
+        <p className="text-[10px] font-bold text-white/65 uppercase tracking-widest mb-0.5">Your Community</p>
+        <p className="text-[19px] font-black text-white mb-1 leading-snug" style={{ fontFamily: 'DM Sans, sans-serif', letterSpacing: '-0.4px' }}>
+          2,847 Nigerians on the {dest} Pathway
+        </p>
+        <p className="text-[11px] text-white/65 mb-3">412 active this week · 38 got their visa this year</p>
+        <div className="flex gap-2">
+          {[{ val: '412', label: 'Active peers' }, { val: '38', label: 'Visas granted' }, { val: '94%', label: 'Support rate' }].map(s => (
+            <div key={s.label} className="flex-1 text-center rounded-[10px] py-2.5" style={{ background: 'rgba(255,255,255,0.14)', border: '1px solid rgba(255,255,255,0.18)' }}>
+              <p className="text-[16px] font-black text-white mb-0" style={{ fontFamily: 'DM Sans, sans-serif' }}>{s.val}</p>
+              <p className="text-[9px] text-white/65 font-medium">{s.label}</p>
             </div>
           ))}
         </div>
+      </div>
 
-        <button
-          disabled
-          className="flex items-center gap-2 px-8 py-3 rounded-full text-sm font-semibold text-slate-400 bg-slate-100 dark:bg-slate-700 dark:text-slate-500 cursor-not-allowed border border-slate-200 dark:border-slate-600"
-        >
-          <Upload size={14} /> Upload Documents
+      {/* Suggested connections */}
+      <h2 className="text-[14px] font-bold text-[#18181B] mb-0" style={{ fontFamily: 'DM Sans, sans-serif' }}>Suggested Connections</h2>
+      <div className="flex flex-col gap-2.5">
+        {PEER_PROFILES_DATA.map(peer => (
+          <div key={peer.id} className="bg-white rounded-[16px] p-4" style={{ border: '1px solid #F0F2FF', boxShadow: '0px 2px 8px rgba(30,77,215,0.05)' }}>
+            <div className="flex items-center gap-2.5 mb-3">
+              <div className="w-[42px] h-[42px] rounded-full flex items-center justify-center shrink-0 text-[14px] font-black text-white" style={{ background: peer.bg, fontFamily: 'DM Sans, sans-serif' }}>
+                {peer.initials}
+              </div>
+              <div className="flex-1">
+                <p className="text-[13px] font-bold text-[#18181B] mb-0">{peer.name}</p>
+                <p className="text-[11px] text-[#82858A] flex items-center gap-1">
+                  <Globe2 size={10} className="text-[#82858A]" />
+                  {peer.city}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-[16px] font-black text-[#1E4DD7] mb-0" style={{ fontFamily: 'DM Sans, sans-serif' }}>{peer.score}%</p>
+                <p className="text-[9px] text-[#82858A]">Readiness</p>
+              </div>
+            </div>
+            <div className="flex gap-1.5">
+              <button className="flex-1 py-2 rounded-[9px] text-[12px] font-semibold text-white cursor-default" style={{ background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)' }}>Connect</button>
+              <button className="px-3 py-2 rounded-[9px] text-[12px] font-semibold text-[#4D4D56] cursor-default" style={{ background: '#F4F6FF', border: '1px solid #E0E4F5' }}>View</button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Community discussions */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-[14px] font-bold text-[#18181B] m-0" style={{ fontFamily: 'DM Sans, sans-serif' }}>Community Discussions</h2>
+        <button className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-white cursor-default" style={{ background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)' }}>+ Thread</button>
+      </div>
+      <div className="flex flex-col gap-2.5">
+        {PEER_THREADS.map(thread => (
+          <div key={thread.id} className="bg-white rounded-[16px] px-4 py-3.5" style={{ border: '1px solid #F0F2FF', boxShadow: '0px 2px 8px rgba(30,77,215,0.05)' }}>
+            <div className="flex items-start gap-2.5">
+              <div className="w-[34px] h-[34px] rounded-full flex items-center justify-center shrink-0 text-[12px] font-black text-white" style={{ background: thread.bg, fontFamily: 'DM Sans, sans-serif' }}>
+                {thread.initials}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                  <span className="text-[12px] font-bold text-[#18181B]">{thread.name}</span>
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-[5px]" style={{ background: thread.tagBg, color: thread.tagColor }}>{thread.tag}</span>
+                  <span className="text-[10px] text-[#B0B4C4] ml-auto">{thread.timeAgo}</span>
+                </div>
+                <p className="text-[13px] font-bold text-[#18181B] leading-snug mb-1">{thread.title}</p>
+                <div className="flex items-center gap-3">
+                  <span className="text-[11px] text-[#82858A]">{thread.replies} replies</span>
+                  <span className="text-[11px] text-[#82858A]">{thread.likes} helpful</span>
+                  <button className="ml-auto px-3 py-1.5 rounded-lg text-[11px] font-semibold text-[#3B75FF] cursor-default" style={{ background: '#F4F6FF', border: '1px solid #E0E4F5' }}>Read</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Coming Soon notice */}
+      <div className="text-center py-4 px-4 rounded-[14px]" style={{ background: 'rgba(124,106,247,0.06)', border: '1px solid #DDD6FE' }}>
+        <p className="text-[12px] font-bold text-[#7C6AF7] mb-0.5">Full Peer Network — Coming in Coming Soon</p>
+        <p className="text-[11px] text-[#82858A]">Real profiles, DMs, and community threads for your exact migration route.</p>
+      </div>
+    </div>
+  )
+}
+
+// ── MARKETPLACE TAB ────────────────────────────────────────────────────────────
+const CONSULTANTS_DATA = [
+  { id: 'mc1', name: 'Solicitor James Okafor', initials: 'JO', title: 'Immigration Barrister', org: "OISC Level 3 · Lincoln's Inn Chambers", rating: 4.9, reviews: 142, priceFrom: '₦120,000', tags: ['Skilled Worker', 'Family Visa', 'Appeals'], specialties: ['UK Skilled Worker', 'Visa Appeals', 'Judicial Review'], verified: true, bg: 'linear-gradient(135deg, #1E4DD7, #3B75FF)', successRate: '97%', casesHandled: 340, available: true, featured: true, badge: 'Top Rated', badgeColor: '#D97706', badgeBg: '#FFF7E6' },
+  { id: 'mc2', name: 'Amaka Consulting Ltd', initials: 'AC', title: 'Senior Immigration Advisor', org: 'OISC Registered · 12 yrs experience', rating: 4.7, reviews: 98, priceFrom: '₦70,000', tags: ['Student Visa', 'Skilled Worker', 'NHS'], specialties: ['NHS Recruitment', 'Student Visa', 'Skilled Worker Visa'], verified: true, bg: 'linear-gradient(135deg, #059669, #10B981)', successRate: '94%', casesHandled: 210, available: true, featured: false, badge: 'NHS Specialist', badgeColor: '#059669', badgeBg: '#E8F9EE' },
+  { id: 'mc3', name: 'UK Path Advisors', initials: 'UP', title: 'Principal Immigration Consultant', org: 'FCA Authorised · ILPA Member', rating: 4.8, reviews: 203, priceFrom: '₦90,000', tags: ['Entrepreneur Visa', 'Spouse Visa', 'EU Settlement'], specialties: ['Innovator Founder Visa', 'Spouse & Partner Visas'], verified: true, bg: 'linear-gradient(135deg, #7C3AED, #A855F7)', successRate: '96%', casesHandled: 415, available: false, featured: false, badge: 'ILPA Member', badgeColor: '#7C3AED', badgeBg: '#F0EEFF' },
+  { id: 'mc4', name: 'Chioma Eze-Williams', initials: 'CE', title: 'Healthcare Immigration Specialist', org: 'OISC Level 2 · Registered Nurse (UK)', rating: 4.9, reviews: 67, priceFrom: '₦65,000', tags: ['Skilled Worker', 'NHS', 'Care Sector'], specialties: ['NMC Registration', 'Tier 2 Health & Care', 'UK Nurse Pathway'], verified: true, bg: 'linear-gradient(135deg, #EC4899, #F43F5E)', successRate: '99%', casesHandled: 89, available: true, featured: false, badge: 'Healthcare Pro', badgeColor: '#EC4899', badgeBg: '#FFF0F6' },
+]
+const MARKETPLACE_CATEGORIES = [
+  { id: 'all', label: 'All' }, { id: 'skilled', label: 'Skilled Worker' }, { id: 'healthcare', label: 'Healthcare' }, { id: 'family', label: 'Family Visa' }, { id: 'student', label: 'Student Visa' },
+]
+const TRUST_STATS = [{ val: '100%', label: 'OISC Verified' }, { val: '96%', label: 'Avg. Success' }, { val: '1,200+', label: 'Visas Secured' }, { val: '< 3 hrs', label: 'Avg. Response' }]
+
+function StarRating({ rating }) {
+  return (
+    <span className="inline-flex gap-px items-center">
+      {[1, 2, 3, 4, 5].map(i => (
+        <svg key={i} width="12" height="12" viewBox="0 0 24 24" fill={i <= Math.floor(rating) ? '#F59A0A' : '#E5E7EB'} stroke="none">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+        </svg>
+      ))}
+    </span>
+  )
+}
+
+function MarketplaceTab({ answers }) {
+  const [activeCategory, setActiveCategory] = useState('all')
+  const [searchQuery, setSearchQuery] = useState('')
+  const dest = answers.destination || 'your destination'
+  const visaRoute = getVisaRoute(dest, answers.segment || '')
+
+  const filtered = CONSULTANTS_DATA.filter(c => {
+    const matchSearch = searchQuery === '' || c.name.toLowerCase().includes(searchQuery.toLowerCase()) || c.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()))
+    const matchCat = activeCategory === 'all'
+      || (activeCategory === 'skilled' && c.tags.some(t => t.toLowerCase().includes('skilled')))
+      || (activeCategory === 'healthcare' && c.tags.some(t => t.toLowerCase().includes('nhs') || t.toLowerCase().includes('health') || t.toLowerCase().includes('care')))
+      || (activeCategory === 'family' && c.tags.some(t => t.toLowerCase().includes('family') || t.toLowerCase().includes('spouse')))
+      || (activeCategory === 'student' && c.tags.some(t => t.toLowerCase().includes('student')))
+    return matchSearch && matchCat
+  })
+
+  return (
+    <div className="flex flex-col gap-4 pb-10 max-w-2xl w-full">
+      {/* Header */}
+      <div className="flex items-center gap-2">
+        <h1 className="text-[20px] font-bold text-[#18181B]" style={{ letterSpacing: '-0.4px', fontFamily: 'DM Sans, sans-serif' }}>Marketplace</h1>
+        <span className="text-[10px] font-bold text-[#7C6AF7] px-2 py-0.5 rounded-full" style={{ background: '#F0EEFF', border: '1px solid #DDD6FE' }}>Coming Soon</span>
+      </div>
+
+      {/* Hero banner — profile-tailored */}
+      <div className="rounded-[20px] p-[18px]" style={{ background: 'linear-gradient(135deg, #0F2E99 0%, #1E4DD7 55%, #3B75FF 100%)', boxShadow: '0px 12px 40px rgba(30,77,215,0.3)' }}>
+        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold text-white uppercase tracking-widest mb-2" style={{ background: 'rgba(255,255,255,0.18)' }}>
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={1.75}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+          OISC-Verified Only
+        </span>
+        <p className="text-[17px] font-black text-white leading-snug mb-1" style={{ fontFamily: 'DM Sans, sans-serif', letterSpacing: '-0.4px' }}>
+          Find a trusted consultant for your {dest} journey
+        </p>
+        <p className="text-[12px] text-white/70 leading-relaxed mb-3">
+          {visaRoute} specialists · Licence-checked, rated, and scam-protected.
+        </p>
+        <div className="grid grid-cols-2 gap-1.5">
+          {TRUST_STATS.map(s => (
+            <div key={s.val} className="px-2.5 py-2 rounded-[10px] text-center" style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)' }}>
+              <p className="text-[14px] font-black text-white mb-0" style={{ fontFamily: 'DM Sans, sans-serif' }}>{s.val}</p>
+              <p className="text-[9px] text-white/60 font-semibold uppercase tracking-wide">{s.label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Search bar */}
+      <div className="flex items-center gap-2 rounded-xl px-3.5 py-2.5" style={{ background: '#FFFFFF', border: '1.5px solid #E4E8FF', boxShadow: '0px 2px 8px rgba(30,77,215,0.05)' }}>
+        <Search size={15} className="text-[#ADADBE] shrink-0" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          placeholder="Search by name, visa type, or specialty..."
+          className="flex-1 border-none bg-transparent outline-none text-[13px] text-[#18181B] placeholder-[#B0B4C4]"
+        />
+      </div>
+
+      {/* Category filters */}
+      <div className="flex gap-2 flex-wrap">
+        {MARKETPLACE_CATEGORIES.map(cat => (
+          <button key={cat.id} onClick={() => setActiveCategory(cat.id)}
+            className="px-3.5 py-1.5 rounded-full text-[12px] font-bold transition-all"
+            style={activeCategory === cat.id
+              ? { background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)', color: '#fff', border: 'none' }
+              : { background: '#FFFFFF', color: '#6B7280', border: '1.5px solid #E4E8FF' }}>
+            {cat.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Consultant cards */}
+      <div className="flex flex-col gap-3">
+        {filtered.map(c => (
+          <div key={c.id} className="bg-white rounded-[18px] p-4" style={{ border: c.featured ? '1.5px solid #B3C5FF' : '1px solid #F0F2FF', boxShadow: c.featured ? '0px 6px 24px rgba(30,77,215,0.12)' : '0px 2px 10px rgba(30,77,215,0.05)' }}>
+            <div className="flex items-start gap-3 mb-3">
+              <div className="w-[46px] h-[46px] rounded-[13px] flex items-center justify-center shrink-0 text-[15px] font-black text-white" style={{ background: c.bg, fontFamily: 'DM Sans, sans-serif' }}>
+                {c.initials}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
+                      <p className="text-[14px] font-bold text-[#18181B] m-0">{c.name}</p>
+                      {c.verified && (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="#1E4DD7" stroke="none"><path d="M9 12l2 2 4-4M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-[#82858A] m-0">{c.title}</p>
+                    <p className="text-[10px] text-[#B0B4C4] m-0">{c.org}</p>
+                  </div>
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-[5px] shrink-0" style={{ background: c.badgeBg, color: c.badgeColor }}>{c.badge}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Rating + stats */}
+            <div className="flex items-center gap-3 mb-3 flex-wrap">
+              <div className="flex items-center gap-1">
+                <StarRating rating={c.rating} />
+                <span className="text-[11px] font-bold text-[#18181B]">{c.rating}</span>
+                <span className="text-[11px] text-[#82858A]">({c.reviews})</span>
+              </div>
+              <span className="text-[11px] font-semibold text-[#21C474]">{c.successRate} success</span>
+              <span className="text-[11px] text-[#82858A]">{c.casesHandled} cases</span>
+              {c.available
+                ? <span className="text-[9px] font-bold text-[#21C474] px-1.5 py-0.5 rounded-full ml-auto" style={{ background: '#E8F9EE' }}>Available now</span>
+                : <span className="text-[9px] font-bold text-[#F59A0A] px-1.5 py-0.5 rounded-full ml-auto" style={{ background: '#FFF7E6' }}>Fully booked</span>}
+            </div>
+
+            {/* Tags */}
+            <div className="flex gap-1.5 flex-wrap mb-3">
+              {c.tags.map(tag => (
+                <span key={tag} className="text-[10px] font-semibold px-2 py-0.5 rounded-full text-[#4D4D56]" style={{ background: '#F4F6FF', border: '1px solid #E4E8FF' }}>{tag}</span>
+              ))}
+            </div>
+
+            {/* Price + CTA */}
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[11px] text-[#82858A] m-0">Starting from</p>
+                <p className="text-[16px] font-black text-[#18181B] m-0" style={{ fontFamily: 'DM Sans, sans-serif' }}>{c.priceFrom}</p>
+              </div>
+              <button className="px-4 py-2.5 rounded-[10px] text-[13px] font-bold text-white cursor-default flex items-center gap-1.5" style={{ background: c.available ? 'linear-gradient(135deg, #1E4DD7, #3B75FF)' : '#D1D5DB', cursor: 'default' }}>
+                {c.available ? 'Book Session' : 'Fully Booked'}
+                {c.available && <ArrowRight size={12} className="text-white" />}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Coming Soon notice */}
+      <div className="text-center py-4 px-4 rounded-[14px]" style={{ background: 'rgba(124,106,247,0.06)', border: '1px solid #DDD6FE' }}>
+        <p className="text-[12px] font-bold text-[#7C6AF7] mb-0.5">Live Booking — Coming in Coming Soon</p>
+        <p className="text-[11px] text-[#82858A]">Real bookings, payments, and one-on-one consultant sessions will be live soon.</p>
+      </div>
+    </div>
+  )
+}
+
+// ── DOCUMENTS TAB ─────────────────────────────────────────────────────────────
+const DOCUMENT_LIST = [
+  { id: 'd1', name: 'International Passport', category: 'Identity', status: 'uploaded' },
+  { id: 'd2', name: 'National ID Card', category: 'Identity', status: 'uploaded' },
+  { id: 'd3', name: 'Degree Certificate', category: 'Qualifications', status: 'missing' },
+  { id: 'd4', name: 'NYSC Discharge Certificate', category: 'Qualifications', status: 'missing' },
+  { id: 'd5', name: 'Language Test Result', category: 'Language', status: 'processing' },
+  { id: 'd6', name: 'Employment Reference Letter', category: 'Employment', status: 'missing' },
+  { id: 'd7', name: 'Bank Statements (3 months)', category: 'Finance', status: 'missing' },
+  { id: 'd8', name: 'Police Clearance Certificate', category: 'Legal', status: 'missing' },
+]
+
+function DocumentsTab() {
+  const [docFilter, setDocFilter] = useState('All')
+  const uploaded = DOCUMENT_LIST.filter(d => d.status === 'uploaded').length
+  const processing = DOCUMENT_LIST.filter(d => d.status === 'processing').length
+  const missing = DOCUMENT_LIST.filter(d => d.status === 'missing').length
+  const pct = Math.round((uploaded / DOCUMENT_LIST.length) * 100)
+  const displayed = docFilter === 'All' ? DOCUMENT_LIST : DOCUMENT_LIST.filter(d => d.status === docFilter.toLowerCase())
+
+  return (
+    <div className="flex flex-col gap-4 pb-10 max-w-2xl w-full">
+      {/* Header */}
+      <div className="flex items-center gap-2">
+        <h1 className="text-[20px] font-bold text-[#18181B]" style={{ letterSpacing: '-0.4px', fontFamily: 'DM Sans, sans-serif' }}>Document Vault</h1>
+        <span className="text-[10px] font-bold text-[#7C6AF7] px-2 py-0.5 rounded-full" style={{ background: '#F0EEFF', border: '1px solid #DDD6FE' }}>Coming Soon</span>
+      </div>
+
+      {/* Hero banner */}
+      <div className="rounded-[18px] p-[18px]" style={{ background: 'linear-gradient(135deg, #1A42C2 0%, #2F67F8 55%, #5C8AFF 100%)', boxShadow: '0px 10px 30px rgba(30,77,215,0.25)' }}>
+        <p className="text-[10px] font-bold text-white/65 uppercase tracking-widest mb-0.5">Document Readiness</p>
+        <p className="text-[36px] font-black text-white mb-2" style={{ fontFamily: 'DM Sans, sans-serif', letterSpacing: '-2px', lineHeight: 1 }}>{pct}%</p>
+        <div className="h-[6px] rounded-full overflow-hidden mb-1.5" style={{ background: 'rgba(255,255,255,0.2)' }}>
+          <div className="h-full rounded-full" style={{ width: `${Math.max(pct, 4)}%`, background: 'linear-gradient(90deg, rgba(255,255,255,0.8), #FFFFFF)' }} />
+        </div>
+        <p className="text-[11px] text-white/60 mb-3">{uploaded} of {DOCUMENT_LIST.length} required documents uploaded</p>
+        <div className="flex gap-2">
+          {[{ val: String(uploaded), label: 'Uploaded', color: '#4ADE80' }, { val: String(missing), label: 'Missing', color: '#F87171' }, { val: String(processing), label: 'Processing', color: '#FCD34D' }].map(s => (
+            <div key={s.label} className="flex-1 text-center rounded-[10px] py-2.5" style={{ background: 'rgba(255,255,255,0.14)', border: '1px solid rgba(255,255,255,0.18)' }}>
+              <p className="text-[18px] font-black mb-0" style={{ color: s.color, fontFamily: 'DM Sans, sans-serif' }}>{s.val}</p>
+              <p className="text-[10px] text-white/65 font-medium m-0">{s.label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Drop zone */}
+      <div className="text-center rounded-[16px] py-6 px-4 cursor-default" style={{ background: 'linear-gradient(135deg, #F4F7FF, #EBF1FF)', border: '2px dashed #B3C5FF' }}>
+        <div className="w-12 h-12 rounded-[14px] flex items-center justify-center mx-auto mb-3" style={{ background: 'linear-gradient(135deg, #EBF1FF, #D8E6FF)', boxShadow: '0px 4px 12px rgba(30,77,215,0.12)' }}>
+          <Upload size={22} style={{ color: '#1E4DD7' }} />
+        </div>
+        <p className="text-[14px] font-bold text-[#18181B] mb-1" style={{ fontFamily: 'DM Sans, sans-serif' }}>Drop your documents here</p>
+        <p className="text-[12px] text-[#82858A] mb-3.5">PDF, JPG, PNG — up to 10MB per file</p>
+        <button disabled className="flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-[13px] font-semibold cursor-not-allowed mx-auto" style={{ background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)', color: '#FFFFFF', opacity: 0.5 }}>
+          <Upload size={13} className="text-white" />
+          Browse Files
         </button>
+      </div>
 
-        <p className="text-xs text-[#9E9E9E] dark:text-slate-500">We'll notify you when document upload is ready.</p>
+      {/* Document list */}
+      <div className="bg-white rounded-[18px] p-4" style={{ boxShadow: '0px 2px 10px rgba(30,77,215,0.05)', border: '1px solid #F0F2FF' }}>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-[14px] font-bold text-[#18181B] m-0" style={{ fontFamily: 'DM Sans, sans-serif' }}>Required Documents</h2>
+          <div className="flex gap-1">
+            {['All', 'Missing', 'Uploaded'].map(f => (
+              <button key={f} onClick={() => setDocFilter(f)}
+                className="px-2.5 py-1 rounded-lg text-[11px] transition-all"
+                style={{ background: docFilter === f ? '#EBF1FF' : '#F4F6FF', border: `1px solid ${docFilter === f ? '#B3C5FF' : '#E4E8FF'}`, fontWeight: docFilter === f ? 700 : 500, color: docFilter === f ? '#1E4DD7' : '#82858A' }}>
+                {f}
+              </button>
+            ))}
+          </div>
+        </div>
+        <ul className="m-0 p-0 list-none flex flex-col">
+          {displayed.map((doc, idx) => (
+            <li key={doc.id} className="flex items-center gap-3 py-3" style={{ borderBottom: idx < displayed.length - 1 ? '1px solid #F4F6FF' : 'none' }}>
+              <div className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center shrink-0"
+                style={{ background: doc.status === 'uploaded' ? '#E8F9EE' : doc.status === 'processing' ? '#FFF7E6' : '#FDECEC', border: `1.5px solid ${doc.status === 'uploaded' ? '#A7F3C5' : doc.status === 'processing' ? '#FDE68A' : '#FBBCC8'}` }}>
+                {doc.status === 'uploaded'   && <CheckCircle2 size={18} className="text-[#21C474]" />}
+                {doc.status === 'processing' && <AlertTriangle size={18} className="text-[#F59A0A]" />}
+                {doc.status === 'missing'    && <XCircle size={18} className="text-[#EF4369]" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-semibold text-[#18181B] m-0 truncate">{doc.name}</p>
+                <span className="text-[10px] font-semibold text-[#6B7280] px-1.5 py-0.5 rounded-[5px]" style={{ background: '#F4F6FF' }}>{doc.category}</span>
+              </div>
+              <div className="shrink-0">
+                {doc.status === 'missing'
+                  ? <button disabled className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-semibold text-white cursor-not-allowed opacity-60" style={{ background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)' }}>
+                      <Upload size={11} className="text-white" /> Upload
+                    </button>
+                  : <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: doc.status === 'uploaded' ? '#E8F9EE' : '#FFF7E6', color: doc.status === 'uploaded' ? '#21C474' : '#F59A0A' }}>
+                      {doc.status === 'uploaded' ? 'Done' : 'Processing'}
+                    </span>}
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   )
 }
 
 // ── PROFILE TAB ──────────────────────────────────────────────────────────────
-function Toggle({ value, onChange }) {
+function DarkToggle({ value, onChange }) {
   return (
     <button
       onClick={() => onChange(!value)}
-      className="relative w-12 h-6 rounded-full transition-all duration-300 shrink-0 focus:outline-none"
-      style={{ background: value ? '#3b75ff' : '#CBD5E1' }}
+      aria-pressed={value}
+      aria-label="Toggle dark mode"
+      className="shrink-0 focus:outline-none"
+      style={{ width: 44, height: 26, borderRadius: 13, background: value ? '#1E4DD7' : '#E5E7EB', border: 'none', cursor: 'pointer', padding: 2, display: 'flex', alignItems: 'center', justifyContent: value ? 'flex-end' : 'flex-start', transition: 'background 0.2s ease' }}
     >
-      <div
-        className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-all duration-300"
-        style={{ transform: value ? 'translateX(24px)' : 'translateX(0)' }}
-      />
+      <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#FFFFFF', boxShadow: '0 1px 4px rgba(0,0,0,0.18)' }} />
     </button>
   )
 }
 
-function ProfileTab({ user, profile, answers, onSignOut, router }) {
-  const fullName = profile?.full_name || user?.user_metadata?.full_name || ''
-  const email = user?.email || ''
-  const [name, setName] = useState(fullName)
-  const [editing, setEditing] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
+// ── Score categories from quiz data ──────────────────────────────────────────
+function buildScoreCategories(answers, score) {
+  const expMap  = { '0 – 1 year': 4, '2 – 3 years': 10, '4 – 6 years': 18, '7 – 10 years': 25, '10+ years': 30 }
+  const eduMap  = { 'High School / WAEC / NECO': 4, 'Diploma / OND / NCE': 8, "Bachelor's Degree (BSc / BA / MBBS / BPharm / LLB etc.)": 14, "Master's Degree (MSc / MBA / MA / LLM etc.)": 18, 'PhD / Doctorate': 20 }
+  const langMap = { 'Not taken': 0, 'Registered / scheduled': 2, 'IELTS Academic — below 6.0': 4, 'IELTS Academic — 6.0 to 6.5': 10, 'IELTS Academic — 7.0 to 7.5': 16, 'IELTS Academic — 8.0+': 20, 'OET (Occupational English Test) — for healthcare': 18, 'TOEFL iBT': 14, 'CELPIP — for Canada': 16 }
+  const savMap  = { 'Less than ₦1M': 0, '₦1M – ₦5M': 3, '₦5M – ₦10M': 6, '₦10M – ₦20M': 8, '₦20M+': 10 }
+
+  const expRaw  = expMap[answers.experience]  ?? 0
+  const eduRaw  = eduMap[answers.education]   ?? 0
+  const langRaw = langMap[answers.language]   ?? 0
+  const savRaw  = savMap[answers.savings]     ?? 0
+
+  const toPercent = (raw, max) => Math.round((raw / max) * 100)
+  const status    = (pct) => pct >= 70 ? 'ok' : pct >= 40 ? 'warn' : 'bad'
+  const color     = (pct) => pct >= 70 ? '#21C474' : pct >= 40 ? '#F59A0A' : '#EF4369'
+
+  return [
+    { id: 'experience', label: 'Work Experience',   pct: toPercent(expRaw, 30)  },
+    { id: 'education',  label: 'Education',          pct: toPercent(eduRaw, 20)  },
+    { id: 'language',   label: 'English Language',   pct: toPercent(langRaw, 20) },
+    { id: 'savings',    label: 'Financial Proof',    pct: toPercent(savRaw, 10)  },
+    { id: 'overall',    label: 'Overall Readiness',  pct: score                  },
+  ].map(c => ({ ...c, status: status(c.pct), color: color(c.pct) }))
+}
+
+function ProfileTab({ user, profile, answers, score, onSignOut, router }) {
+  const fullName   = profile?.full_name || user?.user_metadata?.full_name || ''
+  const email      = user?.email || ''
+  const [name, setName]           = useState(fullName)
+  const [editing, setEditing]     = useState(false)
+  const [saving, setSaving]       = useState(false)
+  const [saved, setSaved]         = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(false)
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || null)
   const [uploading, setUploading] = useState(false)
-  const [darkMode, setDarkMode] = useState(false)
-  const [emailNotifs, setEmailNotifs] = useState(true)
-  const [progressReminders, setProgressReminders] = useState(true)
+  const [darkMode, setDarkMode]   = useState(false)
 
-  useEffect(() => {
-    setDarkMode(document.documentElement.classList.contains('dark'))
-  }, [])
+  useEffect(() => { setDarkMode(document.documentElement.classList.contains('dark')) }, [])
 
-  const initials = (name || email).charAt(0).toUpperCase()
-  const destinationFlag = COUNTRY_FLAGS[answers.destination] || '🌍'
+  const initials    = (name || email).charAt(0).toUpperCase()
+  const dest        = answers.destination || '—'
+  const visaRoute   = getVisaRoute(dest, answers.segment || '')
+  const flag        = COUNTRY_FLAGS[dest] || '🌍'
+  const scoreCategories = score ? buildScoreCategories(answers, score) : null
+  const totalWeeks  = score >= 70 ? 16 : score >= 40 ? 20 : 24
 
   const saveProfile = async () => {
     setSaving(true)
@@ -1271,245 +2301,196 @@ function ProfileTab({ user, profile, answers, onSignOut, router }) {
     setUploading(false)
   }
 
-  const removeAvatar = async () => {
-    const exts = ['jpg', 'jpeg', 'png', 'webp']
-    await supabase.storage.from('avatars').remove(exts.map(e => `${user.id}/avatar.${e}`))
-    await supabase.from('profiles').upsert({ id: user.id, avatar_url: null, updated_at: new Date().toISOString() })
-    setAvatarUrl(null)
-  }
-
   const toggleDarkMode = () => {
     const next = !darkMode
     setDarkMode(next)
-    if (next) {
-      document.documentElement.classList.add('dark')
-      localStorage.setItem('darkMode', 'true')
-    } else {
-      document.documentElement.classList.remove('dark')
-      localStorage.setItem('darkMode', 'false')
-    }
+    if (next) { document.documentElement.classList.add('dark'); localStorage.setItem('darkMode', 'true') }
+    else      { document.documentElement.classList.remove('dark'); localStorage.setItem('darkMode', 'false') }
   }
 
-  const deleteAccount = async () => {
-    await supabase.auth.signOut()
-    router.push('/')
-  }
+  const deleteAccount = async () => { await supabase.auth.signOut(); router.push('/') }
 
-  // card + text helper classes
-  const card = "bg-white dark:bg-[#1e293b] shadow-[0px_14px_42px_rgba(8,15,52,0.06)] dark:shadow-[0px_14px_42px_rgba(0,0,0,0.35)] rounded-[20px]"
-  const heading = "text-sm font-semibold text-[#202020] dark:text-[#f1f5f9]"
-  const sub = "text-xs text-[#9E9E9E] dark:text-slate-400"
-  const labelClass = "block text-xs font-semibold text-[#9E9E9E] dark:text-slate-500 uppercase tracking-wider mb-1.5"
-  const inputClass = (active) => `w-full rounded-xl px-4 py-3 text-sm outline-none transition-all border ${
-    active
-      ? 'bg-white dark:bg-[#0f172a] border-[#3b75ff] text-[#202020] dark:text-[#f1f5f9]'
-      : 'bg-slate-50 dark:bg-[#0f172a] border-transparent text-[#9E9E9E] dark:text-slate-500 cursor-not-allowed'
-  }`
+  const isMobile = useIsMobile()
 
   return (
-    <div className="flex flex-col gap-0 pb-16 max-w-2xl w-full">
+    <div className="flex flex-col gap-4 pb-16" style={{ maxWidth: 820 }}>
 
-      {/* Banner */}
-      <div className="rounded-[20px] overflow-hidden mb-6" style={{
-        background: darkMode
-          ? 'linear-gradient(120deg, #1e3a6e 0%, #1e293b 50%, #2d3748 100%)'
-          : 'linear-gradient(120deg, #3b75ff 0%, #93bbff 50%, #ffe4b5 100%)',
-        height: 100,
-      }} />
-
-      {/* Profile header card */}
-      <div className={`${card} px-6 py-5 mb-5`}>
-        <div className="flex items-center gap-4 flex-wrap">
+      {/* ── Blue hero header card ─────────────────────────────────────────── */}
+      <div className="rounded-[22px] overflow-hidden" style={{ background: 'linear-gradient(135deg, #1A42C2 0%, #2F67F8 55%, #5C8AFF 100%)', boxShadow: '0px 12px 40px rgba(30,77,215,0.28)' }}>
+        {/* Top section: avatar + name + buttons */}
+        <div style={{ display: 'flex', alignItems: isMobile ? 'center' : 'flex-end', gap: isMobile ? 14 : 20, padding: isMobile ? '20px 20px 18px' : '32px 32px 28px', flexWrap: isMobile ? 'nowrap' : 'wrap' }}>
           {/* Avatar */}
-          <div className="relative shrink-0">
+          <div style={{ position: 'relative', width: isMobile ? 64 : 80, height: isMobile ? 64 : 80, flexShrink: 0 }}>
             {avatarUrl ? (
-              <img src={avatarUrl} alt="Avatar" className="w-16 h-16 rounded-full object-cover ring-2 ring-white dark:ring-slate-700 shadow-md" />
+              <img src={avatarUrl} alt="Avatar" style={{ width: isMobile ? 64 : 80, height: isMobile ? 64 : 80, borderRadius: '50%', objectFit: 'cover', border: '3px solid rgba(255,255,255,0.3)' }} />
             ) : (
-              <div className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-black text-white ring-2 ring-white dark:ring-slate-700 shadow-md" style={{ background: 'linear-gradient(135deg, #3b75ff, #2452cc)' }}>
-                {initials}
+              <div style={{ width: isMobile ? 64 : 80, height: isMobile ? 64 : 80, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.2)', border: '3px solid rgba(255,255,255,0.3)' }}>
+                <span style={{ fontSize: isMobile ? 24 : 28, fontWeight: 800, color: '#FFFFFF', fontFamily: 'DM Sans, sans-serif' }}>{initials}</span>
               </div>
             )}
-            <label className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center cursor-pointer shadow-lg border-2 border-white dark:border-[#1e293b]" style={{ background: '#3b75ff' }}>
+            <label style={{ position: 'absolute', bottom: 1, right: 1, width: isMobile ? 20 : 24, height: isMobile ? 20 : 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: '#FFFFFF', border: '2px solid rgba(30,77,215,0.3)' }}>
               {uploading
-                ? <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                : <Camera size={12} className="text-white" />}
+                ? <span className="w-3 h-3 border-2 border-[#1E4DD7]/30 border-t-[#1E4DD7] rounded-full animate-spin" />
+                : <Camera size={isMobile ? 10 : 12} style={{ color: '#1E4DD7' }} />}
               <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={uploading} />
             </label>
           </div>
 
-          {/* Name + email */}
-          <div className="flex-1 min-w-0">
-            <p className="font-bold text-[#202020] dark:text-[#f1f5f9] text-lg leading-tight" style={{ fontFamily: 'DM Sans, sans-serif' }}>{name || 'Your Name'}</p>
-            <p className="text-sm text-[#9E9E9E] dark:text-slate-400 truncate">{email}</p>
-            {avatarUrl && (
-              <button onClick={removeAvatar} className="text-[10px] text-rose-400 hover:text-rose-500 mt-1 transition-colors">
-                Remove photo
-              </button>
-            )}
+          {/* Name + email + route */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 3 }}>
+              {editing ? (
+                <input
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  style={{ fontSize: isMobile ? 18 : 22, fontWeight: 800, background: 'transparent', borderBottom: '1px solid rgba(255,255,255,0.4)', color: '#FFFFFF', outline: 'none', fontFamily: 'DM Sans, sans-serif', letterSpacing: '-0.5px', minWidth: 100 }}
+                />
+              ) : (
+                <h1 style={{ margin: 0, fontSize: isMobile ? 20 : 24, fontWeight: 800, color: '#FFFFFF', fontFamily: 'DM Sans, sans-serif', letterSpacing: '-0.4px' }}>{name || 'Your Name'}</h1>
+              )}
+              {!isMobile && <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, color: '#FFFFFF', background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)' }}>Free Plan</span>}
+            </div>
+            <p style={{ margin: '0 0 2px', fontSize: isMobile ? 12 : 14, color: 'rgba(255,255,255,0.75)' }}>{email}</p>
+            <p style={{ margin: 0, fontSize: isMobile ? 11 : 13, color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <Globe2 size={isMobile ? 10 : 12} style={{ color: 'rgba(255,255,255,0.6)' }} />
+              Nigeria → {dest} {flag} · {visaRoute}
+            </p>
           </div>
 
-          {/* Edit / Save / Cancel */}
-          {!editing ? (
-            <button
-              onClick={() => setEditing(true)}
-              className="shrink-0 px-6 py-2 rounded-xl text-sm font-semibold text-white shadow-sm transition-all hover:opacity-90"
-              style={{ background: '#3b75ff' }}
-            >
-              Edit Profile
+          {/* Edit / Save + Retake buttons */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end', flexShrink: 0 }}>
+            {!editing ? (
+              <button onClick={() => setEditing(true)} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: isMobile ? '8px 12px' : '10px 16px', background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 10, color: '#FFFFFF', fontSize: isMobile ? 12 : 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+                <Edit3 size={isMobile ? 12 : 14} style={{ color: '#FFFFFF' }} /> Edit
+              </button>
+            ) : (
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button onClick={() => { setEditing(false); setName(fullName) }} style={{ padding: '8px 10px', borderRadius: 10, fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.8)', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer' }}>Cancel</button>
+                <button onClick={async () => { await saveProfile(); setEditing(false) }} disabled={saving} style={{ padding: '8px 10px', borderRadius: 10, fontSize: 12, fontWeight: 700, color: '#FFFFFF', background: 'rgba(255,255,255,0.25)', border: '1px solid rgba(255,255,255,0.3)', cursor: 'pointer' }}>
+                  {saving ? 'Saving…' : saved ? '✓ Saved' : 'Save'}
+                </button>
+              </div>
+            )}
+            <button onClick={() => router.push('/quiz')} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: isMobile ? '8px 12px' : '10px 16px', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 10, color: 'rgba(255,255,255,0.85)', fontSize: isMobile ? 11 : 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+              <svg width={isMobile ? 10 : 12} height={isMobile ? 10 : 12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 .49-3.51" /></svg>
+              Retake
             </button>
-          ) : (
-            <div className="flex gap-2 shrink-0">
-              <button
-                onClick={() => { setEditing(false); setName(fullName) }}
-                className="px-4 py-2 rounded-xl text-sm font-semibold text-[#5F5F5F] dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:opacity-80 transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={async () => { await saveProfile(); setEditing(false) }}
-                disabled={saving}
-                className="px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 disabled:opacity-50"
-                style={{ background: '#3b75ff' }}
-              >
-                {saving ? 'Saving…' : saved ? '✓ Saved' : 'Save'}
-              </button>
-            </div>
-          )}
+          </div>
         </div>
-      </div>
 
-      {/* Personal info grid */}
-      <div className={`${card} px-6 py-6 mb-5`}>
-        <h3 className={`${heading} mb-5`}>Personal Information</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Stats bar */}
+        <div className="flex" style={{ borderTop: '1px solid rgba(255,255,255,0.12)' }}>
           {[
-            { label: 'Full Name',     value: name,                          onChange: e => setName(e.target.value), editable: true },
-            { label: 'Email Address', value: email,                         onChange: null, editable: false },
-            { label: 'Destination',   value: answers.destination || '—',    onChange: null, editable: false },
-            { label: 'Occupation',    value: answers.segment || '—',        onChange: null, editable: false },
-            { label: 'Language Test', value: answers.language || 'Not taken', onChange: null, editable: false },
-            { label: 'Age Range',     value: answers.age || '—',            onChange: null, editable: false },
-          ].map(({ label, value, onChange, editable }) => (
-            <div key={label}>
-              <label className={labelClass}>{label}</label>
-              <input
-                type="text"
-                value={value}
-                onChange={onChange || undefined}
-                disabled={!editable || !editing}
-                className={inputClass(editable && editing)}
-                placeholder={label}
-              />
+            { val: score ? `${score}%` : '—',    label: 'Readiness' },
+            { val: '—',                            label: 'Day Streak' },
+            { val: '—',                            label: 'Active Modules' },
+            { val: '—',                            label: 'Docs Ready' },
+          ].map((s, si) => (
+            <div key={s.label} className="flex-1 text-center py-4" style={{ borderRight: si < 3 ? '1px solid rgba(255,255,255,0.12)' : 'none' }}>
+              <p className="text-[20px] font-black text-white m-0" style={{ fontFamily: 'DM Sans, sans-serif' }}>{s.val}</p>
+              <p className="text-[11px] text-white/60 m-0">{s.label}</p>
             </div>
           ))}
         </div>
-        {answers.destination && (
-          <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-700">
-            <button
-              onClick={() => router.push('/quiz')}
-              className="text-xs font-semibold px-4 py-2 rounded-full transition-all hover:opacity-80"
-              style={{ background: 'rgba(59,117,255,0.12)', color: '#3b75ff' }}
-            >
-              Retake Migration Assessment →
+      </div>
+
+      {/* ── Two-column body ───────────────────────────────────────────────── */}
+      <div className="grid sm:grid-cols-2 gap-4">
+
+        {/* Score Breakdown */}
+        <div className="bg-white rounded-[18px] p-5" style={{ border: '1px solid #F0F2FF', boxShadow: '0px 2px 12px rgba(30,77,215,0.05)' }}>
+          <h2 className="text-[15px] font-bold text-[#18181B] mb-4" style={{ fontFamily: 'DM Sans, sans-serif' }}>Score Breakdown</h2>
+          {scoreCategories ? (
+            <div className="flex flex-col gap-3">
+              {scoreCategories.map(cat => (
+                <div key={cat.id}>
+                  <div className="flex justify-between items-center mb-1">
+                    <div className="flex items-center gap-1.5">
+                      {cat.status === 'ok'   && <CheckCircle2 size={12} style={{ color: '#21C474' }} />}
+                      {cat.status === 'warn' && <AlertTriangle size={12} style={{ color: '#F59A0A' }} />}
+                      {cat.status === 'bad'  && <XCircle size={12} style={{ color: '#EF4369' }} />}
+                      <span className="text-[12px] font-medium text-[#2D2D35]">{cat.label}</span>
+                    </div>
+                    <span className="text-[12px] font-bold" style={{ color: cat.color }}>{cat.pct}%</span>
+                  </div>
+                  <div className="h-1.5 rounded-full overflow-hidden" style={{ background: '#F0F2FF' }}>
+                    <div className="h-full rounded-full" style={{ width: `${cat.pct}%`, background: `linear-gradient(90deg, ${cat.color}bb, ${cat.color})` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[13px] text-[#82858A]">Take the quiz to see your score breakdown.</p>
+          )}
+        </div>
+
+        {/* Right column: Migration Profile + Share */}
+        <div className="flex flex-col gap-3">
+          {/* Migration Profile */}
+          <div className="bg-white rounded-[18px] p-5" style={{ border: '1px solid #F0F2FF', boxShadow: '0px 2px 12px rgba(30,77,215,0.05)' }}>
+            <h2 className="text-[15px] font-bold text-[#18181B] mb-4" style={{ fontFamily: 'DM Sans, sans-serif' }}>Migration Profile</h2>
+            <div className="flex flex-col gap-3">
+              {[
+                { label: 'Visa Type',           value: answers.destination ? visaRoute : '—' },
+                { label: 'Target Destination',   value: `${flag} ${dest}` },
+                { label: 'Profession',           value: answers.segment || '—' },
+                { label: 'Language Test',        value: answers.language || 'Not taken' },
+                { label: 'Savings Level',        value: answers.savings || '—' },
+                { label: 'Est. Timeline',        value: score ? `${totalWeeks} weeks` : '—' },
+              ].map(field => (
+                <div key={field.label} className="flex justify-between items-center pb-3" style={{ borderBottom: '1px solid #F4F6FF' }}>
+                  <span className="text-[12px] text-[#82858A] font-medium">{field.label}</span>
+                  <span className="text-[13px] text-[#18181B] font-semibold text-right max-w-[55%] truncate">{field.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Share Profile card */}
+          <div className="rounded-[16px] p-4" style={{ background: 'linear-gradient(135deg, #EBF1FF 0%, #F2EEFF 100%)', border: '1px solid #D4DCFF' }}>
+            <p className="text-[13px] font-bold text-[#1E4DD7] mb-0.5">Share Your Profile 🔗</p>
+            <p className="text-[11px] text-[#6B7280] mb-1.5 leading-relaxed">japalearn.ai/profile</p>
+            <p className="text-[12px] text-[#4D4D56] leading-relaxed mb-3">Your profile shows your readiness score, pathway & progress. Share it with anyone.</p>
+            <button className="w-full py-2.5 rounded-[10px] text-white text-[13px] font-semibold flex items-center justify-center gap-1.5" style={{ background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)', boxShadow: '0px 4px 14px rgba(30,77,215,0.28)' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" /></svg>
+              Share Your Profile
             </button>
           </div>
-        )}
+        </div>
       </div>
 
-      {/* Email address */}
-      <div className={`${card} px-6 py-6 mb-5`}>
-        <h3 className={`${heading} mb-4`}>My Email Address</h3>
-        <div className="flex items-center gap-3 rounded-xl px-4 py-3" style={{ background: darkMode ? 'rgba(59,117,255,0.12)' : '#F0F4FF' }}>
-          <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: '#3b75ff' }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
-            </svg>
-          </div>
+      {/* ── Account & Settings ────────────────────────────────────────────── */}
+      <div className="bg-white rounded-[18px] p-5" style={{ border: '1px solid #F0F2FF', boxShadow: '0px 2px 12px rgba(30,77,215,0.05)' }}>
+        <h2 className="text-[15px] font-bold text-[#18181B] mb-4" style={{ fontFamily: 'DM Sans, sans-serif' }}>Account &amp; Settings</h2>
+        <div className="grid grid-cols-2 gap-2.5 mb-4">
+          {['Notification Preferences', 'Privacy Settings'].map((s, si) => (
+            <button key={s} className="px-4 py-3 rounded-xl text-[13px] font-medium text-[#4D4D56] text-left" style={{ background: '#FAFBFF', border: '1px solid #F0F2FF' }}>{s}</button>
+          ))}
+        </div>
+        {/* Dark mode */}
+        <div className="flex items-center justify-between px-4 py-3 rounded-xl mb-2.5" style={{ background: '#FAFBFF', border: '1px solid #F0F2FF' }}>
           <div>
-            <p className="text-sm font-semibold text-[#202020] dark:text-[#f1f5f9]">{email}</p>
-            <p className={sub}>Primary account email · verified</p>
+            <p className="text-[13px] font-bold text-[#18181B] m-0">Dark Mode</p>
+            <p className="text-[11px] text-[#6B7280] m-0">{darkMode ? 'Dark mode active' : 'Switch to darker theme'}</p>
           </div>
+          <DarkToggle value={darkMode} onChange={toggleDarkMode} />
         </div>
-      </div>
-
-      {/* Appearance & Notifications */}
-      <div className={`${card} px-6 py-6 mb-5`}>
-        <h3 className={`${heading} mb-6`}>Preferences</h3>
-
-        {/* Dark mode row */}
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: darkMode ? 'rgba(59,117,255,0.2)' : '#EEF4FF' }}>
-              {darkMode
-                ? <Moon size={18} style={{ color: '#93bbff' }} />
-                : <Sun size={18} style={{ color: '#3b75ff' }} />}
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-[#202020] dark:text-[#f1f5f9]">{darkMode ? 'Dark Mode' : 'Light Mode'}</p>
-              <p className={sub}>{darkMode ? 'Easier on the eyes at night' : 'Clean and bright interface'}</p>
-            </div>
-          </div>
-          <Toggle value={darkMode} onChange={toggleDarkMode} />
-        </div>
-
-        <div className="h-px bg-slate-100 dark:bg-slate-700 mb-5" />
-
-        {/* Notification rows */}
-        {[
-          { label: 'Email Updates',       sub2: 'New features and announcements', value: emailNotifs,        set: setEmailNotifs },
-          { label: 'Progress Reminders',  sub2: 'Weekly learning check-ins',     value: progressReminders,  set: setProgressReminders },
-        ].map(({ label, sub2, value, set }) => (
-          <div key={label} className="flex items-center justify-between mb-4 last:mb-0">
-            <div>
-              <p className="text-sm font-medium text-[#202020] dark:text-[#f1f5f9]">{label}</p>
-              <p className={sub}>{sub2}</p>
-            </div>
-            <Toggle value={value} onChange={set} />
-          </div>
-        ))}
-      </div>
-
-      {/* Account actions */}
-      <div className={`${card} px-6 py-6`}>
-        <h3 className={`${heading} mb-1`}>Account</h3>
-        <p className={`${sub} mb-5`}>Manage your session and account</p>
-
         {/* Sign out */}
-        <button
-          onClick={onSignOut}
-          className="w-full flex items-center gap-3 text-sm font-medium text-[#202020] dark:text-[#f1f5f9] hover:text-[#3b75ff] dark:hover:text-[#3b75ff] transition-colors py-3 px-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 mb-2"
-        >
-          <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0">
-            <LogOut size={15} className="text-[#5F5F5F] dark:text-slate-300" />
-          </div>
-          <span>Sign out</span>
+        <button onClick={onSignOut} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[13px] font-medium text-[#4D4D56] hover:bg-[#F7F9FF] transition-colors mb-2" style={{ border: '1px solid #F0F2FF', background: '#FAFBFF' }}>
+          <LogOut size={15} className="text-[#5F5F6B] shrink-0" /> Sign out
         </button>
-
         {/* Delete account */}
         {!deleteConfirm ? (
-          <button
-            onClick={() => setDeleteConfirm(true)}
-            className="w-full flex items-center gap-3 text-sm font-medium text-rose-500 hover:text-rose-600 transition-colors py-3 px-3 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-900/20"
-          >
-            <div className="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-900/30 flex items-center justify-center shrink-0">
-              <Trash2 size={15} className="text-rose-400" />
-            </div>
-            <span>Delete account</span>
+          <button onClick={() => setDeleteConfirm(true)} className="w-full px-4 py-3 rounded-xl text-[13px] font-medium text-[#EF4369] text-left" style={{ background: '#FFF5F7', border: '1px solid #FDD' }}>
+            Delete Account
           </button>
         ) : (
-          <div className="bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-800 rounded-2xl p-5 mt-1">
-            <p className="text-sm font-bold text-rose-700 dark:text-rose-400 mb-1">Delete your account?</p>
-            <p className="text-xs text-rose-500 dark:text-rose-400 mb-4 leading-relaxed">
-              This will sign you out immediately. To fully delete your data, email us at{' '}
-              <span className="font-semibold">hello@japalearn.ai</span>.
-            </p>
+          <div className="rounded-xl p-4" style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.15)' }}>
+            <p className="text-[13px] font-bold text-rose-700 mb-1">Delete your account?</p>
+            <p className="text-[12px] text-rose-500 mb-3 leading-relaxed">This will sign you out immediately. To fully delete your data, email <span className="font-semibold">hello@japalearn.ai</span>.</p>
             <div className="flex gap-2">
-              <button onClick={deleteAccount} className="text-xs font-semibold text-white px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 transition-colors">
-                Yes, sign me out
-              </button>
-              <button onClick={() => setDeleteConfirm(false)} className="text-xs font-semibold text-[#5F5F5F] dark:text-slate-300 px-4 py-2 rounded-xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:bg-slate-50 transition-colors">
-                Cancel
-              </button>
+              <button onClick={deleteAccount} className="text-[12px] font-bold text-white px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 transition-colors">Yes, sign me out</button>
+              <button onClick={() => setDeleteConfirm(false)} className="text-[12px] font-semibold text-[#5F5F6B] px-4 py-2 rounded-xl bg-white hover:bg-[#F7F9FF] transition-colors" style={{ border: '1px solid #E0E8FF' }}>Cancel</button>
             </div>
           </div>
         )}
@@ -1601,9 +2582,9 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white dark:bg-[#0f172a] flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#F7F9FF' }}>
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#3b75ff', borderTopColor: 'transparent' }} />
+          <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#1E4DD7', borderTopColor: 'transparent' }} />
           <p className="text-[#9E9E9E] text-sm">Loading your dashboard...</p>
         </div>
       </div>
@@ -1619,7 +2600,7 @@ export default function Dashboard() {
   return (
     <>
       <Head><title>Dashboard — JapaLearn AI</title></Head>
-      <div className="h-screen bg-white dark:bg-[#0f172a] flex overflow-hidden">
+      <div className="h-screen flex overflow-hidden" style={{ background: '#F7F9FF' }}>
         <Sidebar
           activeTab={activeTab}
           setActiveTab={setActiveTab}
@@ -1631,7 +2612,7 @@ export default function Dashboard() {
         />
 
         {/* Main content */}
-        <main className="flex-1 lg:ml-[240px] overflow-y-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8 pb-24 lg:pb-8 dark:bg-[#0f172a]">
+        <main className="flex-1 lg:ml-[260px] overflow-y-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8 pb-24 lg:pb-8" style={{ background: '#F7F9FF' }}>
           {/* Mobile header */}
           <div className="flex items-center justify-between lg:hidden mb-5">
             <button
@@ -1642,8 +2623,8 @@ export default function Dashboard() {
                 <path d="M3 12h18M3 6h18M3 18h18" />
               </svg>
             </button>
-            <span className="font-bold text-sm text-[#202020]" style={{ fontFamily: 'DM Sans, sans-serif' }}>
-              JapaLearn <span style={{ color: '#3b75ff' }}>AI</span>
+            <span className="font-bold text-sm text-[#18181B]" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+              JapaLearn <span style={{ color: '#1E4DD7' }}>AI</span>
             </span>
             <div className="w-9 h-9" />
           </div>
@@ -1656,12 +2637,15 @@ export default function Dashboard() {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.18 }}
             >
-              {activeTab === 'overview'  && <OverviewTab answers={answers} score={score} flag={flag} displayName={displayName} isNewUser={isFirstVisit} router={router} quizResult={quizResult} setActiveTab={setActiveTab} />}
-              {activeTab === 'learning'  && <LearningTab answers={answers} userId={user?.id} />}
-              {activeTab === 'roadmap'   && <RoadmapTab answers={answers} score={score} />}
-              {activeTab === 'resources' && <ResourcesTab answers={answers} userId={user?.id} />}
-              {activeTab === 'documents' && <DocumentsTab />}
-              {activeTab === 'profile'   && <ProfileTab user={user} profile={profile} answers={answers} onSignOut={handleSignOut} router={router} />}
+              {activeTab === 'overview'       && <OverviewTab answers={answers} score={score} flag={flag} displayName={displayName} isNewUser={isFirstVisit} router={router} quizResult={quizResult} setActiveTab={setActiveTab} />}
+              {activeTab === 'learning'       && <LearningTab answers={answers} userId={user?.id} />}
+              {activeTab === 'roadmap'        && <RoadmapTab answers={answers} score={score} />}
+              {activeTab === 'resources'      && <ResourcesTab answers={answers} userId={user?.id} />}
+              {activeTab === 'conversations'  && <ConversationsTab user={user} profile={profile} answers={answers} />}
+              {activeTab === 'documents'      && <DocumentsTab />}
+              {activeTab === 'peers'          && <PeersTab answers={answers} />}
+              {activeTab === 'marketplace'    && <MarketplaceTab answers={answers} />}
+              {activeTab === 'profile'        && <ProfileTab user={user} profile={profile} answers={answers} score={score} onSignOut={handleSignOut} router={router} />}
             </motion.div>
           </AnimatePresence>
         </main>
@@ -1679,7 +2663,7 @@ export default function Dashboard() {
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
                   className="flex flex-col items-center gap-0.5 py-1 px-2 rounded-xl transition-all"
-                  style={{ color: isActive ? '#3b75ff' : '#9E9E9E' }}
+                  style={{ color: isActive ? '#1E4DD7' : '#9E9E9E' }}
                 >
                   <Icon size={19} />
                   <span style={{ fontSize: '9px', fontWeight: isActive ? 600 : 400 }}>{item.label}</span>
