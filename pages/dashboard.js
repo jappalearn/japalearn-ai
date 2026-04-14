@@ -2294,27 +2294,16 @@ function DarkToggle({ value, onChange }) {
 
 // ── Score categories from quiz data ──────────────────────────────────────────
 function buildScoreCategories(answers, score) {
-  const expMap  = { '0 – 1 year': 4, '2 – 3 years': 10, '4 – 6 years': 18, '7 – 10 years': 25, '10+ years': 30 }
-  const eduMap  = { 'High School / WAEC / NECO': 4, 'Diploma / OND / NCE': 8, "Bachelor's Degree (BSc / BA / MBBS / BPharm / LLB etc.)": 14, "Master's Degree (MSc / MBA / MA / LLM etc.)": 18, 'PhD / Doctorate': 20 }
-  const langMap = { 'Not taken': 0, 'Registered / scheduled': 2, 'IELTS Academic — below 6.0': 4, 'IELTS Academic — 6.0 to 6.5': 10, 'IELTS Academic — 7.0 to 7.5': 16, 'IELTS Academic — 8.0+': 20, 'OET (Occupational English Test) — for healthcare': 18, 'TOEFL iBT': 14, 'CELPIP — for Canada': 16 }
-  const savMap  = { 'Less than ₦1M': 0, '₦1M – ₦5M': 3, '₦5M – ₦10M': 6, '₦10M – ₦20M': 8, '₦20M+': 10 }
+  const areaStatus = (pct) => pct >= 70 ? 'ok' : pct >= 40 ? 'warn' : 'bad'
+  const areaColor  = (pct) => pct >= 70 ? '#21C474' : pct >= 40 ? '#F59A0A' : '#EF4369'
+  const labelMap   = { Experience: 'Work Experience', Language: 'English Language', Savings: 'Financial Proof', Profile: 'Profile Bonus', Education: 'Education', Age: 'Age Factor' }
 
-  const expRaw  = expMap[answers.experience]  ?? 0
-  const eduRaw  = eduMap[answers.education]   ?? 0
-  const langRaw = langMap[answers.language]   ?? 0
-  const savRaw  = savMap[answers.savings]     ?? 0
-
-  const toPercent = (raw, max) => Math.round((raw / max) * 100)
-  const status    = (pct) => pct >= 70 ? 'ok' : pct >= 40 ? 'warn' : 'bad'
-  const color     = (pct) => pct >= 70 ? '#21C474' : pct >= 40 ? '#F59A0A' : '#EF4369'
-
-  return [
-    { id: 'experience', label: 'Work Experience',   pct: toPercent(expRaw, 30)  },
-    { id: 'education',  label: 'Education',          pct: toPercent(eduRaw, 20)  },
-    { id: 'language',   label: 'English Language',   pct: toPercent(langRaw, 20) },
-    { id: 'savings',    label: 'Financial Proof',    pct: toPercent(savRaw, 10)  },
-    { id: 'overall',    label: 'Overall Readiness',  pct: score                  },
-  ].map(c => ({ ...c, status: status(c.pct), color: color(c.pct) }))
+  const cats = calculateScoreBreakdown(answers).map(item => {
+    const pct = Math.round((item.score / item.max) * 100)
+    return { id: item.label.toLowerCase(), label: labelMap[item.label] || item.label, pct, status: areaStatus(pct), color: areaColor(pct) }
+  })
+  cats.push({ id: 'overall', label: 'Overall Readiness', pct: score, status: areaStatus(score), color: areaColor(score) })
+  return cats
 }
 
 function ProfileTab({ user, profile, answers, score, quizResult, onSignOut, router }) {
