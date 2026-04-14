@@ -13,7 +13,7 @@ import {
   FileText, File, Download, Filter, FilesIcon, Upload, Flame,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
-import { getScoreFlag } from '../lib/quizData'
+import { getScoreFlag, calculateScoreBreakdown } from '../lib/quizData'
 import Logo from '../lib/Logo'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
@@ -54,40 +54,6 @@ const COUNTRY_FLAGS = {
   'Sweden': '🇸🇪', 'Norway': '🇳🇴', 'UAE': '🇦🇪', 'Singapore': '🇸🇬',
 }
 
-// ── Score breakdown factors ────────────────────────────────────────────────────
-function getScoreBreakdown(answers, score) {
-  const expMap = { '0 – 1 year': 4, '2 – 3 years': 10, '4 – 6 years': 18, '7 – 10 years': 25, '10+ years': 30 }
-  const eduMap = {
-    'High School / WAEC / NECO': 4, 'Diploma / OND / NCE': 8,
-    "Bachelor's Degree (BSc / BA / MBBS / BPharm / LLB etc.)": 14,
-    "Master's Degree (MSc / MBA / MA / LLM etc.)": 18, 'PhD / Doctorate': 20,
-  }
-  const langMap = {
-    'Not taken': 0, 'Registered / scheduled': 2,
-    'IELTS Academic — below 6.0': 4, 'IELTS Academic — 6.0 to 6.5': 10,
-    'IELTS Academic — 7.0 to 7.5': 16, 'IELTS Academic — 8.0+': 20,
-    'OET (Occupational English Test) — for healthcare': 18,
-    'TOEFL iBT': 14, 'CELPIP — for Canada': 16,
-  }
-  const ageMap = { 'Under 20': 2, '20 – 24': 6, '25 – 30': 10, '31 – 35': 10, '36 – 40': 7, '41 – 45': 4, '46+': 2 }
-  const savMap = { 'Less than ₦1M': 0, '₦1M – ₦5M': 3, '₦5M – ₦10M': 6, '₦10M – ₦20M': 8, '₦20M+': 10 }
-
-  const exp = expMap[answers.experience] || 0
-  const edu = eduMap[answers.education] || 0
-  const lang = langMap[answers.language] || 0
-  const age = ageMap[answers.age] || 0
-  const sav = savMap[answers.savings] || 0
-  const bonus = score - exp - edu - lang - age - sav
-
-  return [
-    { label: 'Experience', score: exp, max: 30 },
-    { label: 'Education', score: edu, max: 20 },
-    { label: 'Language', score: lang, max: 20 },
-    { label: 'Age', score: age, max: 10 },
-    { label: 'Savings', score: sav, max: 10 },
-    { label: 'Profile', score: Math.max(0, Math.min(bonus, 10)), max: 10 },
-  ]
-}
 
 // ── Nav groups (new grouped design) ──────────────────────────────────────────
 const NAV_GROUPS = [
@@ -151,7 +117,7 @@ function Sidebar({ activeTab, setActiveTab, onSignOut, isMobileOpen, onMobileClo
         <div className="flex items-center gap-2.5 px-6 mb-4">
           <Logo size={32} />
           <span className="font-bold text-sm text-[#18181B]" style={{ fontFamily: 'DM Sans, sans-serif' }}>
-            JapaLearn <span style={{ color: '#1E4DD7' }}>AI</span>
+            JapaLearn <span style={{ color: '#3b75ff' }}>AI</span>
           </span>
           <button className="ml-auto lg:hidden text-slate-400" onClick={onMobileClose}>
             <X size={16} />
@@ -461,6 +427,28 @@ function SearchBar({ answers, setActiveTab }) {
   )
 }
 
+// ── Quiz-required empty state ─────────────────────────────────────────────────
+function QuizRequiredState({ icon: Icon, title, description, router }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 px-6 text-center max-w-[480px] mx-auto">
+      <div className="w-16 h-16 rounded-[20px] flex items-center justify-center mb-5" style={{ background: 'linear-gradient(135deg, #EBF1FF, #D4DCFF)' }}>
+        <Icon size={28} style={{ color: '#1E4DD7' }} />
+      </div>
+      <h2 className="text-[20px] font-extrabold text-[#18181B] mb-2 leading-snug" style={{ fontFamily: 'DM Sans, sans-serif', letterSpacing: '-0.4px' }}>{title}</h2>
+      <p className="text-[14px] text-[#82858A] leading-relaxed mb-7">{description}</p>
+      <button
+        onClick={() => router.push('/quiz')}
+        className="flex items-center gap-2 px-7 py-3.5 rounded-[14px] text-[15px] font-bold text-white transition-all hover:opacity-90"
+        style={{ background: 'linear-gradient(135deg, #1A42C2, #3B75FF)', boxShadow: '0px 8px 24px rgba(30,77,215,0.3)' }}
+      >
+        <Sparkles size={16} className="text-white" />
+        Start with Quiz
+      </button>
+      <p className="text-[11px] text-[#B0B4C4] mt-3">Takes 2 minutes · Completely free</p>
+    </div>
+  )
+}
+
 // ── OVERVIEW TAB ─────────────────────────────────────────────────────────────
 function OverviewTab({ answers, score, flag, displayName, isNewUser, router, quizResult, setActiveTab }) {
   const visaRoute = answers.destination ? getVisaRoute(answers.destination, answers.segment) : null
@@ -469,7 +457,7 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
   const greeting = greetingHour < 12 ? 'Good morning' : greetingHour < 17 ? 'Good afternoon' : 'Good evening'
 
   // Score area tags — derived from real quiz answers
-  const scoreBreakdown = quizResult ? getScoreBreakdown(answers, score) : []
+  const scoreBreakdown = quizResult ? calculateScoreBreakdown(answers) : []
   const areaStatus = (pct) => pct >= 70 ? 'ok' : pct >= 40 ? 'warn' : 'bad'
   const heroTags = quizResult ? [
     { label: 'Language',     status: areaStatus(Math.round(((scoreBreakdown.find(s=>s.label==='Language')?.score||0) / 20)*100)) },
@@ -590,8 +578,8 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
           {/* ── MOBILE 2×2 Stat Cards ── */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             {[
-              { icon: TrendingUp, val: quizResult ? `${score}%` : '—', label: 'Readiness Score', color: '#F59A0A', bg: '#FFF7E6' },
-              { icon: BookOpen,   val: quizResult && answers.destination ? '3' : '0', label: 'Modules Active', color: '#3B75FF', bg: '#EBF1FF' },
+              { icon: TrendingUp, val: quizResult ? `${score}%` : '0', label: 'Readiness Score', color: '#F59A0A', bg: '#FFF7E6' },
+              { icon: BookOpen,   val: quizResult && answers.destination ? '1' : '—', label: 'Modules Active', color: '#3B75FF', bg: '#EBF1FF' },
               { icon: Flame,      val: '—', label: 'Day Streak',   color: '#21C474', bg: '#E8F9EE' },
               { icon: FilesIcon,  val: '—', label: 'Docs Ready',   color: '#EF4369', bg: '#FDECEC' },
             ].map(card => {
@@ -641,7 +629,7 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
                 className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold transition-all hover:shadow-lg"
                 style={{ background: '#FFFFFF', color: '#1E4DD7', boxShadow: '0px 6px 20px rgba(0,0,0,0.18)' }}
               >
-                <span>{quizResult ? 'Continue Learning' : 'Take Assessment'}</span>
+                <span>{quizResult ? 'Start Learning' : 'Start with Quiz'}</span>
                 <ArrowRight size={14} style={{ color: '#1E4DD7' }} />
               </button>
             </div>
@@ -669,8 +657,8 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
             {/* Quick stats */}
             <div className="grid grid-cols-2 gap-2.5 content-center">
               {[
-                { icon: TrendingUp, val: quizResult ? `${score}%` : '—', label: 'Readiness Score', color: '#F59A0A' },
-                { icon: BookOpen,   val: quizResult && answers.destination ? '3' : '0', label: 'Modules Active', color: '#3B75FF' },
+                { icon: TrendingUp, val: quizResult ? `${score}%` : '0', label: 'Readiness Score', color: '#F59A0A' },
+                { icon: BookOpen,   val: quizResult && answers.destination ? '1' : '—', label: 'Modules Active', color: '#3B75FF' },
                 { icon: Flame,      val: '—', label: 'Day Streak',    color: '#21C474' },
                 { icon: FilesIcon,  val: '—', label: 'Docs Ready',    color: '#EF4369' },
               ].map(s => {
@@ -816,8 +804,7 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
 }
 
 // ── LEARNING TAB ───────────────────────────────────────────────────────────────
-function LearningTab({ answers, userId }) {
-  const router = useRouter()
+function LearningTab({ answers, userId, quizResult, router }) {
   const [curriculum, setCurriculum] = useState(null)
   const [loading, setLoading] = useState(false)
   const [genError, setGenError] = useState('')
@@ -898,22 +885,22 @@ function LearningTab({ answers, userId }) {
     return (
       <div className="flex flex-col gap-6 pb-10 max-w-[820px]">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#18181B] mb-1" style={{ fontFamily: 'DM Sans, sans-serif', letterSpacing: '-0.6px' }}>Your AI Curriculum</h1>
-          <p className="text-[15px] text-[#82858A] leading-relaxed">Personalised, structured and built specifically for your migration profile — generated in seconds.</p>
+          <h1 className="text-2xl font-extrabold text-[#18181B] mb-1" style={{ fontFamily: 'DM Sans, sans-serif', letterSpacing: '-0.6px' }}>Your Curriculum</h1>
+          <p className="text-[15px] text-[#82858A] leading-relaxed">{quizResult ? 'Personalised, structured and built specifically for your migration profile — generated in seconds.' : 'Take the quiz first so we know your destination, profession, and goals — then your curriculum is built around you.'}</p>
         </div>
 
-        {/* Generate card */}
+        {/* Generate / quiz card */}
         <div className="rounded-[22px] p-8" style={{ background: 'linear-gradient(135deg, #1A42C2 0%, #2F67F8 55%, #5C8AFF 100%)', boxShadow: '0px 16px 48px rgba(30,77,215,0.3)' }}>
           <p className="text-[11px] font-bold text-white/65 uppercase tracking-widest mb-2">What you&apos;ll get</p>
           <h2 className="text-xl font-extrabold text-white mb-5 leading-snug" style={{ fontFamily: 'DM Sans, sans-serif', letterSpacing: '-0.4px' }}>
-            A complete {answers.destination || 'migration'} learning path, built around your profile
+            {quizResult ? `A complete ${answers.destination} learning path, built around your profile` : 'A personalised learning path — built around your destination, profession, and goals'}
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-7">
             {[
-              { icon: BookOpen,  title: '5–8 modules',       desc: 'Covering visa, language, docs & finance' },
-              { icon: TrendingUp, title: 'Personalised roadmap', desc: 'Matched to your readiness gaps' },
-              { icon: Sparkles,  title: 'AI-generated fast',  desc: 'Built in under 10 seconds' },
-              { icon: CheckCircle2, title: 'Fully unlocked', desc: 'Every lesson available to you' },
+              { icon: BookOpen,     title: '5–8 modules',       desc: 'Covering visa, language, docs & finance' },
+              { icon: TrendingUp,   title: 'Matches your gaps',  desc: 'Focused on what your profile needs most' },
+              { icon: Sparkles,     title: 'Ready in seconds',   desc: 'Built instantly after your quiz' },
+              { icon: CheckCircle2, title: 'Fully unlocked',     desc: 'Every lesson available to you' },
             ].map(item => {
               const Icon = item.icon
               return (
@@ -928,21 +915,23 @@ function LearningTab({ answers, userId }) {
             })}
           </div>
           <button
-            onClick={generateCurriculum}
-            disabled={loading || !answers.destination}
+            onClick={quizResult ? generateCurriculum : () => router.push('/quiz')}
+            disabled={loading}
             className="flex items-center gap-2.5 px-8 py-4 rounded-[14px] text-[16px] font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ background: '#FFFFFF', color: '#1E4DD7', boxShadow: '0px 8px 24px rgba(0,0,0,0.2)' }}
           >
             {loading ? (
               <><span className="w-4 h-4 border-2 border-blue-200 border-t-[#1E4DD7] rounded-full animate-spin" /> Generating your curriculum…</>
+            ) : quizResult ? (
+              <><BookOpen size={18} style={{ color: '#1E4DD7' }} /><span>Start Learning</span><ArrowRight size={16} style={{ color: '#1E4DD7' }} /></>
             ) : (
-              <><BookOpen size={18} style={{ color: '#1E4DD7' }} /><span>Generate My Curriculum</span><ArrowRight size={16} style={{ color: '#1E4DD7' }} /></>
+              <><Sparkles size={18} style={{ color: '#1E4DD7' }} /><span>Start with Quiz</span><ArrowRight size={16} style={{ color: '#1E4DD7' }} /></>
             )}
           </button>
           {genError && <p className="text-rose-200 text-xs mt-4">{genError}</p>}
         </div>
 
-        {/* Profile tags */}
+        {/* Profile tags — only show post-quiz */}
         {answers.destination && (
           <div className="bg-white rounded-[18px] p-5 sm:p-6" style={{ border: '1px solid #F0F2FF', boxShadow: '0px 2px 12px rgba(30,77,215,0.05)' }}>
             <h3 className="text-[14px] font-bold text-[#18181B] mb-3" style={{ fontFamily: 'DM Sans, sans-serif' }}>Your curriculum will be based on</h3>
@@ -1161,9 +1150,9 @@ function generateMilestones(answers, score) {
   const hasGoodLang  = lang.includes('7.') || lang.includes('8.') ||
     lang.startsWith('OET') || lang.startsWith('CELPIP')
 
-  const m1Done = true
+  const m1Done = false
   const m2Done = false
-  const m3Done = hasGoodLang
+  const m3Done = false
   const m4Done = false; const m5Done = false; const m6Done = false
 
   const currentIdx = m1Done && m2Done && m3Done && m4Done && m5Done ? 5
@@ -1336,20 +1325,90 @@ function generateMilestones(answers, score) {
   return { milestones, totalWeeks, completedCount, pct, visaRoute, destLabel, phases }
 }
 
-function RoadmapTab({ answers, score }) {
+function RoadmapTab({ answers, score, quizResult, router }) {
   const [expandedMilestone, setExpandedMilestone] = useState('mi2')
+  const isMobile = useIsMobile()
+
+  if (!quizResult?.answers?.destination || !quizResult?.answers?.segment) {
+    if (isMobile) {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 40 }}>
+          {/* Mobile sub-header */}
+          <div>
+            <p style={{ margin: '0 0 3px', fontSize: 11, color: '#82858A', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <Calendar size={11} style={{ color: '#82858A' }} />
+              <span>Your personalised plan awaits</span>
+            </p>
+            <h1 style={{ margin: '0 0 3px', fontSize: 22, fontWeight: 700, color: '#18181B', letterSpacing: '-0.5px', fontFamily: 'DM Sans, sans-serif' }}>My Roadmap</h1>
+            <p style={{ margin: 0, fontSize: 13, color: '#82858A' }}>You need to take the quiz to build a personalised roadmap.</p>
+          </div>
+          {/* Mobile blue banner — no quiz state */}
+          <div style={{ background: 'linear-gradient(135deg, #1A42C2 0%, #2F67F8 60%, #5C8AFF 100%)', borderRadius: 18, padding: 18, boxShadow: '0px 10px 32px rgba(30,77,215,0.25)' }}>
+            <p style={{ margin: '0 0 2px', fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.65)', letterSpacing: '0.09em', textTransform: 'uppercase' }}>Quiz Required</p>
+            <p style={{ margin: '0 0 2px', fontSize: 20, fontWeight: 800, color: '#FFFFFF', fontFamily: 'DM Sans, sans-serif', letterSpacing: '-0.4px' }}>Not started yet</p>
+            <p style={{ margin: '0 0 10px', fontSize: 12, color: 'rgba(255,255,255,0.65)' }}>Your destination, visa route &amp; timeline unlock after the quiz</p>
+            <div style={{ height: 7, background: 'rgba(255,255,255,0.18)', borderRadius: 4, overflow: 'hidden', marginBottom: 6 }}>
+              <div style={{ width: '5%', height: '100%', background: 'linear-gradient(90deg, rgba(255,255,255,0.8), #FFFFFF)', borderRadius: 4 }} />
+            </div>
+            <p style={{ margin: '0 0 14px', fontSize: 11, color: 'rgba(255,255,255,0.55)' }}>0 of 6 milestones completed · 0% done</p>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {[{ val: '—', label: 'Weeks left' }, { val: '0%', label: 'Complete' }, { val: '6', label: 'Ahead' }].map(s => (
+                <div key={s.label} style={{ flex: 1, padding: '10px 8px', background: 'rgba(255,255,255,0.14)', borderRadius: 10, border: '1px solid rgba(255,255,255,0.2)', textAlign: 'center' }}>
+                  <p style={{ margin: '0 0 1px', fontSize: 16, fontWeight: 800, color: '#FFFFFF', fontFamily: 'DM Sans, sans-serif' }}>{s.val}</p>
+                  <p style={{ margin: 0, fontSize: 9, fontWeight: 600, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{s.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )
+    }
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20, paddingBottom: 40, maxWidth: 700 }}>
+        {/* Desktop sub-header */}
+        <div>
+          <p style={{ margin: '0 0 4px', fontSize: 13, color: '#82858A', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 5 }}>
+            <Calendar size={13} style={{ color: '#82858A' }} />
+            <span>Your personalised plan awaits</span>
+          </p>
+          <h1 style={{ margin: '0 0 4px', fontSize: 26, fontWeight: 700, color: '#18181B', letterSpacing: '-0.6px', fontFamily: 'DM Sans, sans-serif' }}>My Roadmap</h1>
+          <p style={{ margin: 0, fontSize: 14, color: '#82858A' }}>You need to take the quiz to build a personalised roadmap.</p>
+        </div>
+        {/* Desktop blue banner — no quiz state */}
+        <div style={{ background: 'linear-gradient(135deg, #1A42C2 0%, #2F67F8 60%, #5C8AFF 100%)', borderRadius: 22, padding: '28px 28px 24px', boxShadow: '0px 16px 48px rgba(30,77,215,0.28)', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 20, flexWrap: 'wrap' }}>
+            {/* Left */}
+            <div style={{ flex: 1, minWidth: 160 }}>
+              <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.65)', letterSpacing: '0.09em', textTransform: 'uppercase' }}>Quiz Required</p>
+              <p style={{ margin: '0 0 2px', fontSize: 22, fontWeight: 800, color: '#FFFFFF', fontFamily: 'DM Sans, sans-serif', letterSpacing: '-0.5px' }}>Not started yet</p>
+              <p style={{ margin: '0 0 18px', fontSize: 13, color: 'rgba(255,255,255,0.65)' }}>Your destination, visa route &amp; timeline unlock after the quiz</p>
+              <div style={{ height: 8, background: 'rgba(255,255,255,0.18)', borderRadius: 4, overflow: 'hidden', marginBottom: 8, maxWidth: 280 }}>
+                <div style={{ width: '5%', height: '100%', background: 'linear-gradient(90deg, rgba(255,255,255,0.8), #FFFFFF)', borderRadius: 4 }} />
+              </div>
+              <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>0 of 6 milestones completed · 0% done</p>
+            </div>
+            {/* Right: stat chips */}
+            <div style={{ display: 'flex', gap: 10, flexShrink: 0, flexWrap: 'wrap' }}>
+              {[{ val: '—', label: 'Weeks left' }, { val: '0%', label: 'Complete' }, { val: '6', label: 'Actions due' }].map(s => (
+                <div key={s.label} style={{ padding: '12px 16px', background: 'rgba(255,255,255,0.14)', borderRadius: 14, border: '1px solid rgba(255,255,255,0.2)', textAlign: 'center', backdropFilter: 'blur(10px)', minWidth: 72 }}>
+                  <p style={{ margin: '0 0 2px', fontSize: 22, fontWeight: 800, color: '#FFFFFF', fontFamily: 'DM Sans, sans-serif' }}>{s.val}</p>
+                  <p style={{ margin: 0, fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>{s.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   const { milestones, totalWeeks, completedCount, pct, visaRoute, destLabel, phases } = generateMilestones(answers, score)
   const currentMilestone = milestones.find(m => m.current) || milestones.find(m => !m.done) || milestones[milestones.length - 1]
   const weeksLeft = Math.round(totalWeeks * (1 - pct / 100))
-  const isMobile = useIsMobile()
 
   // Shared milestone timeline JSX (same for mobile + desktop)
   const MilestoneTimeline = (
     <div className="bg-white rounded-[18px]" style={{ padding: isMobile ? 16 : 24, boxShadow: '0px 2px 16px rgba(30,77,215,0.06)', border: '1px solid #F0F2FF' }}>
-      <div className="flex items-center justify-between mb-5">
-        <h2 className="text-[15px] font-bold text-[#18181B]" style={{ fontFamily: 'DM Sans, sans-serif' }}>Milestone Timeline</h2>
-        <span className="text-[12px] text-[#82858A]">Tap to expand action steps</span>
-      </div>
       <div className="flex flex-col gap-0">
         {milestones.map((milestone, idx) => {
           const isOpen = expandedMilestone === milestone.id
@@ -1677,7 +1736,7 @@ function ResourcesTab({ answers, userId }) {
           <p className="text-[#5F5F5F] dark:text-slate-400 text-sm mb-4">
             {categoryFilter !== 'all' || fileTypeFilter !== 'all'
               ? 'Try removing some filters to see more resources.'
-              : 'Resources for your profile will appear here as they\'re added.'}
+              : !answers.destination ? 'Take the quiz so we know your destination — resources are matched to your profile.' : 'Resources for your profile will appear here as they\'re added.'}
           </p>
           {(categoryFilter !== 'all' || fileTypeFilter !== 'all') && (
             <button onClick={() => { setCategoryFilter('all'); setFileTypeFilter('all') }} className="text-xs font-semibold px-4 py-2 rounded-full" style={{ background: 'rgba(59,117,255,0.1)', color: '#3b75ff' }}>
@@ -2258,7 +2317,7 @@ function buildScoreCategories(answers, score) {
   ].map(c => ({ ...c, status: status(c.pct), color: color(c.pct) }))
 }
 
-function ProfileTab({ user, profile, answers, score, onSignOut, router }) {
+function ProfileTab({ user, profile, answers, score, quizResult, onSignOut, router }) {
   const fullName   = profile?.full_name || user?.user_metadata?.full_name || ''
   const email      = user?.email || ''
   const [name, setName]           = useState(fullName)
@@ -2339,41 +2398,23 @@ function ProfileTab({ user, profile, answers, score, onSignOut, router }) {
           {/* Name + email + route */}
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 3 }}>
-              {editing ? (
-                <input
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  style={{ fontSize: isMobile ? 18 : 22, fontWeight: 800, background: 'transparent', borderBottom: '1px solid rgba(255,255,255,0.4)', color: '#FFFFFF', outline: 'none', fontFamily: 'DM Sans, sans-serif', letterSpacing: '-0.5px', minWidth: 100 }}
-                />
-              ) : (
-                <h1 style={{ margin: 0, fontSize: isMobile ? 20 : 24, fontWeight: 800, color: '#FFFFFF', fontFamily: 'DM Sans, sans-serif', letterSpacing: '-0.4px' }}>{name || 'Your Name'}</h1>
-              )}
+              <h1 style={{ margin: 0, fontSize: isMobile ? 20 : 24, fontWeight: 800, color: '#FFFFFF', fontFamily: 'DM Sans, sans-serif', letterSpacing: '-0.4px' }}>{fullName || 'Your Name'}</h1>
               {!isMobile && <span style={{ padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, color: '#FFFFFF', background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)' }}>Free Plan</span>}
             </div>
             <p style={{ margin: '0 0 2px', fontSize: isMobile ? 12 : 14, color: 'rgba(255,255,255,0.75)' }}>{email}</p>
             <p style={{ margin: 0, fontSize: isMobile ? 11 : 13, color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', gap: 4 }}>
               <Globe2 size={isMobile ? 10 : 12} style={{ color: 'rgba(255,255,255,0.6)' }} />
-              Nigeria → {dest} {flag} · {visaRoute}
+              {quizResult ? `Nigeria → ${dest} ${flag} · ${visaRoute}` : 'Take the quiz to build your migration profile'}
             </p>
           </div>
 
-          {/* Edit / Save + Retake buttons */}
+          {/* Retake Quiz is the only way to update your profile */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end', flexShrink: 0 }}>
-            {!editing ? (
-              <button onClick={() => setEditing(true)} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: isMobile ? '8px 12px' : '10px 16px', background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 10, color: '#FFFFFF', fontSize: isMobile ? 12 : 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
-                <Edit3 size={isMobile ? 12 : 14} style={{ color: '#FFFFFF' }} /> Edit
-              </button>
-            ) : (
-              <div style={{ display: 'flex', gap: 6 }}>
-                <button onClick={() => { setEditing(false); setName(fullName) }} style={{ padding: '8px 10px', borderRadius: 10, fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.8)', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer' }}>Cancel</button>
-                <button onClick={async () => { await saveProfile(); setEditing(false) }} disabled={saving} style={{ padding: '8px 10px', borderRadius: 10, fontSize: 12, fontWeight: 700, color: '#FFFFFF', background: 'rgba(255,255,255,0.25)', border: '1px solid rgba(255,255,255,0.3)', cursor: 'pointer' }}>
-                  {saving ? 'Saving…' : saved ? '✓ Saved' : 'Save'}
-                </button>
-              </div>
-            )}
-            <button onClick={() => router.push('/quiz')} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: isMobile ? '8px 12px' : '10px 16px', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 10, color: 'rgba(255,255,255,0.85)', fontSize: isMobile ? 11 : 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
-              <svg width={isMobile ? 10 : 12} height={isMobile ? 10 : 12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 .49-3.51" /></svg>
-              Retake
+            <button onClick={() => router.push('/quiz')} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: isMobile ? '8px 12px' : '10px 16px', background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.3)', borderRadius: 10, color: '#FFFFFF', fontSize: isMobile ? 12 : 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+              {quizResult
+                ? <svg width={isMobile ? 10 : 12} height={isMobile ? 10 : 12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10" /><path d="M3.51 15a9 9 0 1 0 .49-3.51" /></svg>
+                : <Sparkles size={isMobile ? 10 : 12} style={{ color: '#FFFFFF' }} />}
+              {quizResult ? 'Retake Quiz' : 'Take Quiz'}
             </button>
           </div>
         </div>
@@ -2381,7 +2422,7 @@ function ProfileTab({ user, profile, answers, score, onSignOut, router }) {
         {/* Stats bar */}
         <div className="flex" style={{ borderTop: '1px solid rgba(255,255,255,0.12)' }}>
           {[
-            { val: score ? `${score}%` : '—',    label: 'Readiness' },
+            { val: quizResult ? `${score}%` : '0', label: 'Readiness' },
             { val: '—',                            label: 'Day Streak' },
             { val: '—',                            label: 'Active Modules' },
             { val: '—',                            label: 'Docs Ready' },
@@ -2400,7 +2441,7 @@ function ProfileTab({ user, profile, answers, score, onSignOut, router }) {
         {/* Score Breakdown */}
         <div className="bg-white rounded-[18px] p-5" style={{ border: '1px solid #F0F2FF', boxShadow: '0px 2px 12px rgba(30,77,215,0.05)' }}>
           <h2 className="text-[15px] font-bold text-[#18181B] mb-4" style={{ fontFamily: 'DM Sans, sans-serif' }}>Score Breakdown</h2>
-          {scoreCategories ? (
+          {quizResult && scoreCategories?.length > 0 ? (
             <div className="flex flex-col gap-3">
               {scoreCategories.map(cat => (
                 <div key={cat.id}>
@@ -2420,7 +2461,11 @@ function ProfileTab({ user, profile, answers, score, onSignOut, router }) {
               ))}
             </div>
           ) : (
-            <p className="text-[13px] text-[#82858A]">Take the quiz to see your score breakdown.</p>
+            <div className="flex flex-col items-center justify-center py-6 text-center">
+              <TrendingUp size={24} style={{ color: '#D4DCFF', marginBottom: 10 }} />
+              <p className="text-[13px] text-[#82858A] mb-3 leading-relaxed">Your score breakdown shows where you're strong and where to focus. It unlocks after your quiz.</p>
+              <button onClick={() => router.push('/quiz')} className="text-[12px] font-bold px-4 py-2 rounded-[8px] text-white" style={{ background: '#1E4DD7' }}>Start with Quiz</button>
+            </div>
           )}
         </div>
 
@@ -2529,18 +2574,22 @@ export default function Dashboard() {
       const pendingAnswers = localStorage.getItem('pending_quiz_answers')
       const pendingScore = localStorage.getItem('pending_quiz_score')
       const pendingName = localStorage.getItem('pending_full_name')
+      // Always clear these keys immediately — prevents stale quiz data from
+      // bleeding into a different Google account that logs in on the same browser
+      localStorage.removeItem('pending_quiz_answers')
+      localStorage.removeItem('pending_quiz_score')
       if (pendingAnswers && pendingScore) {
-        localStorage.removeItem('pending_quiz_answers')
-        localStorage.removeItem('pending_quiz_score')
         try {
           const parsedAnswers = JSON.parse(pendingAnswers)
-          await supabase.from('quiz_results').insert({
-            user_id: session.user.id,
-            answers: parsedAnswers,
-            score: parseInt(pendingScore),
-            destination: parsedAnswers.destination,
-            segment: parsedAnswers.segment,
-          })
+          if (parsedAnswers?.destination && parsedAnswers?.segment) {
+            await supabase.from('quiz_results').insert({
+              user_id: session.user.id,
+              answers: parsedAnswers,
+              score: parseInt(pendingScore),
+              destination: parsedAnswers.destination,
+              segment: parsedAnswers.segment,
+            })
+          }
         } catch (e) { console.error('Failed to save quiz result:', e) }
       }
 
@@ -2579,6 +2628,7 @@ export default function Dashboard() {
   }, [])
 
   const handleSignOut = async () => { await supabase.auth.signOut(); router.push('/') }
+
 
   if (loading) {
     return (
@@ -2624,7 +2674,7 @@ export default function Dashboard() {
               </svg>
             </button>
             <span className="font-bold text-sm text-[#18181B]" style={{ fontFamily: 'DM Sans, sans-serif' }}>
-              JapaLearn <span style={{ color: '#1E4DD7' }}>AI</span>
+              JapaLearn <span style={{ color: '#3b75ff' }}>AI</span>
             </span>
             <div className="w-9 h-9" />
           </div>
@@ -2638,14 +2688,14 @@ export default function Dashboard() {
               transition={{ duration: 0.18 }}
             >
               {activeTab === 'overview'       && <OverviewTab answers={answers} score={score} flag={flag} displayName={displayName} isNewUser={isFirstVisit} router={router} quizResult={quizResult} setActiveTab={setActiveTab} />}
-              {activeTab === 'learning'       && <LearningTab answers={answers} userId={user?.id} />}
-              {activeTab === 'roadmap'        && <RoadmapTab answers={answers} score={score} />}
+              {activeTab === 'learning'       && <LearningTab answers={answers} userId={user?.id} quizResult={quizResult} router={router} />}
+              {activeTab === 'roadmap'        && <RoadmapTab answers={answers} score={score} quizResult={quizResult} router={router} />}
               {activeTab === 'resources'      && <ResourcesTab answers={answers} userId={user?.id} />}
               {activeTab === 'conversations'  && <ConversationsTab user={user} profile={profile} answers={answers} />}
               {activeTab === 'documents'      && <DocumentsTab />}
               {activeTab === 'peers'          && <PeersTab answers={answers} />}
               {activeTab === 'marketplace'    && <MarketplaceTab answers={answers} />}
-              {activeTab === 'profile'        && <ProfileTab user={user} profile={profile} answers={answers} score={score} onSignOut={handleSignOut} router={router} />}
+              {activeTab === 'profile'        && <ProfileTab user={user} profile={profile} answers={answers} score={score} quizResult={quizResult} onSignOut={handleSignOut} router={router} />}
             </motion.div>
           </AnimatePresence>
         </main>
