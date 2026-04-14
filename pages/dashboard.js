@@ -467,11 +467,12 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
   ] : []
 
   // Score categories for breakdown section
+  const scoreLabelMap = { Experience: 'Work Experience', Language: 'Language Test', Age: 'Age Factor', Savings: 'Financial Readiness', Profile: 'Skills & Certs', Education: 'Education' }
   const scoreCategories = quizResult ? scoreBreakdown.map(item => {
     const pct = Math.round((item.score / item.max) * 100)
     const st = areaStatus(pct)
     return {
-      label: item.label,
+      label: scoreLabelMap[item.label] || item.label,
       score: pct,
       color: st === 'ok' ? '#21C474' : st === 'warn' ? '#F59A0A' : '#EF4369',
       bg:    st === 'ok' ? '#E8F9EE' : st === 'warn' ? '#FFF7E6' : '#FDECEC',
@@ -2296,7 +2297,7 @@ function DarkToggle({ value, onChange }) {
 function buildScoreCategories(answers, score) {
   const areaStatus = (pct) => pct >= 70 ? 'ok' : pct >= 40 ? 'warn' : 'bad'
   const areaColor  = (pct) => pct >= 70 ? '#21C474' : pct >= 40 ? '#F59A0A' : '#EF4369'
-  const labelMap   = { Experience: 'Work Experience', Language: 'English Language', Savings: 'Financial Proof', Profile: 'Profile Bonus', Education: 'Education', Age: 'Age Factor' }
+  const labelMap   = { Experience: 'Work Experience', Language: 'Language Test', Savings: 'Financial Readiness', Profile: 'Skills & Certs', Education: 'Education', Age: 'Age Factor' }
 
   const cats = calculateScoreBreakdown(answers).map(item => {
     const pct = Math.round((item.score / item.max) * 100)
