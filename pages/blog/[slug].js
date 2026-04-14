@@ -458,33 +458,42 @@ export default function BlogPost() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="mt-20 p-10 rounded-[40px] text-white relative overflow-hidden"
-              style={{
-                background: 'linear-gradient(135deg, #5B6AF4 0%, #3B51F0 40%, #2a3de8 100%)'
-              }}
+              className="mt-20 p-8 md:p-14 rounded-[40px] text-white relative overflow-hidden border border-white/5"
+              style={{ background: '#0f172a' }}
             >
-              <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-white/5 -translate-y-1/2 translate-x-1/4" />
-              <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full bg-white/5 translate-y-1/2 -translate-x-1/4" />
-              <div className="relative">
-                <p className="text-xs font-bold uppercase tracking-widest text-white/60 mb-3">YOUR NEXT STEP</p>
-                <h3 className="text-2xl md:text-3xl font-bold mb-4 leading-tight">
+              <div 
+                className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full pointer-events-none"
+                style={{
+                  background: 'radial-gradient(circle at 70% 30%, rgba(59, 117, 255, 0.15) 0%, transparent 70%)',
+                  filter: 'blur(60px)',
+                }}
+              />
+              
+              <div className="relative z-10">
+                <span className="inline-block px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold uppercase tracking-widest text-[#6094FF] mb-6">
+                  YOUR NEXT STEP
+                </span>
+                
+                <h3 className="text-3xl md:text-4xl font-heading font-bold mb-6 leading-tight max-w-2xl">
                   Find out exactly where you stand on your Japa journey
                 </h3>
-                <p className="text-white/70 mb-8 max-w-lg text-sm leading-relaxed">
+                
+                <p className="text-gray-400 mb-10 max-w-xl text-base md:text-lg leading-relaxed">
                   In 60 seconds, our AI will assess your profile against the latest 2024 UK immigration rules and give you a personalised readiness score.
                 </p>
-                <div className="flex flex-col sm:flex-row gap-3">
+                
+                <div className="flex flex-col sm:flex-row gap-4">
                   <Link
                     href="/quiz"
-                    className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-white text-primary font-bold text-sm hover:bg-white/90 transition-all hover:scale-105 active:scale-95 shadow-lg"
+                    className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-[#1E4DD7] text-white font-bold text-base hover:bg-[#1E4DD7]/90 transition-all hover:scale-105 active:scale-95 shadow-xl shadow-[#1E4DD7]/20"
                   >
                     Take the Free AI Assessment <ArrowRight className="w-4 h-4" />
                   </Link>
                   <button
                     onClick={() => setShareOpen(true)}
-                    className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full border border-white/30 text-white font-semibold text-sm hover:bg-white/10 transition-all"
+                    className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full border border-white/10 bg-white/5 text-white font-semibold text-base hover:bg-white/10 transition-all backdrop-blur-sm"
                   >
-                    <Share2 className="w-4 h-4" /> Share this Article
+                    <Share2 className="w-4 h-4" /> Share Article
                   </button>
                 </div>
               </div>
