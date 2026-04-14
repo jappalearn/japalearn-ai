@@ -130,8 +130,6 @@ None of these destinations will work for you if you skip the due diligence.
 4.  **Scholarship Hunting**: Investigate the Stipendium Hungaricum (Hungary) or DAAD (Germany) before paying full price.
 
 Studying medicine abroad is possible. It requires research, realistic planning, and honesty about your budget. JapaLearn AI exists to help you figure out which option actually makes sense for your specific situation.
-
-*Victory from JapaLearn · April 14, 2026*
 `,
     faqs: [
       {
@@ -208,8 +206,6 @@ This change is part of Canada's 2026-2028 Immigration Levels Plan. While Canada 
 
 If you've been considering a Master's or PhD in Canada, now is the time to seriously explore your options. The path to studying in Canada just got significantly clearer.
 
-*Victory from JapaLearn · April 14, 2026*
-
 Source: Immigration, Refugees and Citizenship Canada (canada.ca) - Policy updated December 19, 2025
 `,
     faqs: [
@@ -220,6 +216,22 @@ Source: Immigration, Refugees and Citizenship Canada (canada.ca) - Policy update
       {
         question: "Is the 14-day processing guaranteed for all postgraduates?",
         answer: "The 14-day commitment is specifically for PhD students and their accompanying family members. Master's students will also see faster processing due to the PAL removal, but the 14-day target is prioritized for doctoral applicants."
+      },
+      {
+        question: "Does this rule apply to postgraduate diplomas (PGD) or graduate certificates?",
+        answer: "No. The IRCC specifically exempts Master's and PhD students. Those pursuing PGDs or Graduate Certificates at public or private colleges still generally require a Provincial Attestation Letter (PAL)."
+      },
+      {
+        question: "Can I still bring my spouse if I'm a Master's student under these new rules?",
+        answer: "Yes. While Canada has tightened rules for some students, spouses of Master’s and PhD students at public universities remain eligible for an Open Work Permit. The PAL exemption actually fast-tracks the entire family's journey."
+      },
+      {
+        question: "How can JapaLearn AI help me navigate these 2026 changes?",
+        answer: "Our AI assessment is updated in real-time with IRCC policies. In 60 seconds, we can verify if your target institution is 'Public' (exempt) or 'Private' and provide a custom document checklist for the 14-day priority processing."
+      },
+      {
+        question: "How does JapaLearn ensure my PhD application qualifies for the 14-day priority processing?",
+        answer: "The 14-day window only applies to 'complete' applications. JapaLearn’s premium review service cross-references your files against IRCC’s high-priority standards to ensure no missing signatures or documents delay your approval."
       }
     ]
   }
