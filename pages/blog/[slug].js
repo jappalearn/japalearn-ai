@@ -424,7 +424,7 @@ export default function BlogPost() {
             </div>
 
             {/* Main content - Protected Section Style */}
-            <div className="bg-gray-50 border border-gray-100 rounded-[32px] p-8 md:p-12 shadow-sm mb-16">
+            <div className="bg-gray-50 border border-gray-100 rounded-[24px] md:rounded-[32px] p-5 sm:p-8 md:p-12 shadow-sm mb-16">
               <div className="blog-content prose prose-lg max-w-none">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {post.content}
@@ -458,27 +458,15 @@ export default function BlogPost() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="mt-20 p-8 md:p-14 rounded-[40px] text-white relative overflow-hidden border border-white/5"
-              style={{ background: '#0f172a' }}
+              className="mt-20 p-6 sm:p-10 md:p-14 rounded-[32px] md:rounded-[40px] relative overflow-hidden border border-border"
+              style={{ background: '#f6f9ff' }}
             >
-              <div 
-                className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full pointer-events-none"
-                style={{
-                  background: 'radial-gradient(circle at 70% 30%, rgba(59, 117, 255, 0.15) 0%, transparent 70%)',
-                  filter: 'blur(60px)',
-                }}
-              />
-              
               <div className="relative z-10">
-                <span className="inline-block px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold uppercase tracking-widest text-[#6094FF] mb-6">
-                  YOUR NEXT STEP
-                </span>
-                
-                <h3 className="text-3xl md:text-4xl font-heading font-bold mb-6 leading-tight max-w-2xl">
+                <h3 className="text-2xl md:text-4xl font-heading font-bold mb-6 leading-tight max-w-2xl text-foreground">
                   Find out exactly where you stand on your Japa journey
                 </h3>
                 
-                <p className="text-gray-400 mb-10 max-w-xl text-base md:text-lg leading-relaxed">
+                <p className="text-muted-foreground mb-10 max-w-xl text-base md:text-lg leading-relaxed">
                   In 60 seconds, our AI will assess your profile against the latest 2024 UK immigration rules and give you a personalised readiness score.
                 </p>
                 
@@ -491,7 +479,7 @@ export default function BlogPost() {
                   </Link>
                   <button
                     onClick={() => setShareOpen(true)}
-                    className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full border border-white/10 bg-white/5 text-white font-semibold text-base hover:bg-white/10 transition-all backdrop-blur-sm"
+                    className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full border border-border bg-white text-muted-foreground font-semibold text-base hover:bg-gray-50 transition-all"
                   >
                     <Share2 className="w-4 h-4" /> Share Article
                   </button>
