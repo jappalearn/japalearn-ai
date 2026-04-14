@@ -1178,6 +1178,33 @@ function LearningTab({ answers, userId, quizResult, router }) {
 
 // ── ROADMAP TAB ────────────────────────────────────────────────────────────────
 // ── Generate dynamic roadmap milestones ──────────────────────────────────────
+// Helper: convert weeks to a friendly plan label
+function planLabel(weeks) {
+  if (weeks <= 13) return '3-Month Plan'
+  if (weeks <= 26) return '6-Month Plan'
+  if (weeks <= 52) return '12-Month Plan'
+  return '24-Month Plan'
+}
+
+// Helper: compute proportional week ranges for 6 milestones
+function getMilestoneWeeks(totalWeeks) {
+  const w = (f) => Math.max(1, Math.round(totalWeeks * f))
+  const w1end = w(0.10)
+  const w2end = Math.max(w1end + 1, w(0.25))
+  const w3end = Math.max(w2end + 1, w(0.50))
+  const w4end = Math.max(w3end + 1, w(0.70))
+  const w5end = Math.max(w4end + 1, w(0.85))
+  const fmt   = (a, b) => a === b ? `Week ${a}` : `Week ${a}–${b}`
+  return [
+    fmt(1,          w1end),
+    fmt(w1end + 1,  w2end),
+    fmt(w2end + 1,  w3end),
+    fmt(w3end + 1,  w4end),
+    fmt(w4end + 1,  w5end),
+    fmt(w5end + 1,  totalWeeks),
+  ]
+}
+
 function generateMilestones(answers, score) {
   const dest = answers.destination || ''
   const seg  = answers.segment || ''
@@ -1200,7 +1227,18 @@ function generateMilestones(answers, score) {
     : m1Done && m2Done ? 2
     : m1Done ? 1 : 0
 
-  const totalWeeks = score >= 70 ? 16 : score >= 40 ? 20 : 24
+  // Timeline drives duration — score is the fallback for older quiz results
+  const TIMELINE_WEEKS = {
+    '0–3 months — I need to move very soon':    13,
+    '3–6 months — I have some time to prepare': 26,
+    '6–12 months — I\'m planning well ahead':   52,
+    '12–24 months — I\'m in the early stages':  96,
+  }
+  const totalWeeks = TIMELINE_WEEKS[answers.timeline]
+    ?? (score >= 70 ? 16 : score >= 40 ? 20 : 24)
+
+  const mWeeks = getMilestoneWeeks(totalWeeks)
+
   const completedCount = [m1Done, m2Done, m3Done, m4Done, m5Done, m6Done].filter(Boolean).length
   const pct = Math.round((completedCount / 6) * 100)
 
@@ -1280,7 +1318,7 @@ function generateMilestones(answers, score) {
 
   const milestones = [
     {
-      id: 'mi1', week: 'Week 1–2', phase: 'Foundation',
+      id: 'mi1', week: mWeeks[0], phase: 'Foundation',
       title: 'Complete eligibility assessment',
       desc: `Understand exactly where you stand against ${visaRoute} criteria.`,
       actions: [
@@ -1291,7 +1329,7 @@ function generateMilestones(answers, score) {
       done: m1Done, current: currentIdx === 0,
     },
     {
-      id: 'mi2', week: 'Week 3–4', phase: 'Foundation',
+      id: 'mi2', week: mWeeks[1], phase: 'Foundation',
       title: 'Gather your core documents',
       desc: 'Collect and organise the primary documents needed for your application.',
       actions: [
@@ -1303,7 +1341,7 @@ function generateMilestones(answers, score) {
       done: m2Done, current: currentIdx === 1,
     },
     {
-      id: 'mi3', week: 'Week 5–8', phase: 'Language',
+      id: 'mi3', week: mWeeks[2], phase: 'Language',
       title: hasGoodLang
         ? `Language requirement met — ${lang.split('—')[0].trim()}`
         : hasLangScore
@@ -1327,14 +1365,14 @@ function generateMilestones(answers, score) {
       done: m3Done, current: currentIdx === 2,
     },
     {
-      id: 'mi4', week: 'Week 9–12', phase: m4Phase,
+      id: 'mi4', week: mWeeks[3], phase: m4Phase,
       title: m4Title,
       desc: m4Desc,
       actions: m4Actions,
       done: m4Done, current: currentIdx === 3,
     },
     {
-      id: 'mi5', week: `Week 13–${Math.round(totalWeeks * 0.8)}`, phase: 'Application',
+      id: 'mi5', week: mWeeks[4], phase: 'Application',
       title: `Submit your ${visaRoute} application`,
       desc: `Compile every document and submit your formal application to ${dest || 'the immigration authority'}.`,
       actions: [
@@ -1348,7 +1386,7 @@ function generateMilestones(answers, score) {
       done: m5Done, current: currentIdx === 4,
     },
     {
-      id: 'mi6', week: `Week ${Math.round(totalWeeks * 0.8) + 1}–${totalWeeks}`, phase: 'Relocation',
+      id: 'mi6', week: mWeeks[5], phase: 'Relocation',
       title: 'Await visa decision & prepare your move',
       desc: `Use this window to plan your arrival, accommodation, and first weeks in ${destLabel}.`,
       actions: [
@@ -1361,7 +1399,7 @@ function generateMilestones(answers, score) {
     },
   ]
 
-  return { milestones, totalWeeks, completedCount, pct, visaRoute, destLabel, phases }
+  return { milestones, totalWeeks, completedCount, pct, visaRoute, destLabel, phases, timelinePlan: planLabel(totalWeeks) }
 }
 
 function RoadmapTab({ answers, score, quizResult, router }) {
@@ -1443,7 +1481,7 @@ function RoadmapTab({ answers, score, quizResult, router }) {
     )
   }
 
-  const { milestones, totalWeeks, completedCount, pct, visaRoute, destLabel, phases } = generateMilestones(answers, score)
+  const { milestones, totalWeeks, completedCount, pct, visaRoute, destLabel, phases, timelinePlan } = generateMilestones(answers, score)
   const currentMilestone = milestones.find(m => m.current) || milestones.find(m => !m.done) || milestones[milestones.length - 1]
   const weeksLeft = Math.round(totalWeeks * (1 - pct / 100))
 
@@ -1481,11 +1519,27 @@ function RoadmapTab({ answers, score, quizResult, router }) {
                   onClick={() => setExpandedMilestone(isOpen ? null : milestone.id)}
                   className="w-full text-left rounded-xl transition-all"
                   style={{
+                    position: 'relative',
                     padding: isMobile ? '10px 12px' : '12px 14px',
-                    background: isOpen ? (milestone.current ? 'linear-gradient(135deg, #EBF1FF, #E4EEFF)' : '#FAFBFF') : 'transparent',
-                    border: isOpen ? '1.5px solid #D4DCFF' : '1.5px solid transparent',
+                    background: milestone.done ? '#F8FFF9' : isOpen ? (milestone.current ? 'linear-gradient(135deg, #EBF1FF, #E4EEFF)' : '#FAFBFF') : 'transparent',
+                    border: milestone.done ? '1.5px solid #D8F5E6' : isOpen ? '1.5px solid #D4DCFF' : '1.5px solid transparent',
+                    opacity: milestone.done ? 0.8 : 1,
                   }}
                 >
+                  {milestone.done && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: 14,
+                      right: 14,
+                      height: 1.5,
+                      background: 'linear-gradient(90deg, #21C474 0%, #10B981 100%)',
+                      transform: 'translateY(-50%)',
+                      pointerEvents: 'none',
+                      borderRadius: 1,
+                      opacity: 0.55,
+                    }} />
+                  )}
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 mb-1 flex-wrap">
@@ -1639,7 +1693,7 @@ function RoadmapTab({ answers, score, quizResult, router }) {
         <div>
           <p style={{ margin: '0 0 3px', fontSize: 11, color: '#82858A', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4 }}>
             <Calendar size={11} style={{ color: '#82858A' }} />
-            <span>{visaRoute} · {totalWeeks}-Week Plan</span>
+            <span>{visaRoute} · {timelinePlan}</span>
           </p>
           <h1 style={{ margin: '0 0 3px', fontSize: 22, fontWeight: 700, color: '#18181B', letterSpacing: '-0.5px', fontFamily: 'DM Sans, sans-serif' }}>My Roadmap</h1>
           <p style={{ margin: 0, fontSize: 13, color: '#82858A' }}>Tap any milestone to see action steps.</p>
@@ -1678,7 +1732,7 @@ function RoadmapTab({ answers, score, quizResult, router }) {
       <div>
         <p className="text-[13px] text-[#82858A] font-medium flex items-center gap-1.5 mb-1">
           <Calendar size={13} className="text-[#82858A]" />
-          <span>{visaRoute} · {totalWeeks}-Week Plan</span>
+          <span>{visaRoute} · {timelinePlan}</span>
         </p>
         <h1 className="text-[26px] font-bold text-[#18181B] mb-1" style={{ letterSpacing: '-0.6px', fontFamily: 'DM Sans, sans-serif' }}>My Roadmap</h1>
         <p className="text-[14px] text-[#82858A]">Your personalised week-by-week migration plan. Click any milestone to see your action steps.</p>
@@ -2453,10 +2507,19 @@ function ProfileTab({ user, profile, answers, score, quizResult, onSignOut, rout
 
   useEffect(() => { setDarkMode(document.documentElement.classList.contains('dark')) }, [])
 
+  const [baseUrl, setBaseUrl] = useState('http://localhost:3000')
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setBaseUrl(window.location.origin)
+    }
+  }, [])
+
   const referralCode = profile?.referral_code || ''
   const profileUrl = referralCode
-    ? `https://japalearn.ai/u/${referralCode}`
-    : `https://japalearn.ai/u/${user?.id}`
+    ? `${baseUrl}/u/${referralCode}`
+    : `${baseUrl}/u/${user?.id}`
+
   const handleCopyLink = () => {
     navigator.clipboard.writeText(profileUrl).then(() => {
       setCopied(true)
@@ -2469,7 +2532,9 @@ function ProfileTab({ user, profile, answers, score, quizResult, onSignOut, rout
   const visaRoute   = getVisaRoute(dest, answers.segment || '')
   const flag        = COUNTRY_FLAGS[dest] || '🌍'
   const scoreCategories = score ? buildScoreCategories(answers, score) : null
-  const totalWeeks  = score >= 70 ? 16 : score >= 40 ? 20 : 24
+  const timelineDisplay = answers.timeline
+    ? answers.timeline.split(' — ')[0]  // e.g. "0–3 months"
+    : score ? (score >= 70 ? '16 weeks' : score >= 40 ? '20 weeks' : '24 weeks') : '—'
 
   const saveProfile = async () => {
     setSaving(true)
@@ -2614,7 +2679,7 @@ function ProfileTab({ user, profile, answers, score, quizResult, onSignOut, rout
                 { label: 'Profession',           value: answers.segment || '—' },
                 { label: 'Language Test',        value: answers.language || 'Not taken' },
                 { label: 'Savings Level',        value: answers.savings || '—' },
-                { label: 'Est. Timeline',        value: score ? `${totalWeeks} weeks` : '—' },
+                { label: 'Est. Timeline',        value: timelineDisplay },
               ].map(field => (
                 <div key={field.label} className="flex justify-between items-center pb-3" style={{ borderBottom: '1px solid #F4F6FF' }}>
                   <span className="text-[12px] text-[#82858A] font-medium">{field.label}</span>
@@ -2627,7 +2692,7 @@ function ProfileTab({ user, profile, answers, score, quizResult, onSignOut, rout
           {/* Share Profile card */}
           <div className="rounded-[16px] p-4" style={{ background: 'linear-gradient(135deg, #EBF1FF 0%, #F2EEFF 100%)', border: '1px solid #D4DCFF' }}>
             <p className="text-[13px] font-bold text-[#1E4DD7] mb-0.5">Share Your Profile 🔗</p>
-            <p className="text-[11px] text-[#6B7280] mb-1.5 leading-relaxed">japalearn.ai/u/{user?.id?.slice(0, 8)}…</p>
+            <p className="text-[11px] text-[#6B7280] mb-1.5 leading-relaxed truncate">{profileUrl}</p>
             <p className="text-[12px] text-[#4D4D56] leading-relaxed mb-3">Your profile shows your readiness score, pathway &amp; progress. Share it with anyone.</p>
             <button
               onClick={handleCopyLink}
@@ -2640,13 +2705,7 @@ function ProfileTab({ user, profile, answers, score, quizResult, onSignOut, rout
                 <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" /></svg> Share Your Profile</>
               )}
             </button>
-            <button
-              onClick={() => router.push(`/u/${user?.id}`)}
-              className="w-full mt-2 py-2 rounded-[10px] text-[12px] font-medium text-[#1E4DD7] text-center"
-              style={{ background: 'rgba(30,77,215,0.08)', border: '1px solid #C7D8FF' }}
-            >
-              Preview my profile →
-            </button>
+
           </div>
         </div>
       </div>
