@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Logo from "@/lib/Logo";
 
 // ─── DATA ─────────────────────────────────────────────────────────────────────
 
@@ -181,17 +182,7 @@ function ScoreRing({ score, size = 128 }) {
   );
 }
 
-// ─── LOGO ─────────────────────────────────────────────────────────────────────
 
-function JapaLearnLogo({ size = 26 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="JapaLearn AI" style={{ flexShrink: 0 }}>
-      <circle cx="50" cy="50" r="47" stroke="#1E4DD7" strokeWidth="3.5" fill="white" />
-      <path d="M50 12 L82 30 L82 70 L50 88 L18 70 L18 30 Z" fill="#1E4DD7" />
-      <path d="M50 22 C50 22 47 38 34 50 C47 62 50 78 50 78 C50 78 53 62 66 50 C53 38 50 22 50 22 Z" fill="white" opacity="0.75" />
-    </svg>
-  );
-}
 
 // ─── CARD ─────────────────────────────────────────────────────────────────────
 
@@ -234,7 +225,7 @@ export default function AdaezeReferralProfile({ onSignUp }) {
       <header style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(255,255,255,0.96)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', borderBottom: '1px solid #E8EEFF', height: '56px', padding: isMobile ? '0 16px' : '0 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Link href="/">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-            <JapaLearnLogo size={24} />
+            <Logo size={28} />
             <span style={{ fontSize: '15px', fontWeight: 800, color: '#000000', fontFamily: '"DM Sans", sans-serif', letterSpacing: '-0.4px' }}>
               JapaLearn <span style={{ color: '#1E4DD7' }}>AI</span>
             </span>
