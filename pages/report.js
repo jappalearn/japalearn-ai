@@ -4,7 +4,7 @@ import Head from 'next/head'
 import Link from 'next/link'
 import { FileText, MapPin, BookOpen, CheckCircle, AlertTriangle, ArrowRight } from 'lucide-react'
 import Logo from '../lib/Logo'
-import { getScoreFlag, normaliseSegment } from '../lib/quizData'
+import { getScoreFlag, normaliseSegment, calculateScoreBreakdown } from '../lib/quizData'
 
 const PRIMARY = '#3b75ff'
 const PRIMARY_DARK = '#2452cc'
@@ -53,15 +53,16 @@ function getRecommendation(destination, segment) {
   return routes[segment] || routes['default'] || { route: 'Skilled Worker / Employment Visa', cost: '₦5M – ₦12M', timeline: [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']] }
 }
 
+const REPORT_LABEL_MAP = { Experience: 'Work Experience', Language: 'Language Test', Age: 'Age Factor', Savings: 'Financial Readiness', Profile: 'Skills & Certs', Education: 'Education' }
+const REPORT_NOTES = { Experience: 'Limited experience means you may benefit more from a study pathway first.', Education: 'Higher education levels unlock more immigration pathways.', Language: 'IELTS 6.0–6.5 meets minimum thresholds but improving to 7.0+ significantly boosts eligibility.', Age: 'Age factor is fixed based on your profile.', Savings: '₦5M–10M covers some routes but you may need more depending on your destination.', Profile: 'Certifications, job offers, and licensing progress add valuable points.' }
+
 function getScoreBreakdown(answers) {
-  return [
-    { label: 'Work Experience', score: ({'0–1':4,'2–3':10,'4–6':18,'7–10':25,'10+':30,'0 – 1 year':4,'2 – 3 years':10,'4 – 6 years':18,'7 – 10 years':25,'10+ years':30})[answers.experience]||0, max:30, note: 'Limited experience means you may benefit more from a study pathway first.' },
-    { label: 'Education',       score: ({'High School':4,'Diploma':8,"Bachelor's":14,"Master's":18,'PhD':20,"Bachelor's Degree (BSc / BA / MBBS / BPharm / LLB etc.)":14,"Master's Degree (MSc / MBA / MA / LLM etc.)":18,'PhD / Doctorate':20,'High School / WAEC / NECO':4,'Diploma / OND / NCE':8})[answers.education]||0, max:20, note: 'Higher education levels unlock more immigration pathways.' },
-    { label: 'Language Test',   score: ({'Not taken':0,'Scheduled':2,'IELTS <6.0':4,'IELTS 6.0–6.5':10,'IELTS 7.0–8.0':16,'IELTS 8.0+':20,'CELPIP':16,'TOEFL':14,'IELTS Academic — below 6.0':4,'IELTS Academic — 6.0 to 6.5':10,'IELTS Academic — 7.0 to 7.5':16,'IELTS Academic — 8.0+':20,'OET (Occupational English Test) — for healthcare':18,'CELPIP — for Canada':16,'Registered / scheduled':2})[answers.language]||0, max:20, note: 'IELTS 6.0–6.5 meets minimum thresholds but improving to 7.0+ significantly boosts eligibility.' },
-    { label: 'Age Factor',      score: ({'Under 20':2,'20–24':6,'25–30':10,'31–35':10,'36–40':7,'41–45':4,'46+':2,'20 – 24':6,'25 – 30':10,'31 – 35':10,'36 – 40':7,'41 – 45':4})[answers.age]||0, max:10, note: 'Age factor is fixed based on your profile.' },
-    { label: 'Financial Readiness', score: ({'< ₦1M':0,'₦1M–5M':3,'₦5M–10M':6,'₦10M–20M':8,'₦20M+':10,'Less than ₦1M':0,'₦1M – ₦5M':3,'₦5M – ₦10M':6,'₦10M – ₦20M':8,'₦20M+':10})[answers.savings]||0, max:10, note: '₦5M–10M covers some routes but you may need more depending on your destination.' },
-    { label: 'Skills & Certs',  score: 0, max:10, note: 'Certifications, job offers, and licensing progress add valuable points.' },
-  ]
+  return calculateScoreBreakdown(answers).map(item => ({
+    label: REPORT_LABEL_MAP[item.label] || item.label,
+    score: item.score,
+    max: item.max,
+    note: REPORT_NOTES[item.label] || '',
+  }))
 }
 
 function getStrengthsAndGaps(breakdown) {

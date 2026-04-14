@@ -474,6 +474,8 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
     return {
       label: scoreLabelMap[item.label] || item.label,
       score: pct,
+      rawScore: item.score,
+      max: item.max,
       color: st === 'ok' ? '#21C474' : st === 'warn' ? '#F59A0A' : '#EF4369',
       bg:    st === 'ok' ? '#E8F9EE' : st === 'warn' ? '#FFF7E6' : '#FDECEC',
       status: st,
@@ -749,7 +751,7 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
                       <span className="text-[11px] font-bold px-2 py-0.5 rounded-full" style={{ color: cat.color, background: cat.bg }}>
                         {cat.status === 'ok' ? 'Strong' : cat.status === 'warn' ? 'Improve' : 'Urgent'}
                       </span>
-                      <span className="text-[13px] font-black text-[#18181B] min-w-[36px] text-right">{cat.score}%</span>
+                      <span className="text-[13px] font-black text-[#18181B] min-w-[36px] text-right">{cat.rawScore} / {cat.max}</span>
                     </div>
                   </div>
                   <div className="h-[7px] rounded-full overflow-hidden" style={{ background: '#F0F2FF' }}>
@@ -2301,9 +2303,9 @@ function buildScoreCategories(answers, score) {
 
   const cats = calculateScoreBreakdown(answers).map(item => {
     const pct = Math.round((item.score / item.max) * 100)
-    return { id: item.label.toLowerCase(), label: labelMap[item.label] || item.label, pct, status: areaStatus(pct), color: areaColor(pct) }
+    return { id: item.label.toLowerCase(), label: labelMap[item.label] || item.label, pct, rawScore: item.score, max: item.max, status: areaStatus(pct), color: areaColor(pct) }
   })
-  cats.push({ id: 'overall', label: 'Overall Readiness', pct: score, status: areaStatus(score), color: areaColor(score) })
+  cats.push({ id: 'overall', label: 'Overall Readiness', pct: score, rawScore: score, max: 100, status: areaStatus(score), color: areaColor(score) })
   return cats
 }
 
@@ -2442,7 +2444,7 @@ function ProfileTab({ user, profile, answers, score, quizResult, onSignOut, rout
                       {cat.status === 'bad'  && <XCircle size={12} style={{ color: '#EF4369' }} />}
                       <span className="text-[12px] font-medium text-[#2D2D35]">{cat.label}</span>
                     </div>
-                    <span className="text-[12px] font-bold" style={{ color: cat.color }}>{cat.pct}%</span>
+                    <span className="text-[12px] font-bold" style={{ color: cat.color }}>{cat.rawScore} / {cat.max}</span>
                   </div>
                   <div className="h-1.5 rounded-full overflow-hidden" style={{ background: '#F0F2FF' }}>
                     <div className="h-full rounded-full" style={{ width: `${cat.pct}%`, background: `linear-gradient(90deg, ${cat.color}bb, ${cat.color})` }} />

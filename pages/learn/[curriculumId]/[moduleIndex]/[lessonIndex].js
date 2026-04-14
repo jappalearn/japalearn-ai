@@ -4,9 +4,9 @@ import Head from 'next/head'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import {
-  ArrowLeft, ChevronLeft, ChevronRight, Sparkles,
-  CheckCircle2, Lightbulb, ExternalLink, CircleAlert,
-  Lock, Globe2, BookOpen,
+  ChevronLeft, ChevronRight, Sparkles,
+  CheckCircle2, ExternalLink, CircleAlert,
+  Lock, AlertTriangle, Target, Play, ArrowRight,
 } from 'lucide-react'
 import { supabase } from '../../../../lib/supabase'
 
@@ -97,10 +97,8 @@ export default function LessonPage() {
     const mIdx = parseInt(moduleIndex), lIdx = parseInt(lessonIndex)
     const module = curriculum.modules[mIdx]
     if (lIdx + 1 < module.lessons.length) {
-      // More lessons in this module
       router.push(`/learn/${curriculumId}/${mIdx}/${lIdx + 1}`)
     } else {
-      // Last lesson in module → go to module quiz
       router.push(`/learn/${curriculumId}/${mIdx}/quiz`)
     }
   }
@@ -112,105 +110,159 @@ export default function LessonPage() {
   }
 
   const isFirst = parseInt(moduleIndex) === 0 && parseInt(lessonIndex) === 0
-  const currentModule = curriculum?.modules[parseInt(moduleIndex)]
-  const totalLessons = curriculum?.modules.reduce((a, m) => a + m.lessons.length, 0) || 0
-  const lessonNumber = (curriculum?.modules.slice(0, parseInt(moduleIndex)).reduce((a, m) => a + m.lessons.length, 0) || 0) + parseInt(lessonIndex) + 1
+  const mIdx = parseInt(moduleIndex || '0')
+  const lIdx = parseInt(lessonIndex || '0')
+  const currentModule = curriculum?.modules[mIdx]
+  const moduleLessonCount = currentModule?.lessons.length || 1
+  const modulePct = Math.round(((lIdx + 1) / moduleLessonCount) * 100)
+  const isLastInModule = lIdx + 1 >= moduleLessonCount
 
+  // ── Loading / generating ────────────────────────────────────────────────────
   if (loading || generating) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-4">
-        <div className="relative">
-          <div className="w-12 h-12 border-2 border-slate-200 rounded-full" />
-          <div className="w-12 h-12 border-2 border-blue-500 border-t-transparent rounded-full animate-spin absolute inset-0" />
+      <div style={{ minHeight: '100vh', background: '#F7F9FF', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, fontFamily: '"Inter", sans-serif' }}>
+        <div style={{ position: 'relative', width: 48, height: 48 }}>
+          <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '2px solid #E4E8FF' }} />
+          <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: '2px solid transparent', borderTopColor: '#3B75FF', animation: 'spin 0.8s linear infinite' }} />
         </div>
-        <div className="text-center">
-          <p className="text-slate-900 font-medium text-sm">{generating ? 'Generating lesson content...' : 'Loading...'}</p>
-          {generating && <p className="text-slate-400 text-xs mt-1">Sourcing from official immigration documents</p>}
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ margin: '0 0 4px', fontSize: 14, fontWeight: 600, color: '#18181B' }}>{generating ? 'Generating lesson content…' : 'Loading…'}</p>
+          {generating && <p style={{ margin: 0, fontSize: 12, color: '#B0B4C4' }}>Sourcing from official immigration documents</p>}
         </div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     )
   }
 
+  // ── Error ───────────────────────────────────────────────────────────────────
   if (genError) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-4 px-5">
-        <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center">
-          <CircleAlert size={22} className="text-rose-500" />
+      <div style={{ minHeight: '100vh', background: '#F7F9FF', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: '0 20px', fontFamily: '"Inter", sans-serif' }}>
+        <div style={{ width: 48, height: 48, borderRadius: 16, background: '#FFF0F3', border: '1px solid #FFC2CE', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <CircleAlert size={22} color="#EF4369" />
         </div>
-        <div className="text-center">
-          <p className="text-slate-900 font-semibold mb-1">Failed to generate lesson</p>
-          <p className="text-slate-500 text-sm max-w-xs">{genError}</p>
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ margin: '0 0 6px', fontSize: 15, fontWeight: 700, color: '#18181B', fontFamily: '"DM Sans", sans-serif' }}>Failed to generate lesson</p>
+          <p style={{ margin: 0, fontSize: 13, color: '#82858A', maxWidth: 300, lineHeight: 1.5 }}>{genError}</p>
         </div>
-        <button onClick={() => { setGenError(''); loadLesson() }} className="bg-[#3b75ff] hover:bg-[#2452cc] text-white font-semibold py-3 px-6 rounded-xl transition-all text-sm shadow-sm">
+        <button onClick={() => { setGenError(''); loadLesson() }} style={{ padding: '12px 24px', background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)', color: '#fff', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: '"Inter", sans-serif' }}>
           Try Again
         </button>
-        <button onClick={() => router.push('/dashboard')} className="flex items-center gap-1.5 text-slate-400 hover:text-slate-600 text-sm transition-colors">
-          <ArrowLeft size={14} /> Back to Dashboard
+        <button onClick={() => router.push('/dashboard')} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', color: '#B0B4C4', fontSize: 13, cursor: 'pointer', fontFamily: '"Inter", sans-serif' }}>
+          <ChevronLeft size={14} /> Back to Dashboard
         </button>
       </div>
     )
   }
 
-  if (!lesson) return <div className="min-h-screen bg-slate-50 flex items-center justify-center"><p className="text-slate-400">Lesson not found.</p></div>
+  if (!lesson) return (
+    <div style={{ minHeight: '100vh', background: '#F7F9FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: '"Inter", sans-serif' }}>
+      <p style={{ color: '#B0B4C4', fontSize: 14 }}>Lesson not found.</p>
+    </div>
+  )
 
   const sources = typeof lesson.sources === 'string' ? JSON.parse(lesson.sources) : lesson.sources
   const takeaways = typeof lesson.key_takeaways === 'string' ? JSON.parse(lesson.key_takeaways) : lesson.key_takeaways
+  const wordCount = (lesson.content || '').split(/\s+/).length
+  const readMins = Math.max(1, Math.round(wordCount / 200))
 
   return (
     <>
       <Head><title>{lesson.title} — JapaLearn AI</title></Head>
-      <div className="min-h-screen bg-slate-50">
+      <div style={{ minHeight: '100vh', background: '#F7F9FF', fontFamily: '"Inter", sans-serif' }}>
 
-        {/* Top nav */}
-        <nav className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur-xl">
-          <div className="max-w-3xl mx-auto px-5 h-14 flex items-center gap-4">
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="flex items-center gap-1.5 text-slate-500 hover:text-slate-900 text-sm transition-colors font-medium shrink-0"
-            >
-              <ArrowLeft size={15} /> <span className="hidden sm:block">Curriculum</span>
-            </button>
-            <div className="flex-1">
-              <div className="w-full bg-slate-100 rounded-full h-1.5">
-                <div
-                  className="h-1.5 rounded-full transition-all duration-500"
-                  style={{ background: '#3b75ff', width: `${(lessonNumber / totalLessons) * 100}%` }}
-                />
-              </div>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <div className="w-6 h-6 rounded-lg bg-[#3b75ff] flex items-center justify-center">
-                <Globe2 size={11} className="text-white" />
-              </div>
-              <span className="text-slate-400 text-xs font-medium">{lessonNumber} / {totalLessons}</span>
-            </div>
+        {/* ── Header ── */}
+        <header style={{
+          background: '#FFFFFF',
+          borderBottom: '1px solid #ECEEFF',
+          padding: '0 28px',
+          height: 60,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 16,
+          position: 'sticky',
+          top: 0,
+          zIndex: 30,
+        }}>
+          {/* Back */}
+          <button
+            onClick={() => router.push('/dashboard')}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: '#6B7280', fontSize: 14, fontWeight: 500, padding: '8px 12px', borderRadius: 10, fontFamily: '"Inter", sans-serif', transition: 'background 0.15s, color 0.15s' }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#F4F6FF'; e.currentTarget.style.color = '#1E4DD7' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#6B7280' }}
+          >
+            <ChevronLeft size={16} />
+            <span>Back</span>
+          </button>
+
+          {/* Breadcrumb — desktop only */}
+          <div style={{ width: 1, height: 20, background: '#E4E8FF', flexShrink: 0 }} className="hidden sm:block" />
+          <div className="hidden sm:flex" style={{ alignItems: 'center', gap: 8, overflow: 'hidden', flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: 13, color: '#82858A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 200 }}>{currentModule?.title}</span>
+            <span style={{ color: '#D0D4E0', flexShrink: 0 }}>›</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: '#18181B', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lesson.title}</span>
           </div>
-        </nav>
 
-        <div className="max-w-3xl mx-auto px-5 py-10">
-
-          {/* Module tag */}
-          <div className="flex items-center gap-2 mb-4">
-            <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-100 rounded-full px-3 py-1">
-              <BookOpen size={11} className="text-[#3b75ff]" />
-              <span className="text-[#3b75ff] text-xs font-semibold">{currentModule?.title}</span>
-            </div>
-            {currentModule?.urgent && (
-              <span className="bg-rose-50 text-rose-600 border border-rose-200 text-xs px-2.5 py-1 rounded-full font-semibold">Urgent</span>
+          {/* Right: read time + mark complete */}
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+            <span className="hidden sm:block" style={{ fontSize: 12, color: '#82858A', background: '#F4F6FF', padding: '4px 10px', borderRadius: 20 }}>{readMins} min read</span>
+            {completed ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: '#E8F9EE', border: '1px solid #A7F3C5', borderRadius: 10 }}>
+                <CheckCircle2 size={14} color="#21C474" />
+                <span style={{ fontSize: 13, fontWeight: 600, color: '#21C474', fontFamily: '"Inter", sans-serif' }}>Completed</span>
+              </div>
+            ) : (
+              <button
+                onClick={markComplete}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 18px', background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: '"Inter", sans-serif', boxShadow: '0px 4px 14px rgba(30,77,215,0.28)' }}
+              >
+                <CheckCircle2 size={13} color="#fff" />
+                <span>Mark Complete</span>
+              </button>
             )}
           </div>
+        </header>
 
-          {/* Title */}
-          <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-8 leading-tight tracking-tight">{lesson.title}</h1>
+        {/* ── Main ── */}
+        <main style={{ maxWidth: 720, margin: '0 auto', padding: '48px 20px 80px', boxSizing: 'border-box' }}>
 
-          {/* AI Summary */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 mb-8 shadow-card">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
-                  <Sparkles size={13} className="text-[#3b75ff]" />
+          {/* Module + lesson badges */}
+          <div style={{ marginBottom: 40 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
+              <span style={{ padding: '4px 12px', background: '#EBF1FF', borderRadius: 20, fontSize: 11, fontWeight: 700, color: '#1E4DD7' }}>
+                {currentModule?.title || `Module ${mIdx + 1}`}
+              </span>
+              <span style={{ padding: '4px 12px', background: '#E8F9EE', borderRadius: 20, fontSize: 11, fontWeight: 700, color: '#21C474', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <Play size={9} fill="#21C474" color="#21C474" />
+                <span>Lesson {lIdx + 1} of {moduleLessonCount}</span>
+              </span>
+              {currentModule?.urgent && (
+                <span style={{ padding: '4px 12px', background: '#FFF0F3', borderRadius: 20, fontSize: 11, fontWeight: 700, color: '#EF4369', border: '1px solid #FFC2CE' }}>Urgent</span>
+              )}
+            </div>
+
+            {/* Title */}
+            <h1 style={{ margin: '0 0 16px', fontSize: 32, fontWeight: 800, color: '#18181B', letterSpacing: '-0.8px', fontFamily: '"DM Sans", sans-serif', lineHeight: 1.2 }}>
+              {lesson.title}
+            </h1>
+
+            {/* Module progress bar */}
+            <div style={{ height: 5, background: '#F0F2FF', borderRadius: 3, overflow: 'hidden', marginBottom: 8 }}>
+              <div style={{ width: `${modulePct}%`, height: '100%', background: 'linear-gradient(90deg, #1E4DD7, #3B75FF)', borderRadius: 3, transition: 'width 0.5s' }} />
+            </div>
+            <p style={{ margin: 0, fontSize: 12, color: '#B0B4C4' }}>
+              Lesson {lIdx + 1} of {moduleLessonCount} · {modulePct}% complete in this module
+            </p>
+          </div>
+
+          {/* ── AI Key Points ── */}
+          <div style={{ background: 'linear-gradient(135deg, #EBF1FF 0%, #E4EEFF 100%)', borderRadius: 16, padding: 24, border: '1px solid #CDDAFF', marginBottom: 32 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: summary || summarising ? 14 : 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Sparkles size={13} color="#fff" />
                 </div>
-                <span className="text-slate-900 font-semibold text-sm">AI Key Points</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: '#1E4DD7', fontFamily: '"DM Sans", sans-serif' }}>AI Key Points</span>
               </div>
               {!summary && (
                 <button
@@ -227,94 +279,119 @@ export default function LessonPage() {
                     setSummarising(false)
                   }}
                   disabled={summarising}
-                  className="flex items-center gap-1.5 text-xs bg-[#3b75ff] hover:bg-[#2452cc] disabled:opacity-50 text-white px-3 py-1.5 rounded-lg transition-all font-medium shadow-sm"
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: summarising ? 'not-allowed' : 'pointer', opacity: summarising ? 0.6 : 1, fontFamily: '"Inter", sans-serif' }}
                 >
-                  {summarising ? <><span className="w-3 h-3 border border-white/30 border-t-white rounded-full animate-spin" /> Generating...</> : <><Sparkles size={11} /> Generate Summary</>}
+                  {summarising
+                    ? <><span style={{ width: 11, height: 11, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', animation: 'spin 0.8s linear infinite', display: 'inline-block' }} /> Generating…</>
+                    : <><Sparkles size={11} /> Generate</>}
                 </button>
               )}
             </div>
-            {!summary && !summarising && <p className="text-slate-400 text-xs">Click to generate a quick-scan AI summary of this lesson.</p>}
-            {summarising && <div className="flex items-center gap-2 text-slate-500 text-sm"><div className="w-3 h-3 border border-indigo-400 border-t-transparent rounded-full animate-spin" /> Analysing lesson...</div>}
+            {!summary && !summarising && (
+              <p style={{ margin: 0, fontSize: 13, color: '#4D5EA8', lineHeight: 1.55 }}>Generate a quick AI summary of the key points in this lesson.</p>
+            )}
+            {summarising && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#4D5EA8', fontSize: 13 }}>
+                <div style={{ width: 12, height: 12, borderRadius: '50%', border: '2px solid #9BB3FF', borderTopColor: '#1E4DD7', animation: 'spin 0.8s linear infinite' }} />
+                Analysing lesson…
+              </div>
+            )}
             {summary && summary.length > 0 && (
-              <ul className="space-y-2.5">
+              <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {summary.map((point, i) => (
-                  <li key={i} className="flex items-start gap-2.5 text-slate-700 text-sm">
-                    <span className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold text-[#3b75ff]">{i + 1}</span>
-                    {point}
+                  <li key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                    <span style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(30,77,215,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1, fontSize: 11, fontWeight: 700, color: '#1E4DD7' }}>{i + 1}</span>
+                    <span style={{ fontSize: 14, color: '#2D3A6B', lineHeight: 1.6 }}>{point}</span>
                   </li>
                 ))}
               </ul>
             )}
           </div>
 
-          {/* Lesson content */}
-          <div className="prose-lesson mb-10">
+          {/* ── Lesson content ── */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0, marginBottom: 32 }}>
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={{
-                p:          ({ children }) => <p>{children}</p>,
-                strong:     ({ children }) => <strong>{children}</strong>,
-                ul:         ({ children }) => <ul>{children}</ul>,
-                ol:         ({ children }) => <ol>{children}</ol>,
-                li:         ({ children }) => <li>{children}</li>,
-                h2:         ({ children }) => <h2>{children}</h2>,
-                h3:         ({ children }) => <h3>{children}</h3>,
-                a:          ({ href, children }) => <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>,
-                blockquote: ({ children }) => <blockquote>{children}</blockquote>,
+                p: ({ children }) => <p style={{ margin: '0 0 20px', fontSize: 17, color: '#2D2D35', lineHeight: 1.75, fontWeight: 400 }}>{children}</p>,
+                strong: ({ children }) => <strong style={{ color: '#18181B', fontWeight: 700 }}>{children}</strong>,
+                h2: ({ children }) => (
+                  <div style={{ background: '#FFFFFF', borderRadius: 16, padding: 24, border: '1px solid #ECEEFF', boxShadow: '0px 2px 12px rgba(30,77,215,0.04)', margin: '8px 0 20px' }}>
+                    <h2 style={{ margin: '0 0 4px', fontSize: 17, fontWeight: 700, color: '#18181B', fontFamily: '"DM Sans", sans-serif' }}>{children}</h2>
+                  </div>
+                ),
+                h3: ({ children }) => <h3 style={{ margin: '24px 0 8px', fontSize: 15, fontWeight: 700, color: '#18181B', fontFamily: '"DM Sans", sans-serif' }}>{children}</h3>,
+                ul: ({ children }) => <ul style={{ margin: '0 0 20px', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>{children}</ul>,
+                ol: ({ children }) => <ol style={{ margin: '0 0 20px', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10, counterReset: 'list-counter' }}>{children}</ol>,
+                li: ({ children }) => (
+                  <li style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                    <span style={{ width: 22, height: 22, borderRadius: '50%', background: '#EBF1FF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
+                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#1E4DD7' }} />
+                    </span>
+                    <span style={{ fontSize: 15, color: '#2D2D35', lineHeight: 1.65 }}>{children}</span>
+                  </li>
+                ),
+                blockquote: ({ children }) => (
+                  <div style={{ background: 'linear-gradient(135deg, #FFF7E6, #FFF3CD)', borderRadius: 16, padding: 20, border: '1px solid #FDE68A', margin: '8px 0 20px', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                    <AlertTriangle size={16} color="#D97706" style={{ flexShrink: 0, marginTop: 2 }} />
+                    <div style={{ fontSize: 15, color: '#78350F', lineHeight: 1.65 }}>{children}</div>
+                  </div>
+                ),
+                a: ({ href, children }) => (
+                  <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: '#1E4DD7', fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: 2 }}>{children}</a>
+                ),
               }}
             >
               {lesson.content}
             </ReactMarkdown>
           </div>
 
-          {/* Key takeaways */}
+          {/* ── Key Takeaways ── */}
           {takeaways?.length > 0 && (
-            <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5 mb-4">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <Lightbulb size={14} className="text-[#3b75ff]" />
-                </div>
-                <h3 className="text-slate-900 font-semibold text-sm">Key Takeaways</h3>
+            <div style={{ background: '#FFFFFF', borderRadius: 16, padding: 24, border: '1px solid #ECEEFF', marginBottom: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                <CheckCircle2 size={18} color="#21C474" />
+                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#18181B', fontFamily: '"DM Sans", sans-serif' }}>Key Takeaways</h3>
               </div>
-              <ul className="space-y-3">
+              <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {takeaways.map((t, i) => (
-                  <li key={i} className="flex items-start gap-3 text-slate-700 text-sm">
-                    <span className="w-5 h-5 rounded-full bg-blue-200 flex items-center justify-center shrink-0 mt-0.5 text-xs font-bold text-blue-700">{i + 1}</span>
-                    {t}
+                  <li key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '10px 14px', background: '#F8FFF9', borderRadius: 10, border: '1px solid #D8F5E6' }}>
+                    <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#E8F9EE', border: '2px solid #A7F3C5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#21C474' }} />
+                    </div>
+                    <span style={{ fontSize: 14, color: '#2D2D35', lineHeight: 1.6 }}>{t}</span>
                   </li>
                 ))}
               </ul>
             </div>
           )}
 
-          {/* Action step */}
+          {/* ── Action Step ── */}
           {lesson.action_step && (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 mb-4">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center">
-                  <CheckCircle2 size={14} className="text-emerald-600" />
+            <div style={{ background: 'linear-gradient(135deg, #EBF1FF 0%, #E4EEFF 100%)', borderRadius: 16, padding: 24, border: '1px solid #CDDAFF', marginBottom: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Target size={14} color="#fff" />
                 </div>
-                <h3 className="text-slate-900 font-semibold text-sm">Your Action Step</h3>
+                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#1E4DD7', fontFamily: '"DM Sans", sans-serif' }}>Your Action Step</h3>
               </div>
-              <p className="text-slate-700 text-sm leading-relaxed">{lesson.action_step}</p>
+              <p style={{ margin: 0, fontSize: 15, color: '#2D3A6B', lineHeight: 1.65 }}>{lesson.action_step}</p>
             </div>
           )}
 
-          {/* Sources */}
+          {/* ── Sources ── */}
           {sources?.length > 0 && (
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 mb-8 shadow-card">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center">
-                  <ExternalLink size={13} className="text-slate-500" />
-                </div>
-                <h3 className="text-slate-500 text-xs font-semibold uppercase tracking-widest">Official Sources</h3>
+            <div style={{ background: '#FFFFFF', borderRadius: 16, padding: 24, border: '1px solid #ECEEFF', marginBottom: 32 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+                <ExternalLink size={15} color="#82858A" />
+                <h3 style={{ margin: 0, fontSize: 11, fontWeight: 700, color: '#82858A', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Official Sources</h3>
               </div>
-              <ul className="space-y-2">
+              <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {sources.map((s, i) => (
                   <li key={i}>
                     <a href={s.url || s} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-[#3b75ff] hover:text-blue-700 text-sm transition-colors group font-medium">
-                      <ExternalLink size={12} className="shrink-0 opacity-50 group-hover:opacity-100" />
+                      style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#1E4DD7', fontSize: 14, fontWeight: 600, textDecoration: 'none' }}>
+                      <ExternalLink size={12} color="#9BB3FF" style={{ flexShrink: 0 }} />
                       {s.label || s.url || s}
                     </a>
                   </li>
@@ -323,57 +400,39 @@ export default function LessonPage() {
             </div>
           )}
 
-          {/* Mark Complete */}
-          {!completed ? (
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 mb-4 flex items-center justify-between gap-4 shadow-card">
-              <div>
-                <p className="text-slate-900 font-semibold text-sm">Done reading?</p>
-                <p className="text-slate-400 text-xs mt-0.5">Mark complete to unlock the next lesson.</p>
-              </div>
-              <button
-                onClick={markComplete}
-                className="shrink-0 flex items-center gap-2 bg-[#3b75ff] hover:bg-[#2452cc] text-white font-semibold py-2.5 px-5 rounded-xl transition-all text-sm shadow-sm"
-              >
-                <CheckCircle2 size={15} /> Mark Complete
-              </button>
-            </div>
-          ) : (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 mb-4 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-                <CheckCircle2 size={16} className="text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-emerald-700 font-semibold text-sm">Lesson completed</p>
-                <p className="text-emerald-600/70 text-xs mt-0.5">Next lesson is now unlocked</p>
-              </div>
-            </div>
-          )}
-
-          {/* Prev / Next */}
-          <div className="flex items-center gap-3 pb-12">
+          {/* ── Bottom Navigation ── */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 28, borderTop: '1px solid #ECEEFF' }}>
             <button
-              onClick={goPrev} disabled={isFirst}
-              className="flex items-center justify-center gap-2 flex-1 border border-slate-200 hover:border-slate-300 hover:bg-white disabled:opacity-25 disabled:cursor-not-allowed text-slate-600 hover:text-slate-900 font-semibold py-3.5 rounded-2xl transition-all text-sm shadow-card"
+              onClick={goPrev}
+              disabled={isFirst}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 20px', background: '#FFFFFF', border: '1.5px solid #E4E8FF', borderRadius: 12, fontSize: 14, fontWeight: 600, color: '#4D4D56', cursor: isFirst ? 'not-allowed' : 'pointer', opacity: isFirst ? 0.3 : 1, fontFamily: '"Inter", sans-serif', transition: 'border-color 0.15s' }}
             >
-              <ChevronLeft size={16} /> Previous
+              <ChevronLeft size={14} />
+              <span>Previous</span>
             </button>
+
             <button
-              onClick={goNext} disabled={!completed}
-              className={`flex items-center justify-center gap-2 flex-1 font-semibold py-3.5 rounded-2xl transition-all text-sm ${
-                completed
-                  ? 'bg-[#3b75ff] hover:bg-[#2452cc] text-white shadow-card-md'
-                  : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
-              }`}
+              onClick={goNext}
+              disabled={!completed}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8, padding: '12px 24px',
+                background: completed ? 'linear-gradient(135deg, #1E4DD7, #3B75FF)' : '#F0F2FF',
+                border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 600,
+                color: completed ? '#FFFFFF' : '#B0B4C4',
+                cursor: completed ? 'pointer' : 'not-allowed',
+                fontFamily: '"Inter", sans-serif',
+                boxShadow: completed ? '0px 6px 20px rgba(30,77,215,0.3)' : 'none',
+                transition: 'all 0.15s',
+              }}
             >
               {completed
-                ? (parseInt(lessonIndex) + 1 >= currentModule?.lessons.length
-                    ? <>Take Module Quiz <ChevronRight size={16} /></>
-                    : <>Next Lesson <ChevronRight size={16} /></>)
-                : <><Lock size={14} /> Complete to continue</>}
+                ? <>{isLastInModule ? 'Take Module Quiz' : 'Next Lesson'} <ArrowRight size={14} /></>
+                : <><Lock size={13} /> Complete to continue</>}
             </button>
           </div>
-        </div>
+        </main>
       </div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </>
   )
 }
