@@ -32,9 +32,7 @@ export const Hero = () => {
             Migration <span className="text-primary">Journey</span>
           </h1>
           <p className="max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground mb-14 leading-relaxed">
-            Get personalized migration information through AI and expert
-            mentors, so you can choose the right work or study path before
-            spending a dime.
+            Get personalized information, structured learning, document review and expert guidance built for your relocation goals before spending a dime.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-20">
