@@ -25,153 +25,156 @@ import { Footer } from '@/components/layout/Footer';
 
 // ─── Post Data (mock — will be replaced by gray-matter + fs in production) ──────
 const POST_DATA = {
-  title: "The 2024 UK Visa Changes: What Nigerians Need to Know",
-  date: "April 12, 2024",
+  title: "10 Affordable Countries Nigerian Students Can Study Medicine in 2026",
+  date: "April 14, 2026",
   category: "Visa Guides",
-  author: "Taiwo from JapaLearn",
-  readTime: "8 min",
-  image: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&q=80&w=1400",
-  excerpt: "New salary thresholds, dependent restrictions, and route closures are reshaping the UK immigration landscape for 2024. Here is everything you need to know as a Nigerian applicant.",
+  author: "Victory from JapaLearn",
+  readTime: "12 min",
+  image: "https://images.unsplash.com/photo-1576091160550-2173dad99901?auto=format&fit=crop&q=80&w=1400",
+  excerpt: "Many Nigerian students grow up with the dream of becoming a doctor. We researched the top 10 destinations where you can get a globally recognised medical degree without breaking the bank.",
   content: `
-## Why This Update Matters to You
+Many Nigerian students grow up with the dream of becoming a doctor. You spend years studying, writing JAMB, trying UTME again, watching cut-off marks, and praying for a miracle at the end of each admission cycle. And when the Nigerian system does not cooperate, the next logical question becomes: what if I study medicine abroad?
 
-In April 2024, the UK Home Office introduced sweeping changes to immigration rules. For Nigerians — one of the largest groups of international applicants — these changes are significant and require immediate action if you are planning to relocate.
+It is a valid question, but the moment you start researching, you hit another wall: medical education abroad sounds expensive. And honestly, in many countries it is. A single year of medical school in the United States can cost more than $60,000. The UK is not far behind, and Canada is similar. For most Nigerian families, those numbers are simply not realistic.
 
-This is not just bureaucratic noise. If you have a pending job offer, an active Certificate of Sponsorship (CoS), or are planning your Japa journey in the next 12 months, **these changes directly affect your timeline, your finances, and your family's eligibility.**
+But there's something we want you to know before you give up on the dream entirely. There are countries in the world where you can get a solid, internationally recognised medical degree, without breaking a bank or taking a loan that will follow you for the next decade. We researched the options, looked at tuition fees, living costs, visa processes, and degree recognition, and put together this guide specifically for Nigerian medical students planning ahead for 2026.
 
----
-
-## The Skilled Worker Salary Threshold Increase
-
-The most impactful change is the salary threshold increase for the Skilled Worker visa.
-
-| Category | Old Threshold | New Threshold (April 2024) |
-|---|---|---|
-| General skilled roles | £26,200 | £38,700 |
-| New entrants (graduate shortage) | £20,960 | £30,960 |
-| Health & Care Workers (NHS-banded) | £20,960 | Exempt |
-| National pay scale roles | Varies | Exempt |
-
-**What this means in Naira terms:** At current exchange rates, the new £38,700 threshold represents approximately ₦72M per year — a figure that illustrates just how critical it is to secure a role with a competitive salary before your Certificate of Sponsorship is issued.
-
-### Who is Exempt from the Threshold Increase?
-
-The Home Office has carved out exemptions specifically for:
-- **NHS-banded Health & Care Workers** (Nurses, Doctors, Allied Health Professionals)
-- Workers on national pay agreements (teachers, social workers in specific grades)
-- Those extending or switching a visa already in the UK (subject to conditions)
-
-If you are a nurse or doctor, your path remains viable — but there are new dependent rules you must understand (covered below).
+Let us walk you through all 10 of them.
 
 ---
 
-## The Dependent Restriction for Health & Care Workers
+### 1. Poland
+Poland does not always come up in conversations about studying medicine abroad, but it should. It is a full European Union member state, its universities are accredited and globally recognised, and the tuition fees are significantly lower than what you would pay in Western Europe.
 
-This is perhaps the most emotionally complex change in the 2024 reforms.
+**Quick Facts:**
+*   **Tuition**: $7,000 – $13,400 per year
+*   **Living Costs**: $400 – $800 per month
+*   **Duration**: 6 years (English-taught)
 
-**From March 2024**, overseas Health & Care Workers on the **new** Skilled Worker visa (Health & Care route) are **no longer permitted to bring dependants (spouses, children)** to the UK unless they were already in the country.
+Polish medical degrees are listed in the World Directory of Medical Schools (WDOMS), and graduates are eligible to sit for licensing exams like PLAB and USMLE. For your student visa, you will apply for a Polish national visa (Type D). Processing generally takes between four and eight weeks.
 
-This affects:
-- Nurses joining NHS Trusts for the first time
-- Care workers coming under new CoS arrangements
-- Allied Health Professionals on fresh applications
+### 2. Hungary
+Hungary is an EU member state with a long track record of training international doctors. It has universities that are respected globally, including Semmelweis University, the University of Debrecen, and the University of Pecs.
 
-> "This rule has blindsided thousands of Nigerian healthcare workers who had planned to bring their families. It is critical to verify your visa category and understand your rights." — Taiwo, JapaLearn AI
+**Quick Facts:**
+*   **Tuition**: $10,000 – $20,000 per year
+*   **Living Costs**: $600 – $900 per month
+*   **Scholarship**: Stipendium Hungaricum (Covers tuition, accommodation, and stipend)
 
-**What you should do:** If you are a healthcare worker and family unity is essential, explore roles on the **General Skilled Worker route** (not the Health & Care sub-route). Some NHS-adjacent roles and private sector healthcare employers sponsor under the General route, which does not carry this restriction.
+A degree from Hungary is recognised across the EU and accepted for licensing exams including PLAB and USMLE. Nigerian students are eligible for the Stipendium Hungaricum scholarship, which can drop your costs to near zero.
+
+### 3. Russia
+Russia has one of the longest histories of training African medical students. Affordability is a significant part of why.
+
+**Quick Facts:**
+*   **Tuition**: $2,800 – $4,300 per year
+*   **Living Costs**: $425 – $685 per month
+*   **Total Program Cost**: Approximately $17,000 – $26,000
+
+While highly affordable, the current geopolitical situation allows for practical complications, including international banking challenges. Before you commit, speak to current Nigerian students who are already there to get firsthand accounts of the experience.
+
+### 4. India
+India is a destination that Nigerian medical students often overlook. With over 700 medical colleges and enormous clinical exposure, India offers training competitive with many Western institutions.
+
+**Quick Facts:**
+*   **Tuition (Private)**: $5,000 – $15,000 per year
+*   **Living Costs**: $300 – $500 per month
+*   **Language**: English-medium across all major colleges
+
+Indian medical degrees can qualify graduates to sit for licensing exams in Nigeria, the UK, and the US. One major advantage is that English is widely used for both education and daily life.
+
+### 5. Philippines
+The Philippines has a very specific advantage: the curriculum is American-patterned. If your long-term plan involves the USMLE, this alignment can be a significant benefit.
+
+**Quick Facts:**
+*   **Tuition**: $3,000 – $6,000 per year
+*   **Living Costs**: $400 – $600 per month
+*   **Focus**: Success in USMLE-driven preparation
+
+The Philippines is an English-speaking country, removing the adjustment most other countries require. Filipino medical graduates have a strong track record when it comes to passing international licensing exams.
+
+### 6. Germany
+If you are willing to learn the German language (B2/C1 level), Germany might be the best deal on medical education anywhere in the world.
+
+**Quick Facts:**
+*   **Tuition**: Near zero (Public Universities)
+*   **Semester Fee**: $250 – $350
+*   **Requirements**: German proficiency is mandatory
+
+If you commit to the language and get admitted to a public university, you can graduate from a world-class program with almost no tuition debt.
+
+### 7. Turkey
+Turkey has grown significantly as a medical education destination. It sits at the intersection of Europe and Asia and offers English-taught programs at many well-regarded universities.
+
+**Quick Facts:**
+*   **Tuition (Public)**: $2,000 – $5,000 per year
+*   **Living Costs**: $400 – $700 per month
+*   **Hospital Exposure**: Modern healthcare systems with diverse clinical cases
+
+Before you commit, confirm the MDCN recognition status for your specific university, as not all Turkish institutions are on the approved list for Nigeria.
+
+### 8. Romania
+As a full EU member state, medical degrees from Romanian public universities carry EU recognition, opening doors for practice across Europe and Nigeria.
+
+**Quick Facts:**
+*   **Tuition (English-medium)**: $4,500 – $11,000 per year
+*   **Living Costs**: $400 – $700 per month
+*   **Community**: Significant local community of Nigerian and African students
+
+Romanian living costs are among the lowest in the EU, balancing high-quality education with financial reality.
+
+### 9. Georgia
+Georgia has become one of the fastest-growing destinations due to its affordable fees and English-taught programs.
+
+**Quick Facts:**
+*   **Tuition**: $4,500 – $7,000 per year
+*   **Living Costs**: $300 – $600 per month
+*   **Admission**: Often does not require UCAT or complex entrance exams
+
+If you have a strong academic record, the path to admission in Georgia is more straightforward than in most European countries.
+
+### 10. Cyprus
+Cyprus offers EU-standard education with a warm Mediterranean climate. English is widely spoken, making the transition from Nigeria smoother than most Eastern European options.
+
+**Quick Facts:**
+*   **Tuition**: $5,000 – $10,000 per year
+*   **Living Costs**: $600 – $900 per month
+*   **Location**: Always choose the Republic of Cyprus (EU) over Northern Cyprus for international recognition
 
 ---
 
-## Your 4-Step Action Plan For 2024
+### Before You Apply: The 4 Critical Checkpoints
+None of these destinations will work for you if you skip the due diligence.
 
-### Step 1: Verify Your Role's New Threshold
-Use the [Skilled Occupation List](https://www.gov.uk/government/publications/skilled-worker-visa-eligible-occupations) to check your occupation code and confirm your applicable salary threshold. Do not rely on your employer alone — verify independently.
+1.  **MDCN & WDOMS Recognition**: Make sure your chosen university is recognized by the Medical and Dental Council of Nigeria and listed in the World Directory of Medical Schools.
+2.  **Calculate Your Real Budget**: Add visa fees, flights, health insurance, and setup costs (first 3 months).
+3.  **Language Barriers**: Even in English-taught programs, you will need conversational local language skills for clinical hospital rotations.
+4.  **Scholarship Hunting**: Investigate the Stipendium Hungaricum (Hungary) or DAAD (Germany) before paying full price.
 
-### Step 2: Get Your Certificate of Sponsorship Reviewed
-If you have already received a CoS, confirm the salary on it meets the **new** April 2024 thresholds. If your CoS was issued before April but you have not yet applied, you may still be subject to the new rules.
+Studying medicine abroad is possible. It requires research, realistic planning, and honesty about your budget. JapaLearn AI exists to help you figure out which option actually makes sense for your specific situation.
 
-### Step 3: Plan Your Proof of Funds
-With higher salaries required, your employer offer letter now needs to clearly state a compliant figure. Prepare your bank statements and financial documents to support your application. Aim for 3–6 months of bank statements showing consistent income.
-
-### Step 4: Run Your JapaLearn AI Assessment
-The fastest way to understand your personal situation is to run your AI readiness assessment. Our system accounts for all 2024 rule changes and gives you a personalised roadmap within minutes.
-
----
-
-## Impact on the Nigerian Migration Community
-
-Nigeria provides the UK with the largest cohort of overseas-trained nurses in the NHS. The 2024 changes create a paradox: the UK urgently needs healthcare workers, yet restrictions on dependents may deter highly qualified Nigerians from accepting offers.
-
-Early intelligence from the JapaLearn community shows:
-- **23% of active applicants** had to renegotiate salary terms with their UK sponsors
-- **41% of healthcare workers** are reconsidering their route in light of the dependent restriction
-- Lawyers are recommending a **General Skilled Worker route switch** for those where family unity is a priority
-
----
-
-## Looking Ahead: What to Watch in Q3 2024
-
-The immigration landscape continues to shift. Watch out for:
-- **Further salary threshold reviews** — the Migration Advisory Committee (MAC) meets in Q3
-- **Student visa dependent restrictions** — further tightening expected
-- **Points-Based System review** — the Government has commissioned a full MAC review
-
-Stay subscribed to the JapaLearn Journal for weekly updates as these changes develop.
+*Victory from JapaLearn · April 14, 2026*
 `,
   faqs: [
     {
-      question: "Does the new salary threshold apply to all Skilled Worker visa applicants?",
-      answer: "Not all. Workers on national pay agreements (such as NHS Agenda for Change bands), teachers, and social workers in specific grades are generally exempt. However, the majority of private sector and self-employment-sponsored roles are now subject to the £38,700 minimum."
+      question: "Are medical degrees from these countries recognized in Nigeria?",
+      answer: "Most are, but you must verify each specific university on the MDCN (Medical and Dental Council of Nigeria) approved list before applying. Listing in the World Directory of Medical Schools (WDOMS) is also a critical requirement."
     },
     {
-      question: "I already have a CoS issued before April 2024. Am I affected?",
-      answer: "It depends on when you submit your application. If your CoS was issued before the April 4, 2024 rules change but you have not yet submitted your visa application, you should submit as soon as possible. UKVI guidance suggests applications made with a pre-change CoS may still be assessed under the old thresholds, but this is subject to change."
+      question: "Is there a language barrier in these non-English speaking countries?",
+      answer: "Most universities on this list offer medicine in English. However, you will still need to learn the local language for clinical rotations to communicate with patients during your 4th, 5th, and 6th years."
     },
     {
-      question: "Can I still bring my spouse if I'm a nurse going to the UK?",
-      answer: "From March 2024, new overseas Health & Care visa applicants cannot bring dependants who are not already in the UK. If bringing your spouse is a priority, speak to a registered immigration adviser about switching to the General Skilled Worker route, which remains open to dependants."
+      question: "Can I work while studying medicine abroad?",
+      answer: "Medicine is a demanding full-time course. While some countries allow part-time student work, it is highly recommended to have your full financial backing secured so you can focus on your studies."
     },
     {
-      question: "What is the best way to check if my role qualifies under the new thresholds?",
-      answer: "Visit the UK Government's Skilled Occupation List and find your SOC code. The list will show the minimum salary for your occupation under both the going rate and the general threshold. Use whichever is higher."
-    },
-    {
-      question: "How does the JapaLearn AI help with these changes?",
-      answer: "Our AI assessment has been updated with all 2024 rule changes. When you complete the quiz, you get a personalised readiness score, an updated visa route recommendation, and a step-by-step curriculum that accounts for your exact circumstances — including the new salary and dependent rules."
+      question: "What is the Stipendium Hungaricum scholarship?",
+      answer: "It is a Hungarian government scholarship that covers full tuition and accommodation, and provides a monthly stipend. It is one of the best ways for Nigerian students to study medicine for free in the EU."
     }
   ],
-  relatedPosts: [
-    {
-      id: 2,
-      title: "How to Build a Proof of Funds Strategy that Actually Works",
-      slug: "proof-of-funds-strategy",
-      excerpt: "Naira volatility makes proof of funds a moving target. We break down the best strategies.",
-      category: "Financial Planning",
-      date: "April 10, 2024",
-      readTime: "8 min",
-      image: "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&q=80&w=600"
-    },
-    {
-      id: 3,
-      title: "AI in Migration: How JapaLearn AI Predicts Your Success",
-      slug: "ai-migration-predictions",
-      excerpt: "Discover the technology behind our readiness scores and how it's helping thousands.",
-      category: "AI Insights",
-      date: "April 08, 2024",
-      readTime: "5 min",
-      image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=600"
-    },
-    {
-      id: 4,
-      title: "The NHS Skilled Worker Visa: A Complete 2024 Guide for Nigerian Nurses",
-      slug: "nhs-skilled-worker-guide-nurses",
-      excerpt: "From NMC registration to your first day on the ward — a complete guide for Nigerian nurses.",
-      category: "Visa Guides",
-      date: "April 05, 2024",
-      readTime: "11 min",
-      image: "https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&q=80&w=600"
-    }
-  ]
+  relatedPosts: [],
+  authorImage: "/images/victory.png"
 };
 
 // ─── FAQ Accordion ────────────────────────────────────────────────────────────

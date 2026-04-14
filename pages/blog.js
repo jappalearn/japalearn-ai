@@ -28,69 +28,14 @@ const CATEGORIES = [
 const POSTS = [
   {
     id: 1,
-    title: "The 2024 UK Visa Changes: What Nigerians Need to Know",
-    slug: "uk-visa-changes-2024",
-    excerpt: "New salary thresholds and dependent restrictions are reshaping UK immigration. Here is what you need to do now.",
+    title: "10 Affordable Countries Nigerian Students Can Study Medicine in 2026",
+    slug: "affordable-countries-medicine-2026",
+    excerpt: "Many Nigerian students grow up with the dream of becoming a doctor. We researched the top 10 destinations where you can get a globally recognised degree without breaking the bank.",
     category: 'visa-guides',
-    date: "Apr 12, 2024",
-    readTime: "8 min",
-    image: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&q=80&w=800",
+    date: "Apr 14, 2026",
+    readTime: "12 min",
+    image: "https://images.unsplash.com/photo-1576091160550-2173dad99901?auto=format&fit=crop&q=80&w=800",
     featured: true,
-  },
-  {
-    id: 2,
-    title: "How to Build a Proof of Funds Strategy that Actually Works",
-    slug: "proof-of-funds-strategy",
-    excerpt: "Naira volatility makes proof of funds a moving target. We break down the best strategies for Nigerian applicants.",
-    category: 'financial-planning',
-    date: "Apr 10, 2024",
-    readTime: "8 min",
-    image: "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&q=80&w=800",
-    featured: false,
-  },
-  {
-    id: 3,
-    title: "AI in Migration: How JapaLearn AI Predicts Your Success",
-    slug: "ai-migration-predictions",
-    excerpt: "The technology behind our readiness scores and how it's helping thousands avoid preventable rejections.",
-    category: 'ai-insights',
-    date: "Apr 08, 2024",
-    readTime: "5 min",
-    image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=800",
-    featured: false,
-  },
-  {
-    id: 4,
-    title: "The NHS Skilled Worker Visa: A Complete Guide for Nigerian Nurses",
-    slug: "nhs-skilled-worker-guide-nurses",
-    excerpt: "From NMC registration to your first day on the ward — everything a Nigerian nurse needs to know.",
-    category: 'visa-guides',
-    date: "Apr 05, 2024",
-    readTime: "11 min",
-    image: "https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&q=80&w=800",
-    featured: false,
-  },
-  {
-    id: 5,
-    title: "From Lagos to London: My First 30 Days",
-    slug: "lagos-to-london-first-30-days",
-    excerpt: "A real, honest account of the first month after landing in the UK. The good, the hard, and the unexpected.",
-    category: 'success-stories',
-    date: "Apr 03, 2024",
-    readTime: "7 min",
-    image: "https://images.unsplash.com/photo-1486325212027-8081e485255e?auto=format&fit=crop&q=80&w=800",
-    featured: false,
-  },
-  {
-    id: 6,
-    title: "Canada Express Entry vs UK Skilled Worker: Which is Right for You?",
-    slug: "canada-vs-uk-route-comparison",
-    excerpt: "A side-by-side comparison of the two most popular Japa routes — salary requirements, timelines, PR pathways.",
-    category: 'visa-guides',
-    date: "Apr 01, 2024",
-    readTime: "10 min",
-    image: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&q=80&w=800",
-    featured: false,
   },
 ];
 
@@ -141,7 +86,7 @@ function PostCard({ post, index }) {
             {post.excerpt}
           </p>
           <div className="mt-5 flex items-center justify-between">
-            <span className="text-xs font-semibold text-foreground">Taiwo · JapaLearn</span>
+            <span className="text-xs font-semibold text-foreground">Victory · JapaLearn</span>
             <div className="w-8 h-8 rounded-full border border-border flex items-center justify-center group-hover:bg-primary group-hover:border-primary transition-all">
               <ArrowRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-white transition-colors" />
             </div>
