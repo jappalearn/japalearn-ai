@@ -581,7 +581,7 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
                   onClick={() => quizResult ? setActiveTab('learning') : router.push('/quiz')}
                   style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 16px', background: '#FFFFFF', border: 'none', borderRadius: 10, color: '#1E4DD7', fontSize: 12, fontWeight: 700, cursor: 'pointer', boxShadow: '0px 4px 14px rgba(0,0,0,0.18)', fontFamily: 'Inter, sans-serif' }}
                 >
-                  <span>{quizResult ? 'Continue' : 'Start'}</span>
+                  <span>{quizResult ? 'Start Learning' : 'Start with Quiz'}</span>
                   <ArrowRight size={12} style={{ color: '#1E4DD7' }} />
                 </button>
               </div>

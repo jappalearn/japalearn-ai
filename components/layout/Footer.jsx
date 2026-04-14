@@ -24,7 +24,7 @@ export const Footer = () => {
             Ready To Start Your Journey <br className="hidden sm:block" /> the Right Way?
           </motion.h2>
           <p className="text-white mb-8 sm:mb-10 max-w-md mx-auto text-sm leading-relaxed px-2">
-            Join thousands of Nigerians who have transformed their migration
+            Join hundreds of Nigerians who have transformed their migration
             dreams into reality with JapaLearn AI.
           </p>
           <Button

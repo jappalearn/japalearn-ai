@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import Head from 'next/head'
 import { supabase } from '../../lib/supabase'
 import { calculateScoreBreakdown, calculateScore } from '../../lib/quizData'
+import ReferralProfile from '../../components/profile/ReferralProfile'
 
 // ── Auto-generate insights per score category ─────────────────────────────────
 function generateInsights(answers) {
@@ -59,7 +60,7 @@ function generateInsights(answers) {
 }
 
 // ── Auto-generate next steps from quiz gaps ───────────────────────────────────
-function generateNextSteps(answers, breakdown) {
+function generateNextSteps(answers, breakdown, firstName) {
   const steps = []
   const lang = answers.language || ''
   const savings = answers.savings || ''
@@ -71,46 +72,26 @@ function generateNextSteps(answers, breakdown) {
   const savScore = breakdown.find(b => b.label === 'Savings')?.score || 0
 
   if (!lang || lang === 'Not taken') {
-    steps.push({ bold: 'Book your IELTS / OET test —', text: ' this is the first requirement for most migration routes. Aim for 7.0+.' })
+    steps.push({ id: 'ns1', bold: 'Book your IELTS / OET test —', text: ' this is the first requirement for most migration routes. Aim for 7.0+.' })
   } else if (langScore < 10) {
-    steps.push({ bold: `Retake your language test targeting a higher band —`, text: ` moving to 7.0+ unlocks significantly more ${dest} pathways.` })
+    steps.push({ id: 'ns1', bold: `Retake your language test targeting a higher band —`, text: ` moving to 7.0+ unlocks significantly more ${dest} pathways.` })
   }
 
   if (expScore < 10) {
-    steps.push({ bold: 'Build documented work experience —', text: ' each additional year in your field adds meaningful points to your profile.' })
+    steps.push({ id: 'ns2', bold: 'Build documented work experience —', text: ' each additional year in your field adds meaningful points to your profile.' })
   }
 
   if (savScore < 6) {
-    steps.push({ bold: 'Start a dedicated migration savings plan —', text: ` aim for ₦5M–₦10M minimum to clear proof-of-funds requirements for ${dest}.` })
+    steps.push({ id: 'ns3', bold: 'Start a dedicated migration savings plan —', text: ` aim for ₦5M–₦10M minimum to clear proof-of-funds requirements for ${dest}.` })
   }
 
-  steps.push({ bold: 'Gather your core documents —', text: ' passport, transcripts, certificates, and employer reference letters are required for every route.' })
-  steps.push({ bold: 'Create your JapaLearn account —', text: ' get a personalised week-by-week curriculum built specifically for your pathway to ' + dest + '.' })
+  steps.push({ id: 'ns4', bold: 'Gather your core documents —', text: ' passport, transcripts, certificates, and employer reference letters are required for every route.' })
+  steps.push({ id: 'ns5', bold: 'Start your Pathway Curriculum —', text: ` ${firstName} is ready to begin the week-by-week plan specifically for the ${dest} ${answers.segment || 'Skilled Worker'} pathway.` })
 
   return steps.slice(0, 4)
 }
 
-// ── Flags ─────────────────────────────────────────────────────────────────────
 const FLAGS = { Canada: '🇨🇦', UK: '🇬🇧', USA: '🇺🇸', Germany: '🇩🇪', Ireland: '🇮🇪', Australia: '🇦🇺', Netherlands: '🇳🇱', Portugal: '🇵🇹', UAE: '🇦🇪', Singapore: '🇸🇬' }
-
-// ── Score ring SVG ────────────────────────────────────────────────────────────
-function ScoreRing({ score }) {
-  const size = 128, sw = 10, r = (size - sw * 2) / 2
-  const circ = 2 * Math.PI * r
-  const filled = (score / 100) * circ
-  const cx = size / 2, cy = size / 2
-  const color = score >= 70 ? '#10B981' : score >= 45 ? '#F59E0B' : '#EF4444'
-  const label = score >= 70 ? 'Strong' : score >= 45 ? 'Moderate' : 'Early Stage'
-  return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke="#EEF2FF" strokeWidth={sw} />
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke={color} strokeWidth={sw} strokeLinecap="round"
-        strokeDasharray={`${filled} ${circ}`} transform={`rotate(-90 ${cx} ${cy})`} />
-      <text x={cx} y={cy - 8} textAnchor="middle" fill="#18181B" fontSize="26" fontWeight="900" fontFamily="DM Sans, sans-serif">{score}%</text>
-      <text x={cx} y={cy + 12} textAnchor="middle" fill={color} fontSize="11" fontWeight="700" fontFamily="Inter, sans-serif">{label}</text>
-    </svg>
-  )
-}
 
 export default function PublicProfile() {
   const router = useRouter()
@@ -124,17 +105,26 @@ export default function PublicProfile() {
     if (!router.isReady || !code) return
 
     const load = async () => {
-      // Look up by referral_code — never expose the auth ID in the URL
-      const { data: profileByCode } = await supabase
+      // 1. Try fetching by referral_code
+      let { data: profile } = await supabase
         .from('profiles')
-        .select('id, full_name, avatar_url')
+        .select('id, full_name, avatar_url, referral_code')
         .eq('referral_code', code)
         .maybeSingle()
 
-      if (!profileByCode) { setNotFound(true); setLoading(false); return }
+      // 2. Fallback to lookup by ID if code is a UUID
+      if (!profile && code?.length > 30) {
+        const { data: profileById } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url, referral_code')
+          .eq('id', code)
+          .maybeSingle()
+        profile = profileById
+      }
 
-      const userId = profileByCode.id
-      // Store the real user ID (not the code) for referral tracking
+      if (!profile) { setNotFound(true); setLoading(false); return }
+
+      const userId = profile.id
       localStorage.setItem('referral_from', userId)
       setReferrerId(userId)
 
@@ -148,14 +138,83 @@ export default function PublicProfile() {
 
       const answers = quiz?.answers || {}
       const score = quiz?.score || calculateScore(answers)
-      const breakdown = calculateScoreBreakdown(answers)
+      const rawBreakdown = calculateScoreBreakdown(answers)
       const insights = generateInsights(answers)
-      const nextSteps = generateNextSteps(answers, breakdown)
+      
+      const firstName = (profile?.full_name || 'This user').split(' ')[0]
+      const nextSteps = generateNextSteps(answers, rawBreakdown, firstName)
 
-      const firstName = (profileByCode?.full_name || 'This user').split(' ')[0]
-      const initials = firstName.charAt(0).toUpperCase()
+      // Map to ReferralProfile expectations
+      const labelMap = { Experience: 'Work Experience', Language: 'Language Test', Age: 'Age Factor', Savings: 'Financial Readiness', Profile: 'Skills & Certs', Education: 'Education' }
+      const insightMap = { Experience: insights.exp, Education: insights.edu, Language: insights.lang, Age: insights.age, Savings: insights.savings, Profile: insights.certs }
+      
+      const statusOf = (s, max) => s / max >= 0.7 ? 'Strong Candidate' : s / max >= 0.4 ? 'Moderate Candidate' : 'Early Stage'
+      const statusColor = (s) => s.includes('Strong') ? '#10B981' : s.includes('Moderate') ? '#F59E0B' : '#EF4444'
 
-      setData({ profile: profileByCode, quiz, answers, score, breakdown, insights, nextSteps, firstName, initials })
+      const dest = answers.destination || 'UK'
+      const flag = FLAGS[dest] || '🌍'
+
+      const breakdown = rawBreakdown.map(b => ({
+        id: b.label.toLowerCase(),
+        label: labelMap[b.label] || b.label,
+        score: b.score,
+        max: b.max,
+        color: statusColor(statusOf(b.score, b.max)),
+        insight: insightMap[b.label]
+      }))
+
+      const strengths = rawBreakdown.filter(b => b.score / b.max >= 0.7).map(b => ({ id: b.label, label: labelMap[b.label] || b.label }))
+      const areasToImprove = rawBreakdown.filter(b => b.score / b.max < 0.7).map(b => ({ id: b.label, label: labelMap[b.label] || b.label }))
+
+      const eligibility = [
+        { id: 'lang', label: 'Language', value: answers.language && answers.language !== 'Not taken' ? answers.language : 'Not taken' },
+        { id: 'edu', label: 'Education', value: answers.education || '—' },
+        { id: 'dest', label: 'Destination', value: `${flag} ${dest}` },
+        { id: 'path', label: 'Pathway', value: answers.segment || 'Skilled Migration' },
+      ]
+
+      const status = statusOf(score, 100)
+      
+      const costs = 
+        answers.savings?.includes('₦20M') ? "₦2M – ₦5M" :
+        answers.savings?.includes('₦10M') ? "₦5M – ₦8M" :
+        "₦5M – ₦10M"
+
+      const timeline = [
+        { id: 't1', phase: 'Foundation & Language', period: 'Month 1–2', active: score < 40 },
+        { id: 't2', phase: 'Skills & Assessment', period: 'Month 3–5', active: score >= 40 && score < 70 },
+        { id: 't3', phase: 'Application & Visa', period: 'Month 6–8', active: score >= 70 && score < 90 },
+        { id: 't4', phase: 'Relocation', period: 'Month 9–12', active: score >= 90 }
+      ]
+
+      const activePhase = timeline.find(t => t.active)?.phase || 'Foundation'
+
+      const pathwayTitle = `${dest} Skilled Worker Visa`
+
+      const profileData = {
+        fullName: profile.full_name || 'JapaLearn User',
+        avatar_url: profile.avatar_url,
+        profession: answers.segment || 'Professional',
+        education: answers.education || 'Graduate',
+        status,
+        statusColor: statusColor(status),
+        score,
+        destination: dest,
+        pathwayTitle: pathwayTitle,
+        pathwaySubtitle: '',
+        summary: `${firstName} is looking to migrate to ${dest} via the ${pathwayTitle}. This report shows their migration readiness. ${score >= 70 ? 'They have cleared the primary relocation hurdles and are in a strong position to begin applications.' : score >= 40 ? 'They are well-positioned but need to finalize specific requirements like language tests or registrations.' : 'They are in the early stages and should focus on building their core credentials and relocation funds.'}`,
+        strengths: strengths.length > 0 ? strengths : [{id: 'new', label: 'Migration Intent'}],
+        areasToImprove: areasToImprove.length > 0 ? areasToImprove : [{id: 'new', label: 'Ready to Apply'}],
+        eligibility,
+        costRange: costs,
+        costNote: dest === 'UK' ? "NHS sponsorship can offset visa costs significantly." : "Proof of funds is essential for this route.",
+        timeline,
+        phaseText: `${firstName} is currently in the ${activePhase} phase of their journey.`,
+        breakdown,
+        nextSteps
+      }
+
+      setData({ profileData, firstName })
       setLoading(false)
     }
     load()
@@ -163,14 +222,14 @@ export default function PublicProfile() {
 
   const handleStartAssessment = () => {
     if (referrerId) localStorage.setItem('referral_from', referrerId)
-    router.push('/quiz')
+    router.push('/signup?ref=' + (data?.profileData?.fullName || 'referral'))
   }
 
   if (loading) return (
     <div style={{ minHeight: '100vh', background: '#F7F9FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif' }}>
       <div style={{ textAlign: 'center' }}>
         <div style={{ width: 40, height: 40, borderRadius: '50%', border: '3px solid #E4E8FF', borderTopColor: '#1E4DD7', animation: 'spin 0.8s linear infinite', margin: '0 auto 12px' }} />
-        <p style={{ color: '#82858A', fontSize: 13 }}>Loading profile…</p>
+        <p style={{ color: '#82858A', fontSize: 13 }}>Loading {code?.slice(0, 8)}...</p>
       </div>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
@@ -186,174 +245,13 @@ export default function PublicProfile() {
     </div>
   )
 
-  const { answers, score, breakdown, insights, nextSteps, firstName, initials } = data
-  const dest = answers.destination || '—'
-  const flag = FLAGS[dest] || '🌍'
-  const segment = answers.segment || '—'
-  const scoreColor = score >= 70 ? '#10B981' : score >= 45 ? '#F59E0B' : '#EF4444'
-
-  const labelMap = { Experience: 'Work Experience', Language: 'Language Test', Age: 'Age Factor', Savings: 'Financial Readiness', Profile: 'Skills & Certs', Education: 'Education' }
-  const insightMap = { Experience: insights.exp, Education: insights.edu, Language: insights.lang, Age: insights.age, Savings: insights.savings, Profile: insights.certs }
-  const statusOf = (score, max) => score / max >= 0.7 ? 'strong' : score / max >= 0.4 ? 'moderate' : 'weak'
-  const statusColor = (s) => s === 'strong' ? '#10B981' : s === 'moderate' ? '#F59E0B' : '#EF4444'
-  const statusLabel = (s) => s === 'strong' ? 'Strong' : s === 'moderate' ? 'Moderate' : 'Needs work'
-
-  const strengths = breakdown.filter(b => statusOf(b.score, b.max) === 'strong').map(b => ({ id: b.label, label: labelMap[b.label] || b.label }))
-  const gaps = breakdown.filter(b => statusOf(b.score, b.max) !== 'strong').map(b => ({ id: b.label, label: labelMap[b.label] || b.label }))
-
-  const eligibilityRows = [
-    { label: 'Language', value: answers.language && answers.language !== 'Not taken' ? answers.language : 'Not yet taken' },
-    { label: 'Education', value: answers.education || '—' },
-    { label: 'Destination', value: `${flag} ${dest}` },
-    { label: 'Pathway', value: segment },
-  ]
-
   return (
     <>
       <Head>
-        <title>{firstName}'s Migration Profile | JapaLearn AI</title>
-        <meta name="description" content={`See ${firstName}'s UK migration readiness score and get your own personalised track on JapaLearn AI.`} />
+        <title>{data.firstName}'s Migration Profile | JapaLearn AI</title>
+        <meta name="description" content={`See ${data.firstName}'s UK migration readiness score and get your own personalised track on JapaLearn AI.`} />
       </Head>
-      <div style={{ minHeight: '100vh', background: '#F7F9FF', fontFamily: 'Inter, sans-serif' }}>
-
-        {/* ── Nav ── */}
-        <nav style={{ background: '#FFFFFF', borderBottom: '1px solid #ECEEFF', padding: '0 24px', height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 30 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <svg width="26" height="26" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="47" stroke="#1E4DD7" strokeWidth="3.5" fill="white" /><path d="M50 12 L82 30 L82 70 L50 88 L18 70 L18 30 Z" fill="#1E4DD7" /><path d="M50 22 C50 22 47 38 34 50 C47 62 50 78 50 78 C50 78 53 62 66 50 C53 38 50 22 50 22 Z" fill="white" opacity="0.75" /></svg>
-            <span style={{ fontWeight: 800, fontSize: 15, color: '#18181B', fontFamily: 'DM Sans, sans-serif' }}>JapaLearn <span style={{ color: '#1E4DD7' }}>AI</span></span>
-          </div>
-          <button onClick={handleStartAssessment} style={{ padding: '8px 18px', background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 14px rgba(30,77,215,0.28)' }}>
-            Get My Score →
-          </button>
-        </nav>
-
-        <main style={{ maxWidth: 720, margin: '0 auto', padding: '32px 20px 80px', boxSizing: 'border-box' }}>
-
-          {/* ── Hero ── */}
-          <div style={{ background: 'linear-gradient(135deg, #0F2E99 0%, #1E4DD7 50%, #3B75FF 100%)', borderRadius: 24, padding: '32px 28px', marginBottom: 24, boxShadow: '0 20px 60px rgba(30,77,215,0.3)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
-              {/* Avatar */}
-              <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', border: '2px solid rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <span style={{ fontSize: 28, fontWeight: 800, color: '#FFFFFF', fontFamily: 'DM Sans, sans-serif' }}>{initials}</span>
-              </div>
-              {/* Name + meta */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ margin: '0 0 2px', fontSize: 11, color: 'rgba(255,255,255,0.6)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Migration Profile</p>
-                <h1 style={{ margin: '0 0 6px', fontSize: 26, fontWeight: 800, color: '#FFFFFF', fontFamily: 'DM Sans, sans-serif', letterSpacing: '-0.5px' }}>{firstName}</h1>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)' }}>{flag} {dest}</span>
-                  {segment !== '—' && <><span style={{ color: 'rgba(255,255,255,0.3)' }}>·</span><span style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)' }}>{segment}</span></>}
-                </div>
-              </div>
-              {/* Score ring */}
-              <div style={{ flexShrink: 0 }}>
-                <ScoreRing score={score} />
-              </div>
-            </div>
-          </div>
-
-          {/* ── Score Breakdown ── */}
-          <div style={{ background: '#FFFFFF', borderRadius: 18, padding: 24, marginBottom: 16, border: '1px solid #E8EEFF', boxShadow: '0 2px 12px rgba(30,77,215,0.06)' }}>
-            <h2 style={{ margin: '0 0 20px', fontSize: 15, fontWeight: 700, color: '#18181B', fontFamily: 'DM Sans, sans-serif' }}>Readiness Breakdown</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              {breakdown.map(item => {
-                const status = statusOf(item.score, item.max)
-                const color = statusColor(status)
-                const pct = Math.round((item.score / item.max) * 100)
-                const insight = insightMap[item.label]
-                return (
-                  <div key={item.label}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: '#18181B' }}>{labelMap[item.label] || item.label}</span>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: color + '18', color }}>{statusLabel(status)}</span>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: '#18181B' }}>{item.score} / {item.max}</span>
-                      </div>
-                    </div>
-                    <div style={{ height: 6, background: '#F0F2FF', borderRadius: 3, overflow: 'hidden', marginBottom: 8 }}>
-                      <div style={{ width: `${pct}%`, height: '100%', background: `linear-gradient(90deg, ${color}99, ${color})`, borderRadius: 3 }} />
-                    </div>
-                    {insight && <p style={{ margin: 0, fontSize: 12, color: '#6B7280', lineHeight: 1.55 }}>{insight}</p>}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* ── Strengths + Gaps ── */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-            <div style={{ background: '#FFFFFF', borderRadius: 16, padding: 20, border: '1px solid #E8EEFF', boxShadow: '0 2px 12px rgba(30,77,215,0.06)' }}>
-              <h3 style={{ margin: '0 0 14px', fontSize: 13, fontWeight: 700, color: '#18181B', fontFamily: 'DM Sans, sans-serif', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ color: '#10B981' }}>✓</span> Strengths
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {strengths.length > 0 ? strengths.map(s => (
-                  <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', background: '#F0FDF8', borderRadius: 8, border: '1px solid #BBF7D0' }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10B981', flexShrink: 0 }} />
-                    <span style={{ fontSize: 12, color: '#065F46', fontWeight: 500 }}>{s.label}</span>
-                  </div>
-                )) : <p style={{ fontSize: 12, color: '#82858A', margin: 0 }}>Complete the quiz to see strengths.</p>}
-              </div>
-            </div>
-            <div style={{ background: '#FFFFFF', borderRadius: 16, padding: 20, border: '1px solid #E8EEFF', boxShadow: '0 2px 12px rgba(30,77,215,0.06)' }}>
-              <h3 style={{ margin: '0 0 14px', fontSize: 13, fontWeight: 700, color: '#18181B', fontFamily: 'DM Sans, sans-serif', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ color: '#F59E0B' }}>↑</span> To Improve
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {gaps.length > 0 ? gaps.map(g => (
-                  <div key={g.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', background: '#FFFBEB', borderRadius: 8, border: '1px solid #FDE68A' }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#F59E0B', flexShrink: 0 }} />
-                    <span style={{ fontSize: 12, color: '#78350F', fontWeight: 500 }}>{g.label}</span>
-                  </div>
-                )) : <p style={{ fontSize: 12, color: '#82858A', margin: 0 }}>All areas are strong!</p>}
-              </div>
-            </div>
-          </div>
-
-          {/* ── Eligibility ── */}
-          <div style={{ background: '#FFFFFF', borderRadius: 18, padding: 24, marginBottom: 16, border: '1px solid #E8EEFF', boxShadow: '0 2px 12px rgba(30,77,215,0.06)' }}>
-            <h2 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 700, color: '#18181B', fontFamily: 'DM Sans, sans-serif' }}>Profile Overview</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-              {eligibilityRows.map((row, i) => (
-                <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: i < eligibilityRows.length - 1 ? '1px solid #F0F2FF' : 'none' }}>
-                  <span style={{ fontSize: 13, color: '#82858A', fontWeight: 500 }}>{row.label}</span>
-                  <span style={{ fontSize: 13, color: '#18181B', fontWeight: 600, textAlign: 'right', maxWidth: '60%' }}>{row.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* ── Next Steps ── */}
-          <div style={{ background: 'linear-gradient(135deg, #EBF1FF 0%, #E4EEFF 100%)', borderRadius: 18, padding: 24, marginBottom: 24, border: '1px solid #CDDAFF' }}>
-            <h2 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 700, color: '#1E4DD7', fontFamily: 'DM Sans, sans-serif' }}>Recommended Next Steps</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {nextSteps.map((step, i) => (
-                <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                  <span style={{ width: 22, height: 22, borderRadius: '50%', background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 11, fontWeight: 700, color: '#fff' }}>{i + 1}</span>
-                  <p style={{ margin: 0, fontSize: 14, color: '#2D3A6B', lineHeight: 1.6 }}>
-                    <strong style={{ color: '#1E4DD7' }}>{step.bold}</strong>{step.text}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* ── CTA ── */}
-          <div style={{ background: 'linear-gradient(135deg, #0F2E99, #1E4DD7, #3B75FF)', borderRadius: 20, padding: '32px 28px', textAlign: 'center', boxShadow: '0 20px 60px rgba(30,77,215,0.3)' }}>
-            <p style={{ margin: '0 0 4px', fontSize: 11, color: 'rgba(255,255,255,0.6)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Inspired by {firstName}'s journey?</p>
-            <h2 style={{ margin: '0 0 8px', fontSize: 24, fontWeight: 800, color: '#FFFFFF', fontFamily: 'DM Sans, sans-serif', letterSpacing: '-0.4px' }}>Find out your score</h2>
-            <p style={{ margin: '0 0 24px', fontSize: 14, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6 }}>Take the free 5-minute migration assessment and get your personalised readiness score, pathway, and curriculum.</p>
-            <button
-              onClick={handleStartAssessment}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '14px 32px', background: '#FFFFFF', color: '#1E4DD7', border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 700, cursor: 'pointer', boxShadow: '0 8px 24px rgba(0,0,0,0.2)', fontFamily: 'Inter, sans-serif' }}
-            >
-              Start Free Assessment →
-            </button>
-            <p style={{ margin: '14px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>Free · No account needed to start</p>
-          </div>
-        </main>
-      </div>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <ReferralProfile profileData={data.profileData} onSignUp={handleStartAssessment} />
     </>
   )
 }

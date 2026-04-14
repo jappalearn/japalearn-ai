@@ -1,7 +1,7 @@
 import React from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import AdaezeReferralProfile from '../components/profile/AdaezeReferralProfile';
+import ReferralProfile from '../components/profile/ReferralProfile';
 
 export default function SharedProfilePage() {
   const router = useRouter();
@@ -19,10 +19,10 @@ export default function SharedProfilePage() {
         <meta name="description" content="Check out Adaeze's UK migration readiness report and get your own personalized track." />
       </Head>
       {/* 
-        This is the new design component you provided. 
-        We pass down the onSignUp function to wire its beautiful UI to your actual router logic.
+        This is the new design component. 
+        It defaults to the Adaeze demo data if no profileData is passed.
       */}
-      <AdaezeReferralProfile onSignUp={handleSignUp} />
+      <ReferralProfile onSignUp={handleSignUp} />
     </>
   );
 }

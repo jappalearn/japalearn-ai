@@ -43,9 +43,13 @@ The roadmap has **6 milestones** derived from the user's profile:
 
 ## ⏱️ 3. TIMELINE CALCULATION
 
-- High readiness (score ≥ 70): 16-week estimated timeline
-- Medium readiness (score 40–69): 20-week timeline
-- Low readiness (score < 40): 24-week timeline
+- Timeline is driven by `answers.timeline` (user-selected at end of quiz):
+  - '0–3 months...' → 13 weeks (3-Month Plan)
+  - '3–6 months...' → 26 weeks (6-Month Plan)
+  - '6–12 months...' → 52 weeks (12-Month Plan)
+  - '12–24 months...' → 96 weeks (24-Month Plan)
+- Fallback (legacy users with no `answers.timeline`): score ≥ 70 → 16 weeks, score 40–69 → 20 weeks, score < 40 → 24 weeks
+- Milestone week ranges are proportional to `totalWeeks` via `getMilestoneWeeks(totalWeeks)`
 - `weeksLeft` = `totalWeeks * (1 - pct / 100)`
 - `pct` = `completedMilestones / 6 * 100`
 

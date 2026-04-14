@@ -30,7 +30,7 @@ export const Stats = () => {
           {/* Left Side */}
           <div className="flex flex-col items-center lg:items-start text-center lg:text-left w-full lg:max-w-xs">
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-normal text-foreground leading-snug tracking-tight">
-              <Counter value="15000+" duration={2.5} /> happy customers.
+              <Counter value="100+" duration={2.5} /> happy customers.
             </h2>
             <p className="mt-2 text-sm font-normal text-muted-foreground">
               Using JapaLearn AI and loving it!
@@ -43,9 +43,9 @@ export const Stats = () => {
           {/* Right Side — stats row */}
           <div className="flex items-center justify-center gap-8 sm:gap-12 md:gap-16 lg:gap-24 w-full lg:w-auto">
             {[
-              { value: "5K+", label: "LEARNERS" },
+              { value: "100+", label: "LEARNERS" },
               { value: "87%", label: "SUCCESS RATE" },
-              { value: "12+", label: "COUNTRIES" },
+              { value: "10+", label: "COUNTRIES" },
             ].map(({ value, label }) => (
               <div key={label} className="flex flex-col items-center text-center">
                 <span className="text-4xl sm:text-5xl md:text-6xl font-normal text-blue-500 leading-none">
