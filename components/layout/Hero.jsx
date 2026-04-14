@@ -78,12 +78,11 @@ export const Hero = () => {
             }}
           />
 
-          <div className="relative aspect-video rounded-3xl overflow-hidden">
-            <Image
+          <div className="relative aspect-video rounded-3xl overflow-hidden border border-border shadow-2xl bg-white p-2">
+            <img
               src="/images/system-ui.png"
-              alt="Dashboard Preview"
-              fill
-              className="object-contain bg-white p-2"
+              alt="Real JapaLearn Dashboard"
+              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
             />
           </div>
 
