@@ -1,0 +1,30 @@
+[
+  {
+    "id": "visa-guides",
+    "name": "Visa Guides",
+    "slug": "visa-guides",
+    "description": "Step-by-step guides for UK, Canada, and EU migration pathways.",
+    "color": "#3B82F6"
+  },
+  {
+    "id": "success-stories",
+    "name": "Success Stories",
+    "slug": "success-stories",
+    "description": "Real relocation stories from the JapaLearn community.",
+    "color": "#10B981"
+  },
+  {
+    "id": "financial-planning",
+    "name": "Financial Planning",
+    "slug": "financial-planning",
+    "description": "How to save, manage, and prove your funds for migration.",
+    "color": "#F59E0B"
+  },
+  {
+    "id": "ai-insights",
+    "name": "AI & Future of Japa",
+    "slug": "ai-insights",
+    "description": "How AI is changing the migration landscape for Nigerians.",
+    "color": "#8B5CF6"
+  }
+]

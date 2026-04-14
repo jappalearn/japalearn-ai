@@ -30,6 +30,14 @@ function useIsMobile() {
   return isMobile
 }
 
+// ── Referral code generator ───────────────────────────────────────────────────
+function generateReferralCode(fullName) {
+  const firstName = (fullName || 'user').split(' ')[0].toLowerCase().replace(/[^a-z]/g, '').slice(0, 8) || 'user'
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
+  const suffix = Array.from({ length: 5 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
+  return `${firstName}-${suffix}`
+}
+
 // ── Visa route lookup ─────────────────────────────────────────────────────────
 const VISA_ROUTES = {
   Canada:    { 'Tech Professional': 'Express Entry — Federal Skilled Worker', 'Healthcare Worker': 'Express Entry + Healthcare Streams', 'Student or Post-Grad': 'Study Permit → PGWP → PR', default: 'Express Entry — Federal Skilled Worker' },
@@ -2662,10 +2670,15 @@ export default function Dashboard() {
         const nameForProfile = pendingName || session.user.user_metadata?.full_name || ''
         const { data: newProfile } = await supabase
           .from('profiles')
-          .insert({ id: session.user.id, full_name: nameForProfile, updated_at: new Date().toISOString() })
+          .insert({ id: session.user.id, full_name: nameForProfile, referral_code: generateReferralCode(nameForProfile), updated_at: new Date().toISOString() })
           .select()
           .maybeSingle()
         profileData = newProfile
+      } else if (!profileData.referral_code) {
+        // Backfill existing users who don't have a code yet
+        const code = generateReferralCode(profileData.full_name)
+        await supabase.from('profiles').update({ referral_code: code }).eq('id', session.user.id)
+        profileData = { ...profileData, referral_code: code }
       }
 
       const { data: quizData } = await supabase

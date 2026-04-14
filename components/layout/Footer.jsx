@@ -1,12 +1,10 @@
-import React, { useState } from "react"
+import React from "react"
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
 import { CheckCircle2 } from "lucide-react"
 import Link from "next/link"
 
 export const Footer = () => {
-  const [email, setEmail] = useState("")
-
   return (
     <footer className="bg-white">
       {/* CTA Section */}
@@ -43,29 +41,6 @@ export const Footer = () => {
         </div>
       </section>
 
-      {/* Email subscription */}
-      <div className="bg-[#f6f9ff] py-12 sm:py-16 text-center">
-        <div className="max-w-xl mx-auto px-4 sm:px-6">
-          <h3 className="text-xl sm:text-2xl font-heading font-bold text-foreground mb-3 leading-snug">
-            Dreaming of relocating but don&apos;t <br className="hidden sm:block" /> know where to start?
-          </h3>
-          <p className="text-muted-foreground text-sm mb-8 max-w-sm mx-auto leading-relaxed">
-            Sign up to get real relocation stories, guides, and expert tips straight to your inbox.
-          </p>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 max-w-md mx-auto">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              className="w-full h-12 px-5 rounded-full border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white text-sm transition-all"
-            />
-            <Button className="h-12 px-7 rounded-full bg-primary hover:bg-primary/90 font-semibold text-sm shrink-0 w-full sm:w-auto">
-              Subscribe Now
-            </Button>
-          </div>
-        </div>
-      </div>
 
       {/* Main Footer Content */}
       <div className="border-t border-border bg-gradient-to-br from-white via-slate-50 to-[#f6f9ff] pt-16 pb-8 relative overflow-hidden">

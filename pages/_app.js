@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import '../styles/globals.css'
 import Head from 'next/head'
+import { NewsletterModal } from '@/components/layout/NewsletterModal'
 
 export default function App({ Component, pageProps }) {
   useEffect(() => {
@@ -17,6 +18,7 @@ export default function App({ Component, pageProps }) {
         <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </Head>
       <Component {...pageProps} />
+      <NewsletterModal />
     </>
   )
 }
