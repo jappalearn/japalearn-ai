@@ -1,14 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Mail, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { useRouter } from 'next/router';
 
 export function NewsletterModal() {
   const [visible, setVisible] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const router = useRouter();
+
+  // Show only on blog routes (/blog, /blog/[slug])
+  const isBlogPage = router.pathname.startsWith('/blog');
 
   useEffect(() => {
+    // Hide if navigating away from blog
+    if (!isBlogPage) {
+      setVisible(false);
+      return;
+    }
+
     // Don't show if already dismissed in this session
     if (sessionStorage.getItem('newsletter_dismissed')) return;
 
@@ -18,7 +29,7 @@ export function NewsletterModal() {
     }, 6000);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [isBlogPage]);
 
   const handleDismiss = () => {
     setVisible(false);
