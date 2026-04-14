@@ -54,7 +54,7 @@ export function NewsletterModal() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 50, scale: 0.95 }}
           transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-          className="fixed bottom-6 right-6 z-50 w-[380px] max-w-[calc(100vw-48px)]"
+          className="fixed z-[100] bottom-4 left-4 right-4 sm:bottom-6 sm:right-6 sm:left-auto sm:w-[380px] w-auto max-w-full sm:max-w-[calc(100vw-48px)]"
           role="dialog"
           aria-label="Subscribe to newsletter"
         >

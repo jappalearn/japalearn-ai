@@ -6,10 +6,10 @@ import {
   Search,
   Clock,
   ArrowRight,
-  Globe,
-  TrendingUp,
-  DollarSign,
-  Cpu,
+  Compass,
+  Zap,
+  Wallet,
+  Award,
   Newspaper,
 } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
@@ -18,10 +18,10 @@ import { Footer } from '@/components/layout/Footer';
 // ─── Categories ────────────────────────────────────────────────────────────────
 const CATEGORIES = [
   { id: 'all',               label: 'All',               icon: Newspaper },
-  { id: 'visa-guides',       label: 'Visa Guides',        icon: Globe },
-  { id: 'financial-planning',label: 'Financial Planning', icon: DollarSign },
-  { id: 'success-stories',   label: 'Success Stories',   icon: TrendingUp },
-  { id: 'ai-insights',       label: 'AI & Japa',          icon: Cpu },
+  { id: 'visa-guides',       label: 'Visa Guides',        icon: Compass },
+  { id: 'financial-planning',label: 'Financial Planning', icon: Wallet },
+  { id: 'success-stories',   label: 'Success Stories',   icon: Award },
+  { id: 'ai-insights',       label: 'AI & Japa',          icon: Zap },
 ];
 
 // ─── Posts data ───────────────────────────────────────────────────────────────

@@ -1,6 +1,14 @@
 # JapaLearn Dashboard – Skills & Migration Hub (MVP Spec)
 
-> **Purpose:** This file is a reference guide for the AI agent when building, updating, or making decisions about the JapaLearn dashboard. It defines the logic, tone, behaviour rules, and UX principles the dashboard must always follow.
+> **Purpose:** This file is the north star for the AI agent when building, updating, or making decisions about the JapaLearn dashboard. Every specific rule here has been confirmed by the founder. Do not deviate without asking first.
+
+---
+
+## ⚠️ AGENT RULES (READ FIRST)
+
+- **Always make changes for BOTH mobile and desktop.** The dashboard has a `useIsMobile()` hook. Mobile is `< 768px`. Most tab components have separate mobile/desktop render paths — check both.
+- **Ask before removing any UI design.** The founder distinguishes between removing placeholder DATA (ok) vs removing the design/layout (not ok). When in doubt, ask.
+- **Do not use AI-generated-looking designs.** The prototype in `/magicpath-extracted/` is the visual north star. Match its card styles, spacing, and typography.
 
 ---
 
@@ -18,189 +26,168 @@ You are guiding a migration journey.
 ## 🏠 1. HERO SECTION
 
 ### Dynamic Greeting (real-time, based on local time)
-- Before 12pm → "Good morning ☀️"
-- 12pm–5pm → "Good afternoon 🌤️"
-- After 5pm → "Good evening 🌙"
+- Before 12pm → "Good morning"
+- 12pm–5pm → "Good afternoon"
+- After 5pm → "Good evening"
 
-### Language rule
+### Language rules
 - ✅ "Build your personalized learning journey"
-- ❌ "Generate curriculum"
-- ❌ "AI-powered pathway"
+- ✅ "Start with Quiz"
+- ❌ "Generate curriculum" — never use this phrase anywhere
+- ❌ "AI-powered pathway" — never use this phrase
+- ❌ "AI-generated" — never use this phrase
 
 ### Hero CTA logic
-| User State | Button Label |
-|---|---|
-| Has NOT taken quiz | Take Assessment |
-| Has taken quiz | Start Learning |
+| User State | Button Label | Action |
+|---|---|---|
+| Has NOT taken quiz | Start with Quiz | → `/quiz` |
+| Has taken quiz | Start Learning | → curriculum tab |
 
 ---
 
-## 🚨 2. EMPTY STATE (NO QUIZ TAKEN)
+## 🚨 2. PRE-QUIZ STATES (NO QUIZ TAKEN)
 
-Dashboard should feel guided, not broken.
+### Core rule
+The design layouts ALWAYS show. What changes is the DATA and COPY.
+- No placeholder data (fake numbers, fake milestones, fake modules)
+- Copy should dynamically explain why the quiz matters for that section
+- Buttons that would normally do something should redirect to `/quiz` instead
 
-- All activity sections → EMPTY
-- All stats → show 0 or —
-- Cards → visible but inactive/disabled
+### Per-tab pre-quiz behaviour
+| Tab | Design shown | Data shown | CTA |
+|---|---|---|---|
+| Overview | Full overview | 0 for readiness, — for others | "Start with Quiz" button |
+| Curriculum | "What you'll get" card (blue gradient) | No modules shown pre-quiz | Button → `/quiz`, label "Start with Quiz" |
+| Roadmap | Header + blue banner only (NO milestone timeline) | Quiz Required state, 0% progress, — weeks | No CTA button |
+| Profile | Full profile design | Name/email from auth only, 0 readiness, — for all quiz fields | "Take Quiz" button only |
+| Resources | Full resources design | Shows unfiltered resources if available | No CTA button on empty state |
 
-**Message to show:**
-> "Start your journey by taking a quick assessment. This helps us guide you with the right steps."
+### Roadmap pre-quiz (IMPORTANT)
+The roadmap CANNOT show without quiz data. There is no destination, no visa route, no milestones, no timeline.
+- Show the prototype-style header (sub-header text + h1 "My Roadmap" + description)
+- Show the blue banner hero with: "QUIZ REQUIRED" label, "Not started yet", description, 0% progress bar, stat chips (— / 0% / 6 ahead)
+- Desktop: include the phase strip with all phases dimmed/locked
+- Mobile: no phase strip
+- NO milestone timeline below
+- NO CTA button
 
-### Navigation behaviour (no quiz)
-If user clicks ANY nav item (Dashboard, Profile, Curriculum, Roadmap, Resources):
-- Do NOT block them silently
-- Show a contextual reminder explaining what that section gives them *after* the assessment
-- Always offer a path to the quiz
+### Curriculum pre-quiz
+- Show the "What you'll get" blue gradient card with 4 feature tiles
+- Feature tiles: 5–8 modules / Matches your gaps / Ready in seconds / Fully unlocked
+- Button: "Start with Quiz" → `/quiz`
+- Do NOT show the profile tags section (those need quiz data)
+- Do NOT disable the button — it should be active and route to quiz
 
-**Section-specific reminder copy:**
-| Nav Item Clicked | Reminder Message |
-|---|---|
-| Curriculum | "Your curriculum is built from your quiz results — it's personalised to your destination, profession, and goals. Take the assessment to unlock it." |
-| Roadmap | "Your roadmap is a step-by-step migration timeline based on your profile. Take the assessment to see your personalised plan." |
-| Resources | "Resources are filtered to match your destination country and visa route. Take the assessment so we can show you only what's relevant." |
-| Profile | "Your profile score, breakdown, and migration details come from your assessment. Take the quiz to fill your profile." |
-| Dashboard | "Start your journey by taking a quick assessment. This helps us guide you with the right steps." |
+### Resources pre-quiz empty state
+- When no resources found and no quiz: "Take the quiz so we know your destination — resources are matched to your profile."
+- No CTA button on the empty state message
+
+### Profile pre-quiz
+- Show full profile design (blue hero, stats bar, score breakdown, migration profile cards)
+- Name and email show from auth (real data)
+- Route line: "Take the quiz to build your migration profile"
+- Stats bar: 0 readiness, — for everything else
+- Score breakdown: warm empty state with "Start with Quiz" button
+- Migration profile fields: show — for all quiz-dependent fields
+- Only button in header: "Take Quiz" → `/quiz`
 
 ---
 
-## 📊 3. STATS CARDS
+## 👤 3. PROFILE TAB RULES
+
+- **No Edit button.** The profile is read-only. The only way to change your profile is to retake the quiz.
+- **Only button in the header:** "Retake Quiz" (post-quiz) or "Take Quiz" (pre-quiz) — both route to `/quiz`
+- Name and email display only — no inline editing
+- "Retake Quiz" is the sole mechanism for updating all migration data
+
+---
+
+## 📊 4. STATS CARDS
 
 ### Before quiz
 | Stat | Value |
 |---|---|
-| Readiness Score | 0 |
-| Modules Active | — |
-| Day Streak | — |
-| Docs Ready | — |
+| Readiness Score | `0` |
+| Modules Active | `—` |
+| Day Streak | `—` |
+| Docs Ready | `—` |
 
 ### After quiz
 | Stat | Source |
 |---|---|
-| Readiness Score | Quiz result only. Must be accurate. |
-| Modules Active | Count of started + completed modules from curriculum progress |
-| Day Streak | Activity in curriculum (lesson opens/completions) — track consistency |
-| Docs Ready | Documents uploaded. Show — until document upload is live. |
+| Readiness Score | Quiz result only. Must be accurate. Never hardcoded. |
+| Modules Active | Count from real curriculum progress (Supabase). Show `1` only when curriculum exists. |
+| Day Streak | Activity in curriculum — future feature, show `—` until built |
+| Docs Ready | Documents uploaded — future feature, show `—` until built |
 
 ---
 
-## ⚡ 4. PRIORITY ACTIONS
+## 🗺️ 5. ROADMAP DATA RULES
 
-Always show 4 actions. These evolve as the user progresses.
+- All milestone done/not-done state must come from real Supabase data
+- **Never hardcode `m1Done = true` or any milestone as done**
+- **Never infer milestone completion from quiz answers alone**
+- All milestone values start as `false` for new accounts
+- See `skills/roadmap.md` for the full roadmap north star
 
-### Default order (after quiz)
-1. Start Learning ← most important
-2. View Roadmap
-3. Explore Free Resources
-4. Personalised dynamic action (see table below)
+---
 
-### Dynamic action logic
-| User Behaviour | Show This Action |
+## 📚 6. CURRICULUM SYSTEM
+
+- Curriculum is NOT auto-generated on page load
+- User must explicitly click to trigger generation
+- Once generated: saved to Supabase, never re-generated unless user requests
+- Button label: "Start Learning" (post-quiz, no curriculum) — never "Generate Curriculum"
+- Pre-quiz button: "Start with Quiz" → `/quiz`
+
+---
+
+## ⚡ 7. PRIORITY ACTIONS
+
+Always show 4 actions. Evolve based on real user state.
+
+| User State | Show This Action |
 |---|---|
-| Just finished quiz, no curriculum | "Build your personalised learning path" |
-| Has curriculum, no progress | "Start your first module" |
+| No quiz | "Take Migration Assessment" (urgent) |
+| Quiz done, no language test | "Register for Language Test" (urgent) |
+| Quiz done, no curriculum | "Start Your Curriculum" |
 | Has curriculum, started module | "Continue your module" |
-| Stopped learning mid-module | "Resume where you left off" |
-| Low readiness score (< 40) | "Improve your IELTS preparation plan" |
-| High readiness score (70+) | "Prepare your documents" |
-| Completed all modules | "Review your roadmap and book your visa" |
-| Just completed an IELTS-related module | "Book your IELTS exam" |
-
-**Rule:** Actions must always evolve. Never stay static. Always point to the user's next real step.
+| Low readiness (< 40) | "Improve your IELTS preparation" |
+| High readiness (70+) | "Prepare your documents" |
 
 ---
 
-## 📚 5. CURRICULUM SYSTEM
+## 🕘 8. RECENT ACTIVITIES
 
-### Key rules
-- Curriculum is **NOT** auto-generated on page load
-- User must explicitly click "Start Learning" or equivalent CTA to trigger generation
-- Once generated: curriculum is saved to Supabase and **never re-generated** unless the user explicitly requests it
-- The button copy should say "Start Learning" — never "Generate Curriculum" or "AI-powered"
-
-### Resources section
-- Resources are stored in the backend (Supabase `resources` table)
-- Uploaded by admin, tagged by: destination country, category (IELTS, Visa, Jobs, Documents, Finance, etc.)
-- Only show resources relevant to the user's profile (destination + segment)
-- If no profile: show nothing 
+- Before quiz: section is empty — no placeholder filler
+- After quiz: show 2–5 real activities (module started, completed, resource opened)
+- Never show fake/hardcoded activity items
 
 ---
 
-## 🧠 6. SMART RECOMMENDATION ENGINE
+## 💬 9. VOICE & TONE
 
-The system should track user activity and surface the most urgent next step.
-
-### Examples
-- User just finished an IELTS module → show "Book your IELTS exam" in priority actions
-- User has high score but no language test → surface "Register for your language test"
-- User has been inactive 3+ days → show "Resume your learning" as top action
-- User completed all modules → surface roadmap + visa prep actions
-
----
-
-## 🕘 7. RECENT ACTIVITIES
-
-### Show: 2–5 latest activities
-
-**Activity types:**
-- Started module
-- Completed module
-- Opened resource
-- Deleted item
-- Uploaded document (future)
-
-### Behaviour
-- Always replace oldest activity when new one is added
-- Keep the feed fresh and current
-- Before quiz → section is empty (no placeholder filler)
-
----
-
-## 🧭 8. NAVIGATION RULES
-
-### No quiz taken
-- When user clicks any feature: show contextual reminder (see Section 2 table)
-- Always offer quiz CTA alongside the reminder
-- Do NOT silently redirect without explanation
-
-### Quiz completed
-Nav works normally:
-- Dashboard (overview)
-- Curriculum (learning)
-- Roadmap
-- Resources
-- Profile
-
----
-
-## 🎴 9. DASHBOARD CARDS
-
-- Cards are always visible (never hidden before quiz)
-- Each card includes: icon/emoji, title, short description, action button
-- Before quiz: cards are disabled/greyed — clicking redirects to quiz with a contextual message
-- After quiz: cards are fully active and show real data
-
----
-
-## 💬 10. VOICE & TONE
-
-### Always feel:
-- Supportive
-- Clear
-- Directional
-
-### Good examples
+### Good
 - ✅ "Let's take the next step in your journey"
 - ✅ "You're making progress — keep going"
-- ✅ "Here's what to focus on next"
 - ✅ "Start your journey by taking the assessment"
-- ✅ "Build your personalized learning journey"
+- ✅ "Your roadmap is built from your results"
 
-### Avoid
+### Never
 - ❌ "Generate curriculum"
 - ❌ "AI-powered pathway"
-- ❌ Overly technical language
-- ❌ Robotic, dry copy
-- ❌ Too many explanations — be concise
+- ❌ "AI-generated"
+- ❌ Robotic or dry copy
+- ❌ Overly technical explanations
+
+---
+
+## 📐 10. SCORE BREAKDOWN ACCURACY
+
+- Score breakdown on the dashboard (Profile tab) **must always use `calculateScoreBreakdown(answers)`** imported from `lib/quizData.js`
+- **Never duplicate the scoring maps** in `dashboard.js` or any other file — the maps live only in `lib/quizData.js`
+- The breakdown is: Experience (30pts), Education (20pts), Language (20pts), Age (10pts), Savings (10pts), Profile/bonus (10pts) = 100 total
+- The `calculateScore` and `calculateScoreBreakdown` functions in `lib/quizData.js` share the same constants — the score shown on the report page and on the dashboard will always match
 
 ---
 
@@ -209,11 +196,14 @@ Nav works normally:
 | Rule | Detail |
 |---|---|
 | Quiz = entry point | Everything personal depends on it |
+| No quiz = no roadmap | Roadmap requires destination + visa route + score — impossible without quiz |
+| No quiz = no fake data | Never show hardcoded numbers, fake milestones, or placeholder modules |
 | Curriculum = user-triggered | Once only. Saved forever after. |
-| Actions = always evolving | Based on real user state |
-| Dashboard = always guiding | User should always know their next step |
-| Empty state = guided | Never feel broken — feel inviting |
-| Tone = human | Warm, clear, directional — never robotic |
+| Profile = read-only | Only "Retake Quiz" can update it. No edit button. |
+| Milestone state = Supabase only | Never hardcode done/not-done for any milestone |
+| Mobile + desktop = always both | Every change must be implemented for both breakpoints |
+| Design stays, data changes | Pre-quiz: keep the layout, swap in empty/quiz-pointing content |
+| Score breakdown = quizData.js only | Always import `calculateScoreBreakdown` — never duplicate maps |
 
 ---
 

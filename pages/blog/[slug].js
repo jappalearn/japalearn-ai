@@ -423,11 +423,13 @@ export default function BlogPost() {
               <p className="text-base text-foreground/80 leading-relaxed font-medium italic">{post.excerpt}</p>
             </div>
 
-            {/* Main content */}
-            <div className="blog-content prose prose-lg max-w-none">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {post.content}
-              </ReactMarkdown>
+            {/* Main content - Protected Section Style */}
+            <div className="bg-gray-50 border border-gray-100 rounded-[32px] p-8 md:p-12 shadow-sm mb-16">
+              <div className="blog-content prose prose-lg max-w-none">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {post.content}
+                </ReactMarkdown>
+              </div>
             </div>
 
             {/* ── FAQ Section ──────────────────────────────────────── */}
@@ -542,37 +544,39 @@ export default function BlogPost() {
 
       <style jsx global>{`
         .blog-content h2 {
-          font-size: 1.6rem;
-          font-weight: 800;
-          color: #18181b;
-          margin-top: 2.5em;
-          margin-bottom: 0.8em;
-          line-height: 1.25;
+          font-size: 1.5rem;
+          font-weight: 700;
+          color: #111827;
+          margin-top: 2.5rem;
+          margin-bottom: 1.25rem;
+          line-height: 1.2;
+          font-family: var(--font-heading);
           letter-spacing: -0.02em;
         }
         .blog-content h3 {
-          font-size: 1.2rem;
+          font-size: 1.25rem;
           font-weight: 700;
-          color: #27272a;
-          margin-top: 1.8em;
-          margin-bottom: 0.6em;
+          color: #1f2937;
+          margin-top: 1.75rem;
+          margin-bottom: 0.75rem;
+          line-height: 1.3;
         }
         .blog-content p {
-          color: #52525b;
-          line-height: 1.85;
-          margin-bottom: 1.4em;
+          color: #4b5563;
+          line-height: 1.8;
+          margin-bottom: 1.25rem;
           font-size: 1.05rem;
         }
         .blog-content ul {
           list-style: none;
           padding: 0;
-          margin-bottom: 1.5em;
+          margin-bottom: 1.5rem;
         }
         .blog-content ul li {
           position: relative;
-          padding-left: 1.5em;
-          color: #52525b;
-          margin-bottom: 0.6em;
+          padding-left: 1.5rem;
+          color: #4b5563;
+          margin-bottom: 0.75rem;
           line-height: 1.7;
         }
         .blog-content ul li::before {
@@ -583,19 +587,19 @@ export default function BlogPost() {
           width: 6px;
           height: 6px;
           border-radius: 50%;
-          background-color: #5B6AF4;
+          background-color: #3b82f6;
         }
         .blog-content ol {
           counter-reset: list-counter;
           padding: 0;
-          margin-bottom: 1.5em;
+          margin-bottom: 1.5rem;
         }
         .blog-content ol li {
           counter-increment: list-counter;
           position: relative;
-          padding-left: 2em;
-          color: #52525b;
-          margin-bottom: 0.8em;
+          padding-left: 2rem;
+          color: #4b5563;
+          margin-bottom: 1rem;
           line-height: 1.7;
         }
         .blog-content ol li::before {
@@ -603,10 +607,10 @@ export default function BlogPost() {
           position: absolute;
           left: 0;
           top: 0;
-          width: 1.5em;
-          height: 1.5em;
-          background: #EEF2FF;
-          color: #5B6AF4;
+          width: 1.5rem;
+          height: 1.5rem;
+          background: #eff6ff;
+          color: #2563eb;
           border-radius: 50%;
           display: flex;
           align-items: center;
@@ -615,52 +619,52 @@ export default function BlogPost() {
           font-weight: 700;
         }
         .blog-content strong {
-          color: #18181b;
+          color: #111827;
           font-weight: 700;
         }
         .blog-content blockquote {
-          margin: 2em 0;
-          padding: 1.5em 2em;
-          border-left: 4px solid #5B6AF4;
-          background: linear-gradient(to right, #EEF2FF, #F5F7FF);
-          border-radius: 0 16px 16px 0;
+          margin: 2.5rem 0;
+          padding: 1.75rem 2.25rem;
+          border-left: 4px solid #3b82f6;
+          background: #f8faff;
+          border-radius: 0 24px 24px 0;
           font-style: italic;
-          color: #3730a3;
-          font-size: 1.05rem;
-          line-height: 1.7;
+          color: #1e40af;
+          font-size: 1.1rem;
+          line-height: 1.75;
         }
         .blog-content hr {
           border: none;
-          border-top: 1px solid #e4e4e7;
-          margin: 2.5em 0;
+          border-top: 1px solid #e5e7eb;
+          margin: 3rem 0;
         }
         .blog-content table {
           width: 100%;
           border-collapse: collapse;
-          margin: 2em 0;
-          border-radius: 12px;
+          margin: 2.5rem 0;
+          border-radius: 16px;
           overflow: hidden;
-          border: 1px solid #e4e4e7;
-          font-size: 0.9rem;
+          border: 1px solid #e5e7eb;
+          font-size: 0.95rem;
         }
         .blog-content th {
-          background: #EEF2FF;
-          color: #3730a3;
+          background: #f1f5f9;
+          color: #334155;
           font-weight: 700;
-          padding: 12px 16px;
+          padding: 14px 18px;
           text-align: left;
-          border-bottom: 2px solid #c7d2fe;
+          border-bottom: 1px solid #e5e7eb;
         }
         .blog-content td {
-          padding: 12px 16px;
-          color: #52525b;
-          border-bottom: 1px solid #f4f4f5;
+          padding: 14px 18px;
+          color: #475569;
+          border-bottom: 1px solid #f1f5f9;
         }
         .blog-content tr:last-child td {
           border-bottom: none;
         }
         .blog-content tr:hover td {
-          background: #fafbff;
+          background: #f8fafc;
         }
       `}</style>
     </>
