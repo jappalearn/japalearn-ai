@@ -2348,8 +2348,17 @@ function ProfileTab({ user, profile, answers, score, quizResult, onSignOut, rout
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || null)
   const [uploading, setUploading] = useState(false)
   const [darkMode, setDarkMode]   = useState(false)
+  const [copied, setCopied]       = useState(false)
 
   useEffect(() => { setDarkMode(document.documentElement.classList.contains('dark')) }, [])
+
+  const profileUrl = `https://japalearn.ai/u/${user?.id}`
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(profileUrl).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2500)
+    })
+  }
 
   const initials    = (name || email).charAt(0).toUpperCase()
   const dest        = answers.destination || '—'
@@ -2514,11 +2523,25 @@ function ProfileTab({ user, profile, answers, score, quizResult, onSignOut, rout
           {/* Share Profile card */}
           <div className="rounded-[16px] p-4" style={{ background: 'linear-gradient(135deg, #EBF1FF 0%, #F2EEFF 100%)', border: '1px solid #D4DCFF' }}>
             <p className="text-[13px] font-bold text-[#1E4DD7] mb-0.5">Share Your Profile 🔗</p>
-            <p className="text-[11px] text-[#6B7280] mb-1.5 leading-relaxed">japalearn.ai/profile</p>
-            <p className="text-[12px] text-[#4D4D56] leading-relaxed mb-3">Your profile shows your readiness score, pathway & progress. Share it with anyone.</p>
-            <button className="w-full py-2.5 rounded-[10px] text-white text-[13px] font-semibold flex items-center justify-center gap-1.5" style={{ background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)', boxShadow: '0px 4px 14px rgba(30,77,215,0.28)' }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" /></svg>
-              Share Your Profile
+            <p className="text-[11px] text-[#6B7280] mb-1.5 leading-relaxed">japalearn.ai/u/{user?.id?.slice(0, 8)}…</p>
+            <p className="text-[12px] text-[#4D4D56] leading-relaxed mb-3">Your profile shows your readiness score, pathway &amp; progress. Share it with anyone.</p>
+            <button
+              onClick={handleCopyLink}
+              className="w-full py-2.5 rounded-[10px] text-white text-[13px] font-semibold flex items-center justify-center gap-1.5 transition-all"
+              style={{ background: copied ? 'linear-gradient(135deg, #10B981, #059669)' : 'linear-gradient(135deg, #1E4DD7, #3B75FF)', boxShadow: '0px 4px 14px rgba(30,77,215,0.28)' }}
+            >
+              {copied ? (
+                <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg> Link Copied!</>
+              ) : (
+                <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" /></svg> Share Your Profile</>
+              )}
+            </button>
+            <button
+              onClick={() => router.push(`/u/${user?.id}`)}
+              className="w-full mt-2 py-2 rounded-[10px] text-[12px] font-medium text-[#1E4DD7] text-center"
+              style={{ background: 'rgba(30,77,215,0.08)', border: '1px solid #C7D8FF' }}
+            >
+              Preview my profile →
             </button>
           </div>
         </div>
@@ -2616,6 +2639,17 @@ export default function Dashboard() {
       }
 
       if (pendingName) localStorage.removeItem('pending_full_name')
+
+      // Save referral if this user came via a referral link
+      const referralFrom = localStorage.getItem('referral_from')
+      if (referralFrom && justSignedUp && referralFrom !== session.user.id) {
+        localStorage.removeItem('referral_from')
+        await supabase.from('referrals').insert({
+          referrer_id: referralFrom,
+          referred_user_id: session.user.id,
+          signed_up_at: new Date().toISOString(),
+        })
+      }
 
       // Load profile — create row if it doesn't exist yet
       let { data: profileData } = await supabase
