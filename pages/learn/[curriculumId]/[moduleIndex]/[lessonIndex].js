@@ -165,6 +165,8 @@ export default function LessonPage() {
   const takeaways = typeof lesson.key_takeaways === 'string' ? JSON.parse(lesson.key_takeaways) : lesson.key_takeaways
   const wordCount = (lesson.content || '').split(/\s+/).length
   const readMins = Math.max(1, Math.round(wordCount / 200))
+  // Strip the leading heading (lesson title repeated) from generated content
+  const processedContent = (lesson.content || '').replace(/^#{1,6}\s+[^\n]+\n?/, '')
 
   return (
     <>
@@ -226,27 +228,11 @@ export default function LessonPage() {
         {/* ── Main ── */}
         <main style={{ maxWidth: 720, margin: '0 auto', padding: '48px 20px 80px', boxSizing: 'border-box' }}>
 
-          {/* Module + lesson badges */}
-          <div style={{ marginBottom: 40 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
-              <span style={{ padding: '4px 12px', background: '#EBF1FF', borderRadius: 20, fontSize: 11, fontWeight: 700, color: '#1E4DD7' }}>
-                {currentModule?.title || `Module ${mIdx + 1}`}
-              </span>
-              <span style={{ padding: '4px 12px', background: '#E8F9EE', borderRadius: 20, fontSize: 11, fontWeight: 700, color: '#21C474', display: 'flex', alignItems: 'center', gap: 4 }}>
-                <Play size={9} fill="#21C474" color="#21C474" />
-                <span>Lesson {lIdx + 1} of {moduleLessonCount}</span>
-              </span>
-              {currentModule?.urgent && (
-                <span style={{ padding: '4px 12px', background: '#FFF0F3', borderRadius: 20, fontSize: 11, fontWeight: 700, color: '#EF4369', border: '1px solid #FFC2CE' }}>Urgent</span>
-              )}
-            </div>
-
-            {/* Title */}
+          {/* Lesson title + progress — outside the box */}
+          <div style={{ marginBottom: 32 }}>
             <h1 style={{ margin: '0 0 16px', fontSize: 32, fontWeight: 800, color: '#18181B', letterSpacing: '-0.8px', fontFamily: '"DM Sans", sans-serif', lineHeight: 1.2 }}>
               {lesson.title}
             </h1>
-
-            {/* Module progress bar */}
             <div style={{ height: 5, background: '#F0F2FF', borderRadius: 3, overflow: 'hidden', marginBottom: 8 }}>
               <div style={{ width: `${modulePct}%`, height: '100%', background: 'linear-gradient(90deg, #1E4DD7, #3B75FF)', borderRadius: 3, transition: 'width 0.5s' }} />
             </div>
@@ -255,150 +241,155 @@ export default function LessonPage() {
             </p>
           </div>
 
-          {/* ── AI Key Points ── */}
-          <div style={{ background: 'linear-gradient(135deg, #EBF1FF 0%, #E4EEFF 100%)', borderRadius: 16, padding: 24, border: '1px solid #CDDAFF', marginBottom: 32 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: summary || summarising ? 14 : 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Sparkles size={13} color="#fff" />
+          {/* ── Protected content box ── */}
+          <div style={{ background: '#F9FAFB', border: '1px solid #E8ECFF', borderRadius: 24, padding: '32px 32px 24px', boxShadow: '0 1px 16px rgba(30,77,215,0.05)', marginBottom: 32 }}>
+
+            {/* AI Key Points */}
+            <div style={{ background: 'linear-gradient(135deg, #EBF1FF 0%, #E4EEFF 100%)', borderRadius: 16, padding: 24, border: '1px solid #CDDAFF', marginBottom: 28 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: summary || summarising ? 14 : 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Sparkles size={13} color="#fff" />
+                  </div>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: '#1E4DD7', fontFamily: '"DM Sans", sans-serif' }}>AI Key Points</span>
                 </div>
-                <span style={{ fontSize: 14, fontWeight: 700, color: '#1E4DD7', fontFamily: '"DM Sans", sans-serif' }}>AI Key Points</span>
+                {!summary && (
+                  <button
+                    onClick={async () => {
+                      setSummarising(true)
+                      try {
+                        const r = await fetch('/api/summarise-lesson', {
+                          method: 'POST', headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ content: lesson.content, title: lesson.title }),
+                        })
+                        const d = await r.json()
+                        setSummary(d.points || [])
+                      } catch { setSummary([]) }
+                      setSummarising(false)
+                    }}
+                    disabled={summarising}
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: summarising ? 'not-allowed' : 'pointer', opacity: summarising ? 0.6 : 1, fontFamily: '"Inter", sans-serif' }}
+                  >
+                    {summarising
+                      ? <><span style={{ width: 11, height: 11, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', animation: 'spin 0.8s linear infinite', display: 'inline-block' }} /> Generating…</>
+                      : <><Sparkles size={11} /> Generate</>}
+                  </button>
+                )}
               </div>
-              {!summary && (
-                <button
-                  onClick={async () => {
-                    setSummarising(true)
-                    try {
-                      const r = await fetch('/api/summarise-lesson', {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ content: lesson.content, title: lesson.title }),
-                      })
-                      const d = await r.json()
-                      setSummary(d.points || [])
-                    } catch { setSummary([]) }
-                    setSummarising(false)
-                  }}
-                  disabled={summarising}
-                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: summarising ? 'not-allowed' : 'pointer', opacity: summarising ? 0.6 : 1, fontFamily: '"Inter", sans-serif' }}
-                >
-                  {summarising
-                    ? <><span style={{ width: 11, height: 11, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', animation: 'spin 0.8s linear infinite', display: 'inline-block' }} /> Generating…</>
-                    : <><Sparkles size={11} /> Generate</>}
-                </button>
+              {!summary && !summarising && (
+                <p style={{ margin: 0, fontSize: 13, color: '#4D5EA8', lineHeight: 1.55 }}>Generate a quick AI summary of the key points in this lesson.</p>
+              )}
+              {summarising && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#4D5EA8', fontSize: 13 }}>
+                  <div style={{ width: 12, height: 12, borderRadius: '50%', border: '2px solid #9BB3FF', borderTopColor: '#1E4DD7', animation: 'spin 0.8s linear infinite' }} />
+                  Analysing lesson…
+                </div>
+              )}
+              {summary && summary.length > 0 && (
+                <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {summary.map((point, i) => (
+                    <li key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                      <span style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(30,77,215,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1, fontSize: 11, fontWeight: 700, color: '#1E4DD7' }}>{i + 1}</span>
+                      <span style={{ fontSize: 14, color: '#2D3A6B', lineHeight: 1.6 }}>{point}</span>
+                    </li>
+                  ))}
+                </ul>
               )}
             </div>
-            {!summary && !summarising && (
-              <p style={{ margin: 0, fontSize: 13, color: '#4D5EA8', lineHeight: 1.55 }}>Generate a quick AI summary of the key points in this lesson.</p>
-            )}
-            {summarising && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#4D5EA8', fontSize: 13 }}>
-                <div style={{ width: 12, height: 12, borderRadius: '50%', border: '2px solid #9BB3FF', borderTopColor: '#1E4DD7', animation: 'spin 0.8s linear infinite' }} />
-                Analysing lesson…
-              </div>
-            )}
-            {summary && summary.length > 0 && (
-              <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {summary.map((point, i) => (
-                  <li key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                    <span style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(30,77,215,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1, fontSize: 11, fontWeight: 700, color: '#1E4DD7' }}>{i + 1}</span>
-                    <span style={{ fontSize: 14, color: '#2D3A6B', lineHeight: 1.6 }}>{point}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
 
-          {/* ── Lesson content ── */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 0, marginBottom: 32 }}>
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              components={{
-                p: ({ children }) => <p style={{ margin: '0 0 20px', fontSize: 17, color: '#2D2D35', lineHeight: 1.75, fontWeight: 400 }}>{children}</p>,
-                strong: ({ children }) => <strong style={{ color: '#18181B', fontWeight: 700 }}>{children}</strong>,
-                h2: ({ children }) => (
-                  <div style={{ background: '#FFFFFF', borderRadius: 16, padding: 24, border: '1px solid #ECEEFF', boxShadow: '0px 2px 12px rgba(30,77,215,0.04)', margin: '8px 0 20px' }}>
-                    <h2 style={{ margin: '0 0 4px', fontSize: 17, fontWeight: 700, color: '#18181B', fontFamily: '"DM Sans", sans-serif' }}>{children}</h2>
-                  </div>
-                ),
-                h3: ({ children }) => <h3 style={{ margin: '24px 0 8px', fontSize: 15, fontWeight: 700, color: '#18181B', fontFamily: '"DM Sans", sans-serif' }}>{children}</h3>,
-                ul: ({ children }) => <ul style={{ margin: '0 0 20px', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>{children}</ul>,
-                ol: ({ children }) => <ol style={{ margin: '0 0 20px', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10, counterReset: 'list-counter' }}>{children}</ol>,
-                li: ({ children }) => (
-                  <li style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                    <span style={{ width: 22, height: 22, borderRadius: '50%', background: '#EBF1FF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
-                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#1E4DD7' }} />
-                    </span>
-                    <span style={{ fontSize: 15, color: '#2D2D35', lineHeight: 1.65 }}>{children}</span>
-                  </li>
-                ),
-                blockquote: ({ children }) => (
-                  <div style={{ background: 'linear-gradient(135deg, #FFF7E6, #FFF3CD)', borderRadius: 16, padding: 20, border: '1px solid #FDE68A', margin: '8px 0 20px', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                    <AlertTriangle size={16} color="#D97706" style={{ flexShrink: 0, marginTop: 2 }} />
-                    <div style={{ fontSize: 15, color: '#78350F', lineHeight: 1.65 }}>{children}</div>
-                  </div>
-                ),
-                a: ({ href, children }) => (
-                  <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: '#1E4DD7', fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: 2 }}>{children}</a>
-                ),
-              }}
-            >
-              {lesson.content}
-            </ReactMarkdown>
-          </div>
-
-          {/* ── Key Takeaways ── */}
-          {takeaways?.length > 0 && (
-            <div style={{ background: '#FFFFFF', borderRadius: 16, padding: 24, border: '1px solid #ECEEFF', marginBottom: 20 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                <CheckCircle2 size={18} color="#21C474" />
-                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#18181B', fontFamily: '"DM Sans", sans-serif' }}>Key Takeaways</h3>
-              </div>
-              <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {takeaways.map((t, i) => (
-                  <li key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '10px 14px', background: '#F8FFF9', borderRadius: 10, border: '1px solid #D8F5E6' }}>
-                    <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#E8F9EE', border: '2px solid #A7F3C5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
-                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#21C474' }} />
+            {/* Lesson content */}
+            <div style={{ marginBottom: 28 }}>
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  p: ({ children }) => <p style={{ margin: '0 0 20px', fontSize: 16, color: '#2D2D35', lineHeight: 1.8, fontWeight: 400, textAlign: 'justify' }}>{children}</p>,
+                  strong: ({ children }) => <strong style={{ color: '#18181B', fontWeight: 700 }}>{children}</strong>,
+                  h2: ({ children }) => (
+                    <div style={{ background: '#FFFFFF', borderRadius: 14, padding: '16px 20px', border: '1px solid #ECEEFF', boxShadow: '0px 1px 6px rgba(30,77,215,0.04)', margin: '8px 0 16px' }}>
+                      <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#18181B', fontFamily: '"DM Sans", sans-serif' }}>{children}</h2>
                     </div>
-                    <span style={{ fontSize: 14, color: '#2D2D35', lineHeight: 1.6 }}>{t}</span>
-                  </li>
-                ))}
-              </ul>
+                  ),
+                  h3: ({ children }) => <h3 style={{ margin: '20px 0 8px', fontSize: 15, fontWeight: 700, color: '#18181B', fontFamily: '"DM Sans", sans-serif' }}>{children}</h3>,
+                  ul: ({ children }) => <ul style={{ margin: '0 0 20px', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>{children}</ul>,
+                  ol: ({ children }) => <ol style={{ margin: '0 0 20px', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10, counterReset: 'list-counter' }}>{children}</ol>,
+                  li: ({ children }) => (
+                    <li style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                      <span style={{ width: 22, height: 22, borderRadius: '50%', background: '#EBF1FF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
+                        <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#1E4DD7' }} />
+                      </span>
+                      <span style={{ fontSize: 15, color: '#2D2D35', lineHeight: 1.65 }}>{children}</span>
+                    </li>
+                  ),
+                  blockquote: ({ children }) => (
+                    <div style={{ background: 'linear-gradient(135deg, #FFF7E6, #FFF3CD)', borderRadius: 16, padding: 20, border: '1px solid #FDE68A', margin: '8px 0 20px', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                      <AlertTriangle size={16} color="#D97706" style={{ flexShrink: 0, marginTop: 2 }} />
+                      <div style={{ fontSize: 15, color: '#78350F', lineHeight: 1.65 }}>{children}</div>
+                    </div>
+                  ),
+                  a: ({ href, children }) => (
+                    <a href={href} target="_blank" rel="noopener noreferrer" style={{ color: '#1E4DD7', fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: 2 }}>{children}</a>
+                  ),
+                }}
+              >
+                {processedContent}
+              </ReactMarkdown>
             </div>
-          )}
 
-          {/* ── Action Step ── */}
-          {lesson.action_step && (
-            <div style={{ background: 'linear-gradient(135deg, #EBF1FF 0%, #E4EEFF 100%)', borderRadius: 16, padding: 24, border: '1px solid #CDDAFF', marginBottom: 20 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Target size={14} color="#fff" />
+            {/* Key Takeaways */}
+            {takeaways?.length > 0 && (
+              <div style={{ background: '#FFFFFF', borderRadius: 16, padding: 24, border: '1px solid #ECEEFF', marginBottom: 20 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                  <CheckCircle2 size={18} color="#21C474" />
+                  <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#18181B', fontFamily: '"DM Sans", sans-serif' }}>Key Takeaways</h3>
                 </div>
-                <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#1E4DD7', fontFamily: '"DM Sans", sans-serif' }}>Your Action Step</h3>
+                <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {takeaways.map((t, i) => (
+                    <li key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '10px 14px', background: '#F8FFF9', borderRadius: 10, border: '1px solid #D8F5E6' }}>
+                      <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#E8F9EE', border: '2px solid #A7F3C5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#21C474' }} />
+                      </div>
+                      <span style={{ fontSize: 14, color: '#2D2D35', lineHeight: 1.6 }}>{t}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <p style={{ margin: 0, fontSize: 15, color: '#2D3A6B', lineHeight: 1.65 }}>{lesson.action_step}</p>
-            </div>
-          )}
+            )}
 
-          {/* ── Sources ── */}
-          {sources?.length > 0 && (
-            <div style={{ background: '#FFFFFF', borderRadius: 16, padding: 24, border: '1px solid #ECEEFF', marginBottom: 32 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-                <ExternalLink size={15} color="#82858A" />
-                <h3 style={{ margin: 0, fontSize: 11, fontWeight: 700, color: '#82858A', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Official Sources</h3>
+            {/* Action Step */}
+            {lesson.action_step && (
+              <div style={{ background: 'linear-gradient(135deg, #EBF1FF 0%, #E4EEFF 100%)', borderRadius: 16, padding: 24, border: '1px solid #CDDAFF', marginBottom: 20 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                  <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Target size={14} color="#fff" />
+                  </div>
+                  <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#1E4DD7', fontFamily: '"DM Sans", sans-serif' }}>Your Action Step</h3>
+                </div>
+                <p style={{ margin: 0, fontSize: 15, color: '#2D3A6B', lineHeight: 1.65 }}>{lesson.action_step}</p>
               </div>
-              <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {sources.map((s, i) => (
-                  <li key={i}>
-                    <a href={s.url || s} target="_blank" rel="noopener noreferrer"
-                      style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#1E4DD7', fontSize: 14, fontWeight: 600, textDecoration: 'none' }}>
-                      <ExternalLink size={12} color="#9BB3FF" style={{ flexShrink: 0 }} />
-                      {s.label || s.url || s}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+            )}
+
+            {/* Sources */}
+            {sources?.length > 0 && (
+              <div style={{ background: '#FFFFFF', borderRadius: 16, padding: 24, border: '1px solid #ECEEFF', marginBottom: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+                  <ExternalLink size={15} color="#82858A" />
+                  <h3 style={{ margin: 0, fontSize: 11, fontWeight: 700, color: '#82858A', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Official Sources</h3>
+                </div>
+                <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {sources.map((s, i) => (
+                    <li key={i}>
+                      <a href={s.url || s} target="_blank" rel="noopener noreferrer"
+                        style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#1E4DD7', fontSize: 14, fontWeight: 600, textDecoration: 'none' }}>
+                        <ExternalLink size={12} color="#9BB3FF" style={{ flexShrink: 0 }} />
+                        {s.label || s.url || s}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+          </div>{/* end protected box */}
 
           {/* ── Bottom Navigation ── */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 28, borderTop: '1px solid #ECEEFF' }}>

@@ -1067,7 +1067,7 @@ function LearningTab({ answers, userId, quizResult, router }) {
       {/* Curriculum header card */}
       <div className="rounded-[20px] p-6 sm:p-7" style={{ background: 'linear-gradient(135deg, #1A42C2 0%, #2F67F8 100%)', boxShadow: '0px 10px 36px rgba(30,77,215,0.28)' }}>
         <p className="text-[11px] font-bold text-white/65 uppercase tracking-widest mb-1">Your Learning Path</p>
-        <h1 className="text-xl font-extrabold text-white mb-2 leading-snug" style={{ fontFamily: 'DM Sans, sans-serif', letterSpacing: '-0.4px' }}>{curriculum.title}</h1>
+        <h1 className="text-xl font-extrabold text-white mb-2 leading-snug" style={{ fontFamily: 'DM Sans, sans-serif', letterSpacing: '-0.4px' }}>Your Personalized Curriculum</h1>
         <p className="text-[13px] text-white/70 mb-5 leading-relaxed max-w-lg">
           Complete this curriculum to confidently navigate your {answers.destination} migration — every module is built around your profile.
         </p>
