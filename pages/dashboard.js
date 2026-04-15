@@ -2202,103 +2202,132 @@ function ConversationsTab({ user, profile, answers }) {
 
 // ── PEERS TAB ──────────────────────────────────────────────────────────────────
 const PEER_PROFILES_DATA = [
-  { id: 'p1', name: 'Chukwuemeka Obi',   initials: 'CO', city: 'Lagos → Manchester', score: 68, bg: 'linear-gradient(135deg, #6366F1, #8B5CF6)', mutual: 3 },
-  { id: 'p2', name: 'Fatima Al-Hassan',  initials: 'FA', city: 'Abuja → Birmingham', score: 74, bg: 'linear-gradient(135deg, #EC4899, #F43F5E)', mutual: 5 },
-  { id: 'p3', name: 'Tolu Adeyemi',      initials: 'TA', city: 'Lagos → London',     score: 81, bg: 'linear-gradient(135deg, #14B8A6, #0EA5E9)', mutual: 2 },
-  { id: 'p4', name: 'Blessing Nwachukwu',initials: 'BN', city: 'Port Harcourt → Leeds', score: 65, bg: 'linear-gradient(135deg, #F59E0B, #EF4444)', mutual: 1 },
+  { id: 'p1', name: 'Chukwuemeka Obi',    initials: 'CO', city: 'Lagos → Manchester',   score: 68, bg: 'linear-gradient(135deg, #6366F1, #8B5CF6)', mutual: 3, pathway: 'UK Skilled Worker' },
+  { id: 'p2', name: 'Fatima Al-Hassan',   initials: 'FA', city: 'Abuja → Birmingham',   score: 74, bg: 'linear-gradient(135deg, #EC4899, #F43F5E)', mutual: 5, pathway: 'UK Skilled Worker' },
+  { id: 'p3', name: 'Tolu Adeyemi',       initials: 'TA', city: 'Lagos → London',       score: 81, bg: 'linear-gradient(135deg, #14B8A6, #0EA5E9)', mutual: 2, pathway: 'UK Skilled Worker' },
+  { id: 'p4', name: 'Blessing Nwachukwu', initials: 'BN', city: 'Port Harcourt → Leeds', score: 65, bg: 'linear-gradient(135deg, #F59E0B, #EF4444)', mutual: 1, pathway: 'UK Skilled Worker' },
 ]
 const PEER_THREADS = [
-  { id: 'th1', initials: 'TA', name: 'Tolu Adeyemi',   bg: 'linear-gradient(135deg, #14B8A6, #0EA5E9)', title: "Just got my COS! Here's what actually helped me", replies: 14, likes: 31, tag: 'Success Story', tagColor: '#21C474', tagBg: '#E8F9EE', timeAgo: '2h ago' },
-  { id: 'th2', initials: 'CO', name: 'Chukwuemeka Obi', bg: 'linear-gradient(135deg, #6366F1, #8B5CF6)', title: 'IELTS Academic vs General — which for Skilled Worker?', replies: 9, likes: 17, tag: 'Question', tagColor: '#3B75FF', tagBg: '#EBF1FF', timeAgo: '5h ago' },
-  { id: 'th3', initials: 'FA', name: 'Fatima Al-Hassan', bg: 'linear-gradient(135deg, #EC4899, #F43F5E)', title: 'Bank statement — which bank accepted for ₦ to £ proof?', replies: 22, likes: 28, tag: 'Documents', tagColor: '#F59A0A', tagBg: '#FFF7E6', timeAgo: 'Yesterday' },
+  { id: 'th1', initials: 'TA', name: 'Tolu Adeyemi',    bg: 'linear-gradient(135deg, #14B8A6, #0EA5E9)', title: "Just got my COS! Here's what actually helped me",                  excerpt: 'After 6 months of searching, I finally secured a Certificate of Sponsorship from an NHS Trust. The biggest unlock was using the official sponsor register and targeting community hospitals outside London...', replies: 14, likes: 31, tag: 'Success Story', tagColor: '#21C474', tagBg: '#E8F9EE', timeAgo: '2h ago' },
+  { id: 'th2', initials: 'CO', name: 'Chukwuemeka Obi', bg: 'linear-gradient(135deg, #6366F1, #8B5CF6)', title: 'IELTS Academic vs General — which for Skilled Worker?',              excerpt: 'I keep seeing conflicting info online. My employer says General Training is fine but the UKVI guidance I read mentioned Academic. Has anyone been through this recently?', replies: 9,  likes: 17, tag: 'Question',      tagColor: '#3B75FF', tagBg: '#EBF1FF', timeAgo: '5h ago' },
+  { id: 'th3', initials: 'FA', name: 'Fatima Al-Hassan', bg: 'linear-gradient(135deg, #EC4899, #F43F5E)', title: 'Bank statement — which bank accepted for ₦ to £ proof?', excerpt: "My GTBank statement was rejected because the officer said it wasn't an \"internationally recognised institution.\" Has anyone used Zenith or UBA and had it accepted?", replies: 22, likes: 28, tag: 'Documents',     tagColor: '#F59A0A', tagBg: '#FFF7E6', timeAgo: 'Yesterday' },
 ]
 
 function PeersTab({ answers }) {
   const dest = answers.destination || 'your destination'
-  const pathway = getVisaRoute(dest, answers.segment || '')
 
   return (
-    <div className="flex flex-col gap-4 pb-10 max-w-2xl w-full">
+    <div className="flex flex-col gap-5 pb-10 w-full" style={{ maxWidth: '820px' }}>
+
       {/* Header */}
-      <div className="flex items-center gap-2">
-        <h1 className="text-[20px] font-bold text-[#18181B]" style={{ letterSpacing: '-0.4px', fontFamily: 'DM Sans, sans-serif' }}>Peer Network</h1>
-        <span className="text-[10px] font-bold text-[#7C6AF7] px-2 py-0.5 rounded-full" style={{ background: '#F0EEFF', border: '1px solid #DDD6FE' }}>Coming Soon</span>
+      <div style={{ marginBottom: '4px' }}>
+        <div className="flex items-center gap-2.5 mb-1.5">
+          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700, color: '#18181B', letterSpacing: '-0.5px', fontFamily: '"DM Sans", sans-serif' }}>Peer Network</h1>
+          <span style={{ fontSize: '11px', fontWeight: 700, color: '#7C6AF7', background: '#F0EEFF', border: '1px solid #DDD6FE', padding: '3px 10px', borderRadius: '20px' }}>Coming Soon</span>
+        </div>
+        <p style={{ margin: 0, fontSize: '14px', color: '#82858A', lineHeight: '1.6' }}>Connect, learn, and grow with people on the same UK migration journey — real stories, real support.</p>
       </div>
 
       {/* Hero banner */}
-      <div className="rounded-[18px] p-[18px]" style={{ background: 'linear-gradient(135deg, #1A42C2 0%, #2F67F8 55%, #5C8AFF 100%)', boxShadow: '0px 10px 30px rgba(30,77,215,0.25)' }}>
-        <p className="text-[10px] font-bold text-white/65 uppercase tracking-widest mb-0.5">Your Community</p>
-        <p className="text-[19px] font-black text-white mb-1 leading-snug" style={{ fontFamily: 'DM Sans, sans-serif', letterSpacing: '-0.4px' }}>
-          2,847 Nigerians on the {dest} Pathway
-        </p>
-        <p className="text-[11px] text-white/65 mb-3">412 active this week · 38 got their visa this year</p>
-        <div className="flex gap-2">
+      <div style={{ background: 'linear-gradient(135deg, #1A42C2 0%, #2F67F8 55%, #5C8AFF 100%)', borderRadius: '20px', padding: '24px 28px', boxShadow: '0px 12px 40px rgba(30,77,215,0.28)', display: 'flex', alignItems: 'center', gap: '28px', flexWrap: 'wrap' }}>
+        <div style={{ flex: 1, minWidth: '160px' }}>
+          <p style={{ margin: '0 0 4px', fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.65)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Your Community</p>
+          <p style={{ margin: '0 0 6px', fontSize: '22px', fontWeight: 800, color: '#FFFFFF', fontFamily: '"DM Sans", sans-serif', letterSpacing: '-0.5px', lineHeight: 1.2 }}>2,847 Nigerians on the {dest} Pathway</p>
+          <p style={{ margin: '0 0 12px', fontSize: '12px', color: 'rgba(255,255,255,0.65)' }}>412 active this week · 38 got their visa this year</p>
+        </div>
+        <div style={{ display: 'flex', gap: '10px' }}>
           {[{ val: '412', label: 'Active peers' }, { val: '38', label: 'Visas granted' }, { val: '94%', label: 'Support rate' }].map(s => (
-            <div key={s.label} className="flex-1 text-center rounded-[10px] py-2.5" style={{ background: 'rgba(255,255,255,0.14)', border: '1px solid rgba(255,255,255,0.18)' }}>
-              <p className="text-[16px] font-black text-white mb-0" style={{ fontFamily: 'DM Sans, sans-serif' }}>{s.val}</p>
-              <p className="text-[9px] text-white/65 font-medium">{s.label}</p>
+            <div key={s.label} style={{ padding: '12px 14px', background: 'rgba(255,255,255,0.14)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.18)', textAlign: 'center', backdropFilter: 'blur(8px)' }}>
+              <p style={{ margin: '0 0 2px', fontSize: '20px', fontWeight: 800, color: '#FFFFFF', fontFamily: '"DM Sans", sans-serif' }}>{s.val}</p>
+              <p style={{ margin: 0, fontSize: '10px', color: 'rgba(255,255,255,0.65)', fontWeight: 500, whiteSpace: 'nowrap' }}>{s.label}</p>
             </div>
           ))}
         </div>
       </div>
 
       {/* Suggested connections */}
-      <h2 className="text-[14px] font-bold text-[#18181B] mb-0" style={{ fontFamily: 'DM Sans, sans-serif' }}>Suggested Connections</h2>
-      <div className="flex flex-col gap-2.5">
-        {PEER_PROFILES_DATA.map(peer => (
-          <div key={peer.id} className="bg-white rounded-[16px] p-4" style={{ border: '1px solid #F0F2FF', boxShadow: '0px 2px 8px rgba(30,77,215,0.05)' }}>
-            <div className="flex items-center gap-2.5 mb-3">
-              <div className="w-[42px] h-[42px] rounded-full flex items-center justify-center shrink-0 text-[14px] font-black text-white" style={{ background: peer.bg, fontFamily: 'DM Sans, sans-serif' }}>
-                {peer.initials}
+      <div>
+        <div className="flex items-center justify-between" style={{ marginBottom: '14px' }}>
+          <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#18181B', fontFamily: '"DM Sans", sans-serif' }}>Suggested Connections</h2>
+          <span style={{ fontSize: '12px', color: '#3B75FF', fontWeight: 600, cursor: 'pointer' }}>View all</span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '12px' }}>
+          {PEER_PROFILES_DATA.map(peer => (
+            <div key={peer.id}
+              style={{ background: '#FFFFFF', borderRadius: '18px', padding: '20px', border: '1px solid #F0F2FF', boxShadow: '0px 2px 12px rgba(30,77,215,0.05)', cursor: 'pointer', transition: 'border-color 0.15s, box-shadow 0.15s' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = '#B3C5FF'; e.currentTarget.style.boxShadow = '0px 4px 20px rgba(30,77,215,0.1)' }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = '#F0F2FF'; e.currentTarget.style.boxShadow = '0px 2px 12px rgba(30,77,215,0.05)' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: peer.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '16px', fontWeight: 800, color: '#FFFFFF', fontFamily: '"DM Sans", sans-serif' }}>
+                  {peer.initials}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ margin: '0 0 2px', fontSize: '14px', fontWeight: 700, color: '#18181B' }}>{peer.name}</p>
+                  <p style={{ margin: 0, fontSize: '12px', color: '#82858A', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Globe2 size={11} color="#82858A" />
+                    <span>{peer.city}</span>
+                  </p>
+                </div>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <p style={{ margin: '0 0 1px', fontSize: '18px', fontWeight: 800, color: '#1E4DD7', fontFamily: '"DM Sans", sans-serif' }}>{peer.score}%</p>
+                  <p style={{ margin: 0, fontSize: '10px', color: '#82858A' }}>Readiness</p>
+                </div>
               </div>
-              <div className="flex-1">
-                <p className="text-[13px] font-bold text-[#18181B] mb-0">{peer.name}</p>
-                <p className="text-[11px] text-[#82858A] flex items-center gap-1">
-                  <Globe2 size={10} className="text-[#82858A]" />
-                  {peer.city}
-                </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+                <span style={{ padding: '4px 10px', background: '#EBF1FF', borderRadius: '20px', fontSize: '11px', fontWeight: 600, color: '#1E4DD7' }}>{peer.pathway}</span>
+                <span style={{ padding: '4px 10px', background: '#F4F6FF', borderRadius: '20px', fontSize: '11px', fontWeight: 500, color: '#6B7280' }}>{peer.mutual} mutual connections</span>
               </div>
-              <div className="text-right">
-                <p className="text-[16px] font-black text-[#1E4DD7] mb-0" style={{ fontFamily: 'DM Sans, sans-serif' }}>{peer.score}%</p>
-                <p className="text-[9px] text-[#82858A]">Readiness</p>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button style={{ flex: 1, padding: '9px', background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)', color: '#FFFFFF', border: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: '"Inter", sans-serif', boxShadow: '0px 3px 12px rgba(30,77,215,0.22)' }}>Connect</button>
+                <button style={{ padding: '9px 14px', background: '#F4F6FF', color: '#4D4D56', border: '1px solid #E0E4F5', borderRadius: '10px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: '"Inter", sans-serif' }}>View Profile</button>
               </div>
             </div>
-            <div className="flex gap-1.5">
-              <button className="flex-1 py-2 rounded-[9px] text-[12px] font-semibold text-white cursor-default" style={{ background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)' }}>Connect</button>
-              <button className="px-3 py-2 rounded-[9px] text-[12px] font-semibold text-[#4D4D56] cursor-default" style={{ background: '#F4F6FF', border: '1px solid #E0E4F5' }}>View</button>
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {/* Community discussions */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-[14px] font-bold text-[#18181B] m-0" style={{ fontFamily: 'DM Sans, sans-serif' }}>Community Discussions</h2>
-        <button className="px-3 py-1.5 rounded-lg text-[11px] font-semibold text-white cursor-default" style={{ background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)' }}>+ Thread</button>
-      </div>
-      <div className="flex flex-col gap-2.5">
-        {PEER_THREADS.map(thread => (
-          <div key={thread.id} className="bg-white rounded-[16px] px-4 py-3.5" style={{ border: '1px solid #F0F2FF', boxShadow: '0px 2px 8px rgba(30,77,215,0.05)' }}>
-            <div className="flex items-start gap-2.5">
-              <div className="w-[34px] h-[34px] rounded-full flex items-center justify-center shrink-0 text-[12px] font-black text-white" style={{ background: thread.bg, fontFamily: 'DM Sans, sans-serif' }}>
-                {thread.initials}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 mb-1 flex-wrap">
-                  <span className="text-[12px] font-bold text-[#18181B]">{thread.name}</span>
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-[5px]" style={{ background: thread.tagBg, color: thread.tagColor }}>{thread.tag}</span>
-                  <span className="text-[10px] text-[#B0B4C4] ml-auto">{thread.timeAgo}</span>
+      <div>
+        <div className="flex items-center justify-between" style={{ marginBottom: '14px' }}>
+          <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#18181B', fontFamily: '"DM Sans", sans-serif' }}>Community Discussions</h2>
+          <button style={{ padding: '7px 14px', background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)', color: '#FFFFFF', border: 'none', borderRadius: '9px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: '"Inter", sans-serif' }}>+ Start Thread</button>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {PEER_THREADS.map(thread => (
+            <div key={thread.id}
+              style={{ background: '#FFFFFF', borderRadius: '18px', padding: '20px 22px', border: '1px solid #F0F2FF', boxShadow: '0px 2px 12px rgba(30,77,215,0.05)', cursor: 'pointer', transition: 'border-color 0.15s, box-shadow 0.15s' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = '#B3C5FF'; e.currentTarget.style.boxShadow = '0px 4px 20px rgba(30,77,215,0.1)' }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = '#F0F2FF'; e.currentTarget.style.boxShadow = '0px 2px 12px rgba(30,77,215,0.05)' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: thread.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '13px', fontWeight: 800, color: '#FFFFFF', fontFamily: '"DM Sans", sans-serif' }}>
+                  {thread.initials}
                 </div>
-                <p className="text-[13px] font-bold text-[#18181B] leading-snug mb-1">{thread.title}</p>
-                <div className="flex items-center gap-3">
-                  <span className="text-[11px] text-[#82858A]">{thread.replies} replies</span>
-                  <span className="text-[11px] text-[#82858A]">{thread.likes} helpful</span>
-                  <button className="ml-auto px-3 py-1.5 rounded-lg text-[11px] font-semibold text-[#3B75FF] cursor-default" style={{ background: '#F4F6FF', border: '1px solid #E0E4F5' }}>Read</button>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#18181B' }}>{thread.name}</span>
+                    <span style={{ padding: '2px 8px', background: thread.tagBg, borderRadius: '6px', fontSize: '10px', fontWeight: 700, color: thread.tagColor }}>{thread.tag}</span>
+                    <span style={{ fontSize: '11px', color: '#B0B4C4', marginLeft: 'auto' }}>{thread.timeAgo}</span>
+                  </div>
+                  <p style={{ margin: '0 0 6px', fontSize: '14px', fontWeight: 700, color: '#18181B', lineHeight: '1.4' }}>{thread.title}</p>
+                  <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#6B7280', lineHeight: '1.6' }}>{thread.excerpt}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <button style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '12px', fontWeight: 600, color: '#82858A', fontFamily: '"Inter", sans-serif' }}>
+                      <MessageSquare size={14} color="#82858A" strokeWidth={1.75} />
+                      <span>{thread.replies} replies</span>
+                    </button>
+                    <button style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '12px', fontWeight: 600, color: '#82858A', fontFamily: '"Inter", sans-serif' }}>
+                      <Flame size={14} color="#82858A" strokeWidth={1.75} />
+                      <span>{thread.likes} helpful</span>
+                    </button>
+                    <button style={{ marginLeft: 'auto', padding: '6px 14px', background: '#F4F6FF', border: '1px solid #E0E4F5', borderRadius: '8px', fontSize: '12px', fontWeight: 600, color: '#3B75FF', cursor: 'pointer', fontFamily: '"Inter", sans-serif' }}>Read thread</button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {/* Coming Soon notice */}
