@@ -1672,8 +1672,11 @@ function RoadmapTab({ answers, score, quizResult, router }) {
                           const isChecked = milestone.done || !!checkedActions[actionKey]
                           return (
                             <li key={ai}>
-                              <button
+                              <div
+                                role={milestone.done ? undefined : 'button'}
+                                tabIndex={milestone.done ? undefined : 0}
                                 onClick={e => { e.stopPropagation(); if (!milestone.done) toggleAction(milestone.id, ai) }}
+                                onKeyDown={e => { if (!milestone.done && (e.key === 'Enter' || e.key === ' ')) { e.stopPropagation(); toggleAction(milestone.id, ai) } }}
                                 className="w-full flex items-start gap-2 rounded-lg text-left transition-all"
                                 style={{
                                   padding: isMobile ? '8px 10px' : '9px 12px',
@@ -1688,7 +1691,7 @@ function RoadmapTab({ answers, score, quizResult, router }) {
                                     : <span style={{ fontSize: 8, fontWeight: 700, color: milestone.current ? '#1E4DD7' : '#B0B4C4' }}>{ai + 1}</span>}
                                 </div>
                                 <span style={{ fontSize: 12, lineHeight: 1.5, color: isChecked ? '#6B7280' : '#2D2D35', textDecoration: isChecked ? 'line-through' : 'none' }}>{action}</span>
-                              </button>
+                              </div>
                             </li>
                           )
                         })}
