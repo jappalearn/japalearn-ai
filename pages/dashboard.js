@@ -1487,7 +1487,25 @@ function RoadmapTab({ answers, score, quizResult, router }) {
   const [expandedMilestone, setExpandedMilestone] = useState(null)
   const [showReportModal, setShowReportModal] = useState(false)
   const [reportInterest, setReportInterest] = useState(false)
+  const [checkedActions, setCheckedActions] = useState({})
   const isMobile = useIsMobile()
+
+  // Load checked actions from localStorage on mount
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem('japalearn_roadmap_checked')
+      if (saved) setCheckedActions(JSON.parse(saved))
+    } catch {}
+  }, [])
+
+  const toggleAction = (milestoneId, actionIndex) => {
+    const key = `${milestoneId}-${actionIndex}`
+    setCheckedActions(prev => {
+      const next = { ...prev, [key]: !prev[key] }
+      try { localStorage.setItem('japalearn_roadmap_checked', JSON.stringify(next)) } catch {}
+      return next
+    })
+  }
 
   if (!quizResult?.answers?.destination || !quizResult?.answers?.segment) {
     if (isMobile) {
@@ -1649,18 +1667,31 @@ function RoadmapTab({ answers, score, quizResult, router }) {
                     <div className="mt-3 pt-3" style={{ borderTop: '1px solid rgba(30,77,215,0.1)' }}>
                       <p style={{ margin: '0 0 8px', fontSize: 11, fontWeight: 700, color: '#82858A', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Action Steps</p>
                       <ul className="flex flex-col gap-1.5">
-                        {milestone.actions.map((action, ai) => (
-                          <li key={ai} className="flex items-start gap-2 rounded-lg"
-                            style={{ padding: isMobile ? '8px 10px' : '9px 12px', background: milestone.done ? '#F8FFF9' : milestone.current ? '#F0F5FF' : '#FAFBFF', border: `1px solid ${milestone.done ? '#D8F5E6' : milestone.current ? '#D4DCFF' : '#ECEEFF'}` }}>
-                            <div className="rounded-full flex items-center justify-center shrink-0 mt-0.5"
-                              style={{ width: 18, height: 18, background: milestone.done ? 'linear-gradient(135deg, #21C474, #10B981)' : milestone.current ? '#EBF1FF' : '#F0F2FF' }}>
-                              {milestone.done
-                                ? <CheckCircle2 size={9} className="text-white" />
-                                : <span style={{ fontSize: 8, fontWeight: 700, color: milestone.current ? '#1E4DD7' : '#B0B4C4' }}>{ai + 1}</span>}
-                            </div>
-                            <span style={{ fontSize: 12, lineHeight: 1.5, color: milestone.done ? '#6B7280' : '#2D2D35', textDecoration: milestone.done ? 'line-through' : 'none' }}>{action}</span>
-                          </li>
-                        ))}
+                        {milestone.actions.map((action, ai) => {
+                          const actionKey = `${milestone.id}-${ai}`
+                          const isChecked = milestone.done || !!checkedActions[actionKey]
+                          return (
+                            <li key={ai}>
+                              <button
+                                onClick={e => { e.stopPropagation(); if (!milestone.done) toggleAction(milestone.id, ai) }}
+                                className="w-full flex items-start gap-2 rounded-lg text-left transition-all"
+                                style={{
+                                  padding: isMobile ? '8px 10px' : '9px 12px',
+                                  background: isChecked ? '#F0FDF4' : milestone.current ? '#F0F5FF' : '#FAFBFF',
+                                  border: `1px solid ${isChecked ? '#BBF7D0' : milestone.current ? '#D4DCFF' : '#ECEEFF'}`,
+                                  cursor: milestone.done ? 'default' : 'pointer',
+                                }}>
+                                <div className="rounded-full flex items-center justify-center shrink-0 mt-0.5"
+                                  style={{ width: 18, height: 18, background: isChecked ? 'linear-gradient(135deg, #21C474, #10B981)' : milestone.current ? '#EBF1FF' : '#F0F2FF' }}>
+                                  {isChecked
+                                    ? <CheckCircle2 size={9} className="text-white" />
+                                    : <span style={{ fontSize: 8, fontWeight: 700, color: milestone.current ? '#1E4DD7' : '#B0B4C4' }}>{ai + 1}</span>}
+                                </div>
+                                <span style={{ fontSize: 12, lineHeight: 1.5, color: isChecked ? '#6B7280' : '#2D2D35', textDecoration: isChecked ? 'line-through' : 'none' }}>{action}</span>
+                              </button>
+                            </li>
+                          )
+                        })}
                       </ul>
                       {milestone.current && (
                         <button className="w-full mt-3 py-2.5 rounded-[10px] text-white text-[12px] font-semibold flex items-center justify-center gap-1.5"
