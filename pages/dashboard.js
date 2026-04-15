@@ -572,7 +572,7 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
       color: '#F59A0A', bg: '#FFF7E6', urgent: false, onClick: () => router.push('/quiz'),
     },
     !quizResult && {
-      icon: FolderOpen, title: 'Check Your Documents', desc: 'Know what you'll need before you apply',
+      icon: FolderOpen, title: 'Check Your Documents', desc: "Know what you'll need before you apply",
       color: '#21C474', bg: '#E8F9EE', urgent: false, onClick: () => router.push('/quiz'),
     },
   ].filter(Boolean)
