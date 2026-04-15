@@ -33,6 +33,13 @@ export default function ModuleQuiz() {
   }, [router.isReady, curriculumId, moduleIndex])
 
   const load = async () => {
+    setLoading(true)
+    setQuiz(null)
+    setCurriculum(null)
+    setError('')
+    setPhase('quiz')
+    setCurrent(0)
+    setAnswers([])
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { router.push('/'); return }
     setUserId(session.user.id)

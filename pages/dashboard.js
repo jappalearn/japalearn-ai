@@ -911,6 +911,7 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
 function LearningTab({ answers, userId, quizResult, router }) {
   const [curriculum, setCurriculum] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [loadingExisting, setLoadingExisting] = useState(true)
   const [genError, setGenError] = useState('')
   const [progress, setProgress] = useState({})
   const [quizPassed, setQuizPassed] = useState({}) // { moduleIndex: true/false }
@@ -919,9 +920,11 @@ function LearningTab({ answers, userId, quizResult, router }) {
   useEffect(() => { if (userId && answers.destination) loadExisting() }, [userId])
 
   const loadExisting = async () => {
+    setLoadingExisting(true)
     const { data } = await supabase.from('curricula').select('*')
       .eq('user_id', userId).eq('destination', answers.destination).eq('segment', answers.segment).maybeSingle()
     if (data) { setCurriculum(data); loadProgress(data.id) }
+    setLoadingExisting(false)
   }
 
   const loadProgress = async (curriculumId) => {
@@ -983,6 +986,17 @@ function LearningTab({ answers, userId, quizResult, router }) {
   const openQuiz = (mi) => {
     if (!curriculum?.id || !isModuleUnlocked(mi)) return
     router.push(`/learn/${curriculum.id}/${mi}/quiz`)
+  }
+
+  if (loadingExisting) {
+    return (
+      <div className="flex items-center justify-center" style={{ minHeight: 240 }}>
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-7 h-7 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: '#1E4DD7', borderTopColor: 'transparent' }} />
+          <p className="text-[13px] text-[#9E9E9E]">Loading your curriculum…</p>
+        </div>
+      </div>
+    )
   }
 
   if (!curriculum) {

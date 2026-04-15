@@ -30,6 +30,10 @@ export default function LessonPage() {
   }, [router.isReady, curriculumId, moduleIndex, lessonIndex])
 
   const loadLesson = async () => {
+    setLoading(true)
+    setLesson(null)
+    setCurriculum(null)
+    setGenError('')
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { router.push('/'); return }
     setUserId(session.user.id)
