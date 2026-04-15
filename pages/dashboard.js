@@ -562,6 +562,11 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
       icon: FolderOpen, title: 'Explore Resources', desc: `Tools & guides for ${answers.destination || 'your journey'}`,
       color: '#9B59B6', bg: '#F5EEFF', urgent: false, onClick: () => setActiveTab('resources'),
     },
+    // Next Best Action from AI Curriculum
+    curriculum?.next_best_action && {
+      icon: Sparkles, title: 'AI Recommendation', desc: curriculum.next_best_action,
+      color: '#3b75ff', bg: '#EBF1FF', urgent: true, onClick: () => setActiveTab('learning'),
+    },
     // Always shown pre-quiz: explore what's possible (fills slots 2–4)
     !quizResult && {
       icon: Map, title: 'See How It Works', desc: 'Your roadmap unlocks after the quiz',
@@ -956,10 +961,16 @@ function LearningTab({ answers, userId, quizResult, router }) {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Generation failed')
+      
       const { data: saved } = await supabase.from('curricula').upsert({
         user_id: userId, destination: answers.destination, segment: answers.segment,
-        title: data.curriculum.title, modules: data.curriculum.modules,
+        title: data.curriculum.curriculum_title, 
+        modules: data.curriculum.modules,
+        persona: data.curriculum.persona,
+        next_best_action: data.curriculum.next_best_action,
+        gaps: data.curriculum.gaps
       }, { onConflict: 'user_id,destination,segment' }).select().maybeSingle()
+      
       setCurriculum(saved || { ...data.curriculum, id: null })
     } catch (e) { setGenError(e.message || 'Something went wrong.') }
     setLoading(false)
@@ -1201,7 +1212,7 @@ function LearningTab({ answers, userId, quizResult, router }) {
                         <div className={cn("font-semibold text-[13px]",
                           done ? "text-[#ADADBE] line-through" : unlocked ? "text-[#18181B]" : "text-[#ADADBE]"
                         )}>{lesson.title}</div>
-                        <p className="text-[11px] text-[#9E9E9E] mt-0.5 truncate">{lesson.summary}</p>
+                        <p className="text-[11px] text-[#9E9E9E] mt-0.5 truncate">{lesson.goal || lesson.summary}</p>
                       </div>
 
                       {done
@@ -1683,12 +1694,12 @@ function RoadmapTab({ answers, score, quizResult, router }) {
                       <ul className="flex flex-col gap-1.5">
                         {milestone.actions.map((action, ai) => {
                           const actionKey = `${milestone.id}-${ai}`
-                          const isChecked = milestone.done || !!checkedActions[actionKey]
+                          const isChecked = !!checkedActions[actionKey]
                           return (
                             <li key={ai}>
                               <div
-                                role={milestone.done ? undefined : 'button'}
-                                tabIndex={milestone.done ? undefined : 0}
+                                role="button"
+                                tabIndex={0}
                                 onClick={e => { e.stopPropagation(); toggleAction(milestone.id, ai) }}
                                 onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); toggleAction(milestone.id, ai) } }}
                                 className="w-full flex items-start gap-2 rounded-lg text-left transition-all"
