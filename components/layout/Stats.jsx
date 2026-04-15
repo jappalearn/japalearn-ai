@@ -3,7 +3,7 @@ import { motion, useInView, useMotionValue, useTransform, animate } from "framer
 
 const Counter = ({ value, duration = 2 }) => {
   const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, margin: "-100px" })
+  const isInView = useInView(ref, { once: true, margin: "0px" })
 
   const numericValue = parseInt(value.replace(/[^0-9]/g, ""))
   const suffix = value.replace(/[0-9]/g, "")
