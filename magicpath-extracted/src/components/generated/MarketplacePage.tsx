@@ -663,7 +663,7 @@ export function MarketplacePage({
           padding: '3px 10px',
           borderRadius: '20px'
         }}>
-            Coming Soon
+            Coming in MVP 2
           </span>
         </div>
         <p style={{

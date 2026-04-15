@@ -8004,7 +8004,7 @@ export function LoginDashboard() {
                 border: '1px solid #DDD6FE',
                 padding: '3px 10px',
                 borderRadius: '20px'
-              }}>Coming Soon</span>
+              }}>Coming in MVP 2</span>
                 </div>
                 <p style={{
               margin: 0,
@@ -8214,7 +8214,7 @@ export function LoginDashboard() {
                 border: '1px solid #DDD6FE',
                 padding: '3px 10px',
                 borderRadius: '20px'
-              }}>Coming Soon</span>
+              }}>Coming in MVP 2</span>
                 </div>
                 <p style={{
               margin: 0,
@@ -8700,7 +8700,7 @@ export function LoginDashboard() {
                 border: '1px solid #DDD6FE',
                 padding: '3px 10px',
                 borderRadius: '20px'
-              }}>Coming Soon</span>
+              }}>Coming in MVP 2</span>
                 </div>
                 <p style={{
               margin: 0,

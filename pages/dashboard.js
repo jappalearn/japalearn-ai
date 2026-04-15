@@ -1297,9 +1297,9 @@ function generateMilestones(answers, score) {
   const hasGoodLang  = lang.includes('7.') || lang.includes('8.') ||
     lang.startsWith('OET') || lang.startsWith('CELPIP')
 
-  const m1Done = true                  // reaching the roadmap means the quiz (eligibility assessment) is complete
-  const m2Done = lang !== 'Not taken'  // user has booked or registered for a language test
-  const m3Done = hasGoodLang           // user has a passing language score
+  const m1Done = true
+  const m2Done = false
+  const m3Done = false
   const m4Done = false; const m5Done = false; const m6Done = false
 
   const currentIdx = m1Done && m2Done && m3Done && m4Done && m5Done ? 5
@@ -1320,8 +1320,8 @@ function generateMilestones(answers, score) {
 
   const mWeeks = getMilestoneWeeks(totalWeeks)
 
-  const completedCount = [m1Done, m2Done, m3Done, m4Done, m5Done, m6Done].filter(Boolean).length
-  const pct = Math.round((completedCount / 6) * 100)
+  const completedCount = 0
+  const pct = 0
 
   // Destination-specific content
   const docEvalText =
@@ -1580,9 +1580,23 @@ function RoadmapTab({ answers, score, quizResult, router }) {
     )
   }
 
-  const { milestones, totalWeeks, completedCount, pct, visaRoute, destLabel, phases, timelinePlan } = generateMilestones(answers, score)
+  const { milestones: rawMilestones, totalWeeks, visaRoute, destLabel, phases, timelinePlan } = generateMilestones(answers, score)
+
+  // All done/current state is manual — driven entirely by checkedActions
+  const milestones = rawMilestones
+    .map(m => ({
+      ...m,
+      done: m.actions.length > 0 && m.actions.every((_, ai) => !!checkedActions[`${m.id}-${ai}`]),
+    }))
+    .map((m, idx, arr) => ({
+      ...m,
+      current: !m.done && arr.slice(0, idx).every(prev => prev.done),
+    }))
+
+  const completedCount = milestones.filter(m => m.done).length
+  const pct = Math.round((completedCount / 6) * 100)
   const currentMilestone = milestones.find(m => m.current) || milestones.find(m => !m.done) || milestones[milestones.length - 1]
-  const weeksLeft = Math.round(totalWeeks * (1 - pct / 100))
+  const weeksLeft = Math.round(totalWeeks * (Math.max(0, 100 - pct) / 100))
 
   // Shared milestone timeline JSX (same for mobile + desktop)
   const MilestoneTimeline = (
@@ -1675,14 +1689,14 @@ function RoadmapTab({ answers, score, quizResult, router }) {
                               <div
                                 role={milestone.done ? undefined : 'button'}
                                 tabIndex={milestone.done ? undefined : 0}
-                                onClick={e => { e.stopPropagation(); if (!milestone.done) toggleAction(milestone.id, ai) }}
-                                onKeyDown={e => { if (!milestone.done && (e.key === 'Enter' || e.key === ' ')) { e.stopPropagation(); toggleAction(milestone.id, ai) } }}
+                                onClick={e => { e.stopPropagation(); toggleAction(milestone.id, ai) }}
+                                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); toggleAction(milestone.id, ai) } }}
                                 className="w-full flex items-start gap-2 rounded-lg text-left transition-all"
                                 style={{
                                   padding: isMobile ? '8px 10px' : '9px 12px',
                                   background: isChecked ? '#F0FDF4' : milestone.current ? '#F0F5FF' : '#FAFBFF',
                                   border: `1px solid ${isChecked ? '#BBF7D0' : milestone.current ? '#D4DCFF' : '#ECEEFF'}`,
-                                  cursor: milestone.done ? 'default' : 'pointer',
+                                  cursor: 'pointer',
                                 }}>
                                 <div className="rounded-full flex items-center justify-center shrink-0 mt-0.5"
                                   style={{ width: 18, height: 18, background: isChecked ? 'linear-gradient(135deg, #21C474, #10B981)' : milestone.current ? '#EBF1FF' : '#F0F2FF' }}>
@@ -1696,11 +1710,16 @@ function RoadmapTab({ answers, score, quizResult, router }) {
                           )
                         })}
                       </ul>
-                      {milestone.current && (
-                        <button className="w-full mt-3 py-2.5 rounded-[10px] text-white text-[12px] font-semibold flex items-center justify-center gap-1.5"
+                      {isOpen && idx < milestones.length - 1 && (
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExpandedMilestone(milestones[idx + 1].id);
+                          }}
+                          className="w-full mt-3 py-3 rounded-xl text-white text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all"
                           style={{ background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)' }}>
-                          <span>Work on this milestone</span>
-                          <ArrowRight size={12} className="text-white" />
+                          <span>Move to next phase</span>
+                          <ArrowRight size={14} className="text-white" />
                         </button>
                       )}
                     </div>
@@ -1883,8 +1902,7 @@ function RoadmapTab({ answers, score, quizResult, router }) {
         <div style={{ display: 'flex', borderTop: '1px solid rgba(255,255,255,0.12)' }}>
           {phases.map((phase, pi) => {
             const isActive = phase === currentMilestone.phase
-            const isDone = pi < milestones.findIndex(m => m.phase === currentMilestone.phase && !m.done && !m.done)
-              && milestones.filter(m => m.phase === phase).every(m => m.done)
+            const isDone = milestones.filter(m => m.phase === phase).every(m => m.done)
             return (
               <div key={phase} style={{ flex: 1, padding: '10px 8px', textAlign: 'center', borderRight: pi < phases.length - 1 ? '1px solid rgba(255,255,255,0.1)' : 'none', background: isActive ? 'rgba(255,255,255,0.1)' : 'transparent' }}>
                 <p style={{ margin: 0, fontSize: 10, fontWeight: isActive ? 700 : 500, color: isDone ? 'rgba(255,255,255,0.9)' : isActive ? '#FFFFFF' : 'rgba(255,255,255,0.45)', letterSpacing: '0.04em' }}>{phase}</p>
