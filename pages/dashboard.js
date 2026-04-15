@@ -458,7 +458,7 @@ function QuizRequiredState({ icon: Icon, title, description, router }) {
 }
 
 // ── OVERVIEW TAB ─────────────────────────────────────────────────────────────
-function OverviewTab({ answers, score, flag, displayName, isNewUser, router, quizResult, setActiveTab, curriculum, recentProgress }) {
+function OverviewTab({ answers, score, flag, displayName, isNewUser, router, quizResult, setActiveTab, curriculum, recentProgress, recentModuleQuizResults }) {
   const visaRoute = answers.destination ? getVisaRoute(answers.destination, answers.segment) : null
   const today = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
   const greetingHour = new Date().getHours()
@@ -490,9 +490,30 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
     }
   }) : []
 
+  // Derive next lesson from most recently completed lesson
+  const hasStartedLessons = recentProgress.length > 0
+  const lastCompleted = recentProgress[0]
+  let nextLesson = null
+  if (lastCompleted && curriculum?.modules) {
+    const mod = curriculum.modules[lastCompleted.module_index]
+    if (mod && lastCompleted.lesson_index + 1 < (mod.lessons?.length || 0)) {
+      nextLesson = {
+        moduleIndex: lastCompleted.module_index,
+        lessonTitle: mod.lessons[lastCompleted.lesson_index + 1]?.title,
+        moduleTitle: mod.title,
+      }
+    } else if (lastCompleted.module_index + 1 < curriculum.modules.length) {
+      const nextMod = curriculum.modules[lastCompleted.module_index + 1]
+      nextLesson = {
+        moduleIndex: lastCompleted.module_index + 1,
+        lessonTitle: nextMod?.lessons?.[0]?.title,
+        moduleTitle: nextMod?.title,
+      }
+    }
+  }
+
   // Priority actions — always exactly 4, ordered by urgency
   // Skills rule: always show 4 actions, evolve based on real user state
-  const hasStartedLessons = recentProgress.length > 0
   const allActions = [
     // No quiz → take assessment (urgent)
     !quizResult && {
@@ -504,9 +525,11 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
       icon: Globe2, title: 'Register for Language Test', desc: 'IELTS / OET required for most visas',
       color: '#EF4369', bg: '#FDECEC', urgent: true, onClick: () => setActiveTab('resources'),
     },
-    // Has curriculum and started lessons → continue
+    // Has curriculum and started lessons → point to exact next lesson
     quizResult && curriculum && hasStartedLessons && {
-      icon: BookOpen, title: 'Continue your module', desc: 'Pick up where you left off',
+      icon: BookOpen,
+      title: nextLesson?.lessonTitle ? `Complete: ${nextLesson.lessonTitle}` : 'Continue your module',
+      desc: nextLesson?.moduleTitle ? `Module ${nextLesson.moduleIndex + 1}: ${nextLesson.moduleTitle}` : 'Pick up where you left off',
       color: '#1E4DD7', bg: '#EBF1FF', urgent: false, onClick: () => setActiveTab('learning'),
     },
     // Quiz done, no curriculum yet OR curriculum exists but no lessons started → start
@@ -831,15 +854,30 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
         <div className="bg-white rounded-[18px] p-5" style={{ border: '1px solid #F0F2FF', boxShadow: '0px 2px 12px rgba(30,77,215,0.05)' }}>
           <h2 className="text-[13px] font-bold text-[#18181B] mb-4" style={{ fontFamily: 'DM Sans, sans-serif' }}>Recent Activity</h2>
           {quizResult ? (() => {
-            const quizActivity = { icon: CheckCircle2, title: 'Completed Migration Assessment', time: quizResult.created_at ? new Date(quizResult.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'Recently', color: '#21C474', bg: '#E8F9EE' }
-            const lessonActivities = recentProgress.slice(0, 4).map(p => {
+            const fmt = (t) => t ? new Date(t).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'Recently'
+            const lessonActivities = recentProgress.map(p => {
               const mod = curriculum?.modules?.[p.module_index]
               const lesson = mod?.lessons?.[p.lesson_index]
-              const title = lesson?.title ? `Completed: ${lesson.title}` : `Completed Module ${p.module_index + 1} – Lesson ${p.lesson_index + 1}`
-              const time = p.completed_at ? new Date(p.completed_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'Recently'
-              return { icon: BookOpen, title, time, color: '#1E4DD7', bg: '#EBF1FF' }
+              return {
+                icon: BookOpen,
+                title: lesson?.title ? `Completed: ${lesson.title}` : `Completed Module ${p.module_index + 1} – Lesson ${p.lesson_index + 1}`,
+                ts: p.completed_at, color: '#1E4DD7', bg: '#EBF1FF',
+              }
             })
-            const allActivities = [...lessonActivities, quizActivity].slice(0, 5)
+            const moduleQuizActivities = (recentModuleQuizResults || []).map(q => {
+              const mod = curriculum?.modules?.[q.module_index]
+              return {
+                icon: q.passed ? CheckCircle2 : AlertTriangle,
+                title: q.passed
+                  ? `Passed Module ${q.module_index + 1} Quiz${mod?.title ? ` — ${mod.title}` : ''}`
+                  : `Attempted Module ${q.module_index + 1} Quiz — keep going`,
+                ts: q.created_at, color: q.passed ? '#21C474' : '#F59A0A', bg: q.passed ? '#E8F9EE' : '#FFF7E6',
+              }
+            })
+            const quizActivity = { icon: CheckCircle2, title: 'Completed Migration Assessment', ts: quizResult.created_at, color: '#21C474', bg: '#E8F9EE' }
+            const allActivities = [...lessonActivities, ...moduleQuizActivities, quizActivity]
+              .sort((a, b) => new Date(b.ts || 0) - new Date(a.ts || 0))
+              .slice(0, 5)
             return (
               <ul className="flex flex-col divide-y divide-[#F4F6FF]">
                 {allActivities.map((item, i) => {
@@ -851,7 +889,7 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-[12px] font-medium text-[#18181B] leading-snug truncate">{item.title}</p>
-                        <p className="text-[10px] text-[#B0B4C4]">{item.time}</p>
+                        <p className="text-[10px] text-[#B0B4C4]">{fmt(item.ts)}</p>
                       </div>
                     </li>
                   )
@@ -2858,6 +2896,7 @@ export default function Dashboard() {
   const [isFirstVisit, setIsFirstVisit] = useState(false)
   const [curriculum, setCurriculum] = useState(null)
   const [recentProgress, setRecentProgress] = useState([])
+  const [recentModuleQuizResults, setRecentModuleQuizResults] = useState([])
 
   useEffect(() => {
     const load = async () => {
@@ -2954,15 +2993,23 @@ export default function Dashboard() {
           .maybeSingle()
         if (currData) {
           setCurriculum(currData)
-          const { data: progressData } = await supabase
-            .from('lesson_progress')
-            .select('module_index, lesson_index, completed, completed_at')
-            .eq('user_id', session.user.id)
-            .eq('curriculum_id', currData.id)
-            .eq('completed', true)
-            .order('completed_at', { ascending: false })
-            .limit(10)
+          const [{ data: progressData }, { data: moduleQuizData }] = await Promise.all([
+            supabase.from('lesson_progress')
+              .select('module_index, lesson_index, completed, completed_at')
+              .eq('user_id', session.user.id)
+              .eq('curriculum_id', currData.id)
+              .eq('completed', true)
+              .order('completed_at', { ascending: false })
+              .limit(10),
+            supabase.from('module_quiz_results')
+              .select('module_index, passed, created_at')
+              .eq('user_id', session.user.id)
+              .eq('curriculum_id', currData.id)
+              .order('created_at', { ascending: false })
+              .limit(10),
+          ])
           setRecentProgress(progressData || [])
+          setRecentModuleQuizResults(moduleQuizData || [])
         }
       }
 
@@ -2970,6 +3017,35 @@ export default function Dashboard() {
     }
     load()
   }, [])
+
+  // Real-time activity feed — subscribes to lesson + module quiz changes for this user
+  useEffect(() => {
+    if (!user?.id || !curriculum?.id) return
+    const channel = supabase
+      .channel(`activity-${user.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'lesson_progress', filter: `user_id=eq.${user.id}` },
+        async () => {
+          const { data } = await supabase
+            .from('lesson_progress')
+            .select('module_index, lesson_index, completed, completed_at')
+            .eq('user_id', user.id).eq('curriculum_id', curriculum.id)
+            .eq('completed', true).order('completed_at', { ascending: false }).limit(10)
+          setRecentProgress(data || [])
+        }
+      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'module_quiz_results', filter: `user_id=eq.${user.id}` },
+        async () => {
+          const { data } = await supabase
+            .from('module_quiz_results')
+            .select('module_index, passed, created_at')
+            .eq('user_id', user.id).eq('curriculum_id', curriculum.id)
+            .order('created_at', { ascending: false }).limit(10)
+          setRecentModuleQuizResults(data || [])
+        }
+      )
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [user?.id, curriculum?.id])
 
   const handleSignOut = async () => { await supabase.auth.signOut(); router.push('/') }
 
@@ -3031,7 +3107,7 @@ export default function Dashboard() {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.18 }}
             >
-              {activeTab === 'overview'       && <OverviewTab answers={answers} score={score} flag={flag} displayName={displayName} isNewUser={isFirstVisit} router={router} quizResult={quizResult} setActiveTab={setActiveTab} curriculum={curriculum} recentProgress={recentProgress} />}
+              {activeTab === 'overview'       && <OverviewTab answers={answers} score={score} flag={flag} displayName={displayName} isNewUser={isFirstVisit} router={router} quizResult={quizResult} setActiveTab={setActiveTab} curriculum={curriculum} recentProgress={recentProgress} recentModuleQuizResults={recentModuleQuizResults} />}
               {activeTab === 'learning'       && <LearningTab answers={answers} userId={user?.id} quizResult={quizResult} router={router} />}
               {activeTab === 'roadmap'        && <RoadmapTab answers={answers} score={score} quizResult={quizResult} router={router} />}
               {activeTab === 'resources'      && <ResourcesTab answers={answers} userId={user?.id} />}
