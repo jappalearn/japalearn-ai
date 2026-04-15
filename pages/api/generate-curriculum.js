@@ -1,6 +1,5 @@
-import OpenAI from 'openai'
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+import { generateAIResponse } from '../../lib/ai'
+import { SKILLS } from '../../lib/skills'
 
 function buildProfileDescription(answers) {
   const lines = []
@@ -150,7 +149,7 @@ ROLE-SPECIFIC REQUIREMENTS — NIGERIAN STUDENT GOING TO ${destination}:
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
-  const { answers } = req.body
+  const { answers, ai_data } = req.body
   if (!answers?.destination || !answers?.segment) {
     return res.status(400).json({ error: 'Missing destination or segment' })
   }
@@ -160,30 +159,8 @@ export default async function handler(req, res) {
   const roleInstructions = buildRoleSpecificInstructions(answers)
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      temperature: 0.4,
-      max_tokens: 4000,
-      response_format: { type: 'json_object' },
-      messages: [
-        {
-          role: 'system',
-          content: `You are a world-class migration curriculum designer who builds deeply personalised, structured learning paths for Nigerians relocating abroad. Your output translates official immigration policy into clear, sequenced, actionable learning modules.
-
-CORE STANDARDS:
-- NO GENERIC CONTENT. Every module and lesson is written exclusively for this person's profession, destination, and current readiness stage.
-- STRUCTURED OUTPUT ONLY. Modules and lessons — never free-form content.
-- ROUTE-SPECIFIC MODULES ONLY. No irrelevant content for this person's visa route.
-- PROGRESSIVE FLOW. Every curriculum must follow: understanding → eligibility → preparation → application → pre-departure → arrival.
-- NO REDUNDANCY. No overlapping content across modules or lessons.
-- LOGICAL SEQUENCING. Each module builds on the last. Dependencies are respected.
-- URGENCY FIRST. Modules addressing critical blockers must come first and be marked urgent=true.
-- UNIQUE PER USER. No two users get the same curriculum structure. The profile fully determines the output.
-- SECOND-PERSON LANGUAGE. Write as "you" — direct, clear, no filler.
-- OUTCOME-LINKED. Every module must map to a real migration milestone or outcome.
-
-A Medical Doctor going to the UK gets a completely different curriculum from a Software Engineer going to Canada. Build it entirely around who this person is.`,
-        },
+    const responseText = await generateAIResponse(
+      [
         {
           role: 'user',
           content: `Design a complete, deeply personalised migration curriculum for this specific person.
@@ -194,6 +171,15 @@ ${profileDescription}
 ═══════════════════════════════════════════
 ${gapInstructions}
 ${roleInstructions}
+
+${ai_data ? `═══════════════════════════════════════════
+PHASE 1 AI ANALYSIS RESULTS:
+- Recommended Route: ${ai_data.recommendedRoute}
+- Estimated Timeline: ${ai_data.estimatedTimelineMonths} months
+- Key Strengths: ${ai_data.topStrengths?.join(', ') || 'N/A'}
+- Critical Gaps: ${ai_data.topGaps?.join(', ') || 'N/A'}
+- Expert Note: ${ai_data.expertNote}
+═══════════════════════════════════════════` : ''}
 
 CURRICULUM RULES:
 1. ROLE FIRST — build entirely around who this person IS professionally and their exact visa route
@@ -224,12 +210,14 @@ Return ONLY valid JSON:
 }`,
         },
       ],
-    })
+      SKILLS.CURRICULUM_BUILDER,
+      { enrich: true } // 🚀 This triggers RAG + Search grounding
+    )
 
-    const curriculum = JSON.parse(completion.choices[0]?.message?.content)
+    const curriculum = JSON.parse(responseText.replace(/```json/g, '').replace(/```/g, ''))
     return res.status(200).json({ curriculum })
   } catch (error) {
-    console.error('OpenAI ERROR:', error.message)
+    console.error('AI CURRICULUM ERROR:', error.message)
     return res.status(500).json({ error: error.message })
   }
 }

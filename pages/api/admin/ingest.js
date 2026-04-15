@@ -1,4 +1,4 @@
-import { addDocument } from '../../lib/rag';
+import { addDocument } from '../../../lib/rag';
 
 /**
  * Admin API to ingest initial migration policy data

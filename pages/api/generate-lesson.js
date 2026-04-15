@@ -1,7 +1,6 @@
-import OpenAI from 'openai'
+import { generateAIResponse, openai } from '../../lib/ai'
+import { SKILLS } from '../../lib/skills'
 import { createClient } from '@supabase/supabase-js'
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
 // Vary the opening style so no two lessons start the same way
 const openingStyles = [
@@ -30,26 +29,11 @@ export default async function handler(req, res) {
   const openingStyle = openingStyles[(mIdx + lIdx) % openingStyles.length]
 
   // Step 1 — Generate rich formatted lesson content
-    const contentCompletion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      temperature: 0.6,
-      max_tokens: 3000,
-      messages: [{
-        role: 'system',
-        content: `You are a world-class migration education writer producing structured, source-backed lessons that translate immigration policy into clear actions for Nigerians relocating abroad.
-
-STANDARDS YOU MUST MEET:
-- PRACTICAL ONLY. No fluff, no filler, no motivational language. Every sentence must teach something actionable.
-- SECOND-PERSON DIRECT. Write as "you" throughout. Clear, direct, no passive voice.
-- EXPLAIN BEFORE INSTRUCTING. Define every immigration term, body, or concept the first time it appears — the reader may have zero prior knowledge.
-- OFFICIAL SOURCES EMBEDDED. Real government URLs linked inline throughout the lesson.
-- NIGERIAN CONTEXT ALWAYS. Nigerian passport, WAEC/NECO results, NYSC discharge letter, NIN, Lagos/Abuja notarisation, NGN cost equivalents — use these throughout.
-- OUTCOME-LINKED. Every section must connect back to what completing this step unlocks.
-- HIGHLIGHT FAILURE POINTS. Be specific about what Nigerians get wrong and why it kills applications.
-- NO GENERIC CONTENT. This lesson is for THIS person (${segment} going to ${destination}). Every example, cost, and step must reflect their exact situation.`
-      }, {
-        role: 'user',
-        content: `Write a comprehensive, structured lesson about "${lessonTitle}" for a Nigerian ${segment} planning to move to ${destination}.
+    const content = await generateAIResponse(
+      [
+        {
+          role: 'user',
+          content: `Write a comprehensive, structured lesson about "${lessonTitle}" for a Nigerian ${segment} planning to move to ${destination}.
 
 Part of: "${moduleTitle}" in "${curriculumTitle}"
 
@@ -93,20 +77,18 @@ REAL DATA REQUIREMENTS:
 - Nigerian context: NYSC discharge, Nigerian passport, WAEC/NECO, NIN, notarisation in Lagos/Abuja
 
 Write 900–1200 words. Be thorough. This is the definitive resource for this topic for this person.`
-      }],
-    })
+      ],
+      SKILLS.LESSON_WRITER,
+      { enrich: true }
+    )
 
-    const content = contentCompletion.choices[0]?.message?.content?.trim()
 
     // Step 2 — Generate detailed takeaways, action step, and sources
-    const metaCompletion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      temperature: 0.2,
-      max_tokens: 800,
-      response_format: { type: 'json_object' },
-      messages: [{
-        role: 'user',
-        content: `For this migration lesson titled "${lessonTitle}" for a Nigerian ${segment} moving to ${destination}, provide structured metadata.
+    const metaResponse = await generateAIResponse(
+      [
+        {
+          role: 'user',
+          content: `For this migration lesson titled "${lessonTitle}" for a Nigerian ${segment} moving to ${destination}, provide structured metadata.
 
 Return a JSON object with exactly these fields:
 
@@ -115,10 +97,13 @@ Return a JSON object with exactly these fields:
 "action_step": exactly ONE sentence. The single most important thing this person must do right now. Include a real URL or specific named resource if possible. Maximum 25 words. Tied to this person's exact situation as a ${segment} going to ${destination}.
 
 "sources": array of 3–4 objects. Each has "label" (full official name of the source) and "url" (real, working government URL specific to ${destination} immigration and this lesson topic).`
-      }],
-    })
+        }
+      ],
+      'Return ONLY a valid JSON object.',
+      { enrich: false } // Meta doesn't strictly need extra enrichment
+    )
 
-    const meta = JSON.parse(metaCompletion.choices[0]?.message?.content)
+    const meta = JSON.parse(metaResponse.replace(/```json/g, '').replace(/```/g, ''))
 
     const lessonData = {
       title: lessonTitle,

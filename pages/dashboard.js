@@ -62,6 +62,15 @@ const COUNTRY_FLAGS = {
   'Sweden': '🇸🇪', 'Norway': '🇳🇴', 'UAE': '🇦🇪', 'Singapore': '🇸🇬',
 }
 
+const scoreLabelMap = {
+  'Experience': 'Work Experience',
+  'Education': 'Education Level',
+  'Language': 'Language Proficiency',
+  'Age': 'Demographics',
+  'Savings': 'Financial Readiness',
+  'Profile': 'Professional Profile',
+}
+
 
 // ── Nav groups (new grouped design) ──────────────────────────────────────────
 const NAV_GROUPS = [
@@ -458,7 +467,7 @@ function QuizRequiredState({ icon: Icon, title, description, router }) {
 }
 
 // ── OVERVIEW TAB ─────────────────────────────────────────────────────────────
-function OverviewTab({ answers, score, flag, displayName, isNewUser, router, quizResult, setActiveTab, curriculum, recentProgress, recentModuleQuizResults }) {
+function OverviewTab({ answers, score, flag, displayName, isNewUser, router, quizResult, setActiveTab, curriculum, recentProgress, recentModuleQuizResults, isAiCalculating }) {
   const visaRoute = answers.destination ? getVisaRoute(answers.destination, answers.segment) : null
   const today = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
   const greetingHour = new Date().getHours()
@@ -475,8 +484,24 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
   ] : []
 
   // Score categories for breakdown section
-  const scoreLabelMap = { Experience: 'Work Experience', Language: 'Language Test', Age: 'Age Factor', Savings: 'Financial Readiness', Profile: 'Skills & Certs', Education: 'Education' }
-  const scoreCategories = quizResult ? scoreBreakdown.map(item => {
+  // Priority: Use AI-grounded dimensions if available, otherwise fallback to static
+  const aiData = quizResult?.ai_data
+  const scoreCategories = aiData ? [
+    { label: 'Financial Readiness', score: aiData.dimensions.financial, rawScore: aiData.dimensions.financial, max: 100 },
+    { label: 'Language Skills',      score: aiData.dimensions.language, rawScore: aiData.dimensions.language, max: 100 },
+    { label: 'Documentation',       score: aiData.dimensions.documentation, rawScore: aiData.dimensions.documentation, max: 100 },
+    { label: 'Professional Profile', score: aiData.dimensions.professional, rawScore: aiData.dimensions.professional, max: 100 },
+    { label: 'Migration Knowledge',  score: aiData.dimensions.knowledge, rawScore: aiData.dimensions.knowledge, max: 100 },
+  ].map(item => {
+    const pct = item.score
+    const st = areaStatus(pct)
+    return {
+      ...item,
+      color: st === 'ok' ? '#21C474' : st === 'warn' ? '#F59A0A' : '#EF4369',
+      bg:    st === 'ok' ? '#E8F9EE' : st === 'warn' ? '#FFF7E6' : '#FDECEC',
+      status: st,
+    }
+  }) : (quizResult ? scoreBreakdown.map(item => {
     const pct = Math.round((item.score / item.max) * 100)
     const st = areaStatus(pct)
     return {
@@ -488,7 +513,7 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
       bg:    st === 'ok' ? '#E8F9EE' : st === 'warn' ? '#FFF7E6' : '#FDECEC',
       status: st,
     }
-  }) : []
+  }) : [])
 
   // Derive next lesson from most recently completed lesson
   const hasStartedLessons = recentProgress.length > 0
@@ -499,6 +524,7 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
     if (mod && lastCompleted.lesson_index + 1 < (mod.lessons?.length || 0)) {
       nextLesson = {
         moduleIndex: lastCompleted.module_index,
+        lessonIndex: lastCompleted.lesson_index + 1,
         lessonTitle: mod.lessons[lastCompleted.lesson_index + 1]?.title,
         moduleTitle: mod.title,
       }
@@ -506,6 +532,7 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
       const nextMod = curriculum.modules[lastCompleted.module_index + 1]
       nextLesson = {
         moduleIndex: lastCompleted.module_index + 1,
+        lessonIndex: 0,
         lessonTitle: nextMod?.lessons?.[0]?.title,
         moduleTitle: nextMod?.title,
       }
@@ -528,13 +555,15 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
     // Has curriculum and started lessons → point to exact next lesson
     quizResult && curriculum && hasStartedLessons && {
       icon: BookOpen,
-      title: nextLesson?.lessonTitle ? `Complete: ${nextLesson.lessonTitle}` : 'Continue your module',
-      desc: nextLesson?.moduleTitle ? `Module ${nextLesson.moduleIndex + 1}: ${nextLesson.moduleTitle}` : 'Pick up where you left off',
+      title: nextLesson ? `Continue Lesson ${nextLesson.lessonIndex + 1}` : 'Continue Module',
+      desc: nextLesson?.lessonTitle || 'Pick up where you left off',
       color: '#1E4DD7', bg: '#EBF1FF', urgent: false, onClick: () => setActiveTab('learning'),
     },
     // Quiz done, no curriculum yet OR curriculum exists but no lessons started → start
     quizResult && !(curriculum && hasStartedLessons) && {
-      icon: BookOpen, title: 'Start Your Curriculum', desc: `Personalised for ${answers.destination || 'your destination'}`,
+      icon: BookOpen,
+      title: 'Start Module 1',
+      desc: curriculum?.modules?.[0]?.title || `Personalised for ${answers.destination || 'your destination'}`,
       color: '#1E4DD7', bg: '#EBF1FF', urgent: false, onClick: () => setActiveTab('learning'),
     },
     // Low readiness → improve language score
@@ -626,15 +655,18 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
                   <p style={{ margin: 0, fontSize: 10, color: 'rgba(255,255,255,0.55)', fontWeight: 600 }}>{scoreLabel}</p>
                 </div>
               )}
-              <div style={{ marginLeft: 'auto', paddingBottom: 4 }}>
-                <button
-                  onClick={() => quizResult ? setActiveTab('learning') : router.push('/quiz')}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 16px', background: '#FFFFFF', border: 'none', borderRadius: 10, color: '#1E4DD7', fontSize: 12, fontWeight: 700, cursor: 'pointer', boxShadow: '0px 4px 14px rgba(0,0,0,0.18)', fontFamily: 'Inter, sans-serif' }}
-                >
-                  <span>{quizResult ? 'Start Learning' : 'Start with Quiz'}</span>
-                  <ArrowRight size={12} style={{ color: '#1E4DD7' }} />
-                </button>
-              </div>
+
+              {!aiData && !isAiCalculating && quizResult && (
+                <div style={{ marginLeft: 'auto', paddingBottom: 4 }}>
+                  <button
+                    onClick={() => quizResult ? setActiveTab('learning') : router.push('/quiz')}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 16px', background: '#FFFFFF', border: 'none', borderRadius: 10, color: '#1E4DD7', fontSize: 12, fontWeight: 700, cursor: 'pointer', boxShadow: '0px 4px 14px rgba(0,0,0,0.18)', fontFamily: 'Inter, sans-serif' }}
+                  >
+                    <span>{quizResult ? 'Start Learning' : 'Start with Quiz'}</span>
+                    <ArrowRight size={12} style={{ color: '#1E4DD7' }} />
+                  </button>
+                </div>
+              )}
             </div>
             <div style={{ height: 6, background: 'rgba(255,255,255,0.15)', borderRadius: 3, overflow: 'hidden', marginBottom: 8 }}>
               <div style={{ width: `${quizResult ? Math.max(score, 5) : 0}%`, height: '100%', background: 'linear-gradient(90deg, rgba(255,255,255,0.6), #FFFFFF)', borderRadius: 3 }} />
@@ -660,10 +692,10 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
           {/* ── MOBILE 2×2 Stat Cards ── */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             {[
-              { icon: TrendingUp, val: quizResult ? `${score}%` : '0', label: 'Readiness Score', color: '#F59A0A', bg: '#FFF7E6' },
+              { icon: TrendingUp, val: quizResult ? (isAiCalculating ? '...' : `${score}%`) : '0', label: 'Readiness Score', color: '#F59A0A', bg: '#FFF7E6' },
               { icon: BookOpen,   val: curriculum ? String(Math.max(1, new Set(recentProgress.map(p => p.module_index)).size)) : '—', label: 'Modules Active', color: '#3B75FF', bg: '#EBF1FF' },
-              { icon: Flame,      val: '—', label: 'Day Streak',   color: '#21C474', bg: '#E8F9EE' },
-              { icon: FilesIcon,  val: '—', label: 'Docs Ready',   color: '#EF4369', bg: '#FDECEC' },
+              { icon: Wallet,     val: aiData ? aiData.estimatedCost : (isAiCalculating ? 'Thinking...' : '—'), label: 'Est. Migration Cost', color: '#21C474', bg: '#E8F9EE' },
+              { icon: Clock,      val: aiData ? `${aiData.estimatedTimelineMonths} Months` : (isAiCalculating ? 'Thinking...' : '—'), label: 'Est. Timeline', color: '#EF4369', bg: '#FDECEC' },
             ].map(card => {
               const Icon = card.icon
               return (
@@ -695,6 +727,7 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
                       <span className="text-xl font-bold text-white/70">%</span>
                       <p className="text-[11px] font-semibold text-white/55 leading-tight">{scoreLabel}</p>
                     </div>
+
                   </div>
                   <div className="h-2 rounded-full mb-3 max-w-[220px] overflow-hidden" style={{ background: 'rgba(255,255,255,0.15)' }}>
                     <div className="h-full rounded-full" style={{ width: `${score}%`, background: 'linear-gradient(90deg, rgba(255,255,255,0.6), #FFFFFF)' }} />
@@ -739,10 +772,10 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
             {/* Quick stats */}
             <div className="grid grid-cols-2 gap-2.5 content-center">
               {[
-                { icon: TrendingUp, val: quizResult ? `${score}%` : '0', label: 'Readiness Score', color: '#F59A0A' },
+                { icon: TrendingUp, val: quizResult ? (isAiCalculating ? '...' : `${score}%`) : '0', label: 'Readiness Score', color: '#F59A0A' },
                 { icon: BookOpen,   val: curriculum ? String(Math.max(1, new Set(recentProgress.map(p => p.module_index)).size)) : '—', label: 'Modules Active', color: '#3B75FF' },
-                { icon: Flame,      val: '—', label: 'Day Streak',    color: '#21C474' },
-                { icon: FilesIcon,  val: '—', label: 'Docs Ready',    color: '#EF4369' },
+                { icon: Wallet,     val: aiData ? aiData.estimatedCost : (isAiCalculating ? 'Thinking...' : '—'), label: 'Estimated Cost', color: '#21C474' },
+                { icon: Clock,      val: aiData ? `${aiData.estimatedTimelineMonths} Months` : (isAiCalculating ? 'Thinking...' : '—'), label: 'Timeline', color: '#EF4369' },
               ].map(s => {
                 const Icon = s.icon
                 return (
@@ -952,7 +985,7 @@ function LearningTab({ answers, userId, quizResult, router }) {
     try {
       const res = await fetch('/api/generate-curriculum', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answers }),
+        body: JSON.stringify({ answers, ai_data: quizResult?.ai_data }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Generation failed')
@@ -2994,6 +3027,7 @@ export default function Dashboard() {
   const [curriculum, setCurriculum] = useState(null)
   const [recentProgress, setRecentProgress] = useState([])
   const [recentModuleQuizResults, setRecentModuleQuizResults] = useState([])
+  const [isAiCalculating, setIsAiCalculating] = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -3078,6 +3112,32 @@ export default function Dashboard() {
 
       setProfile(profileData)
       setQuizResult(quizData)
+
+      // ── Trigger Grounded AI Scorer if missing ────────────────────────────────
+      if (quizData && !quizData.ai_data && !isAiCalculating) {
+        setIsAiCalculating(true)
+        console.log('Grounding user profile with Master AI Pipeline...')
+        fetch('/api/calculate-readiness', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            answers: quizData.answers, 
+            resultId: quizData.id 
+          })
+        }).then(res => res.json()).then(resData => {
+          if (resData.overall) {
+            setQuizResult(prev => ({ 
+              ...prev, 
+              ai_data: resData, 
+              score: resData.overall 
+            }))
+          }
+          setIsAiCalculating(false)
+        }).catch(err => {
+          console.error('AI Grounding Error:', err)
+          setIsAiCalculating(false)
+        })
+      }
 
       // Fetch curriculum + recent lesson progress for personalised dashboard
       if (quizData?.answers?.destination && quizData?.answers?.segment) {
@@ -3204,7 +3264,7 @@ export default function Dashboard() {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.18 }}
             >
-              {activeTab === 'overview'       && <OverviewTab answers={answers} score={score} flag={flag} displayName={displayName} isNewUser={isFirstVisit} router={router} quizResult={quizResult} setActiveTab={setActiveTab} curriculum={curriculum} recentProgress={recentProgress} recentModuleQuizResults={recentModuleQuizResults} />}
+              {activeTab === 'overview'       && <OverviewTab answers={answers} score={score} flag={flag} displayName={displayName} isNewUser={isFirstVisit} router={router} quizResult={quizResult} setActiveTab={setActiveTab} curriculum={curriculum} recentProgress={recentProgress} recentModuleQuizResults={recentModuleQuizResults} isAiCalculating={isAiCalculating} />}
               {activeTab === 'learning'       && <LearningTab answers={answers} userId={user?.id} quizResult={quizResult} router={router} />}
               {activeTab === 'roadmap'        && <RoadmapTab answers={answers} score={score} quizResult={quizResult} router={router} />}
               {activeTab === 'resources'      && <ResourcesTab answers={answers} userId={user?.id} />}

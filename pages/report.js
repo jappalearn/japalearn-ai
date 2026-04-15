@@ -194,27 +194,56 @@ export default function Report() {
 
   useEffect(() => {
     if (!router.isReady) return
-    const { score, answers } = router.query
-    if (!score || !answers) { router.push('/'); return }
-    try {
-      const parsed = { score: parseInt(score), answers: JSON.parse(answers) }
-      const totalMs = 30000
-      const stepMs = totalMs / LOADING_STEPS.length
-      let step = 0
-      const stepTimer = setInterval(() => {
-        step += 1
-        if (step < LOADING_STEPS.length) setStepIndex(step)
-        else clearInterval(stepTimer)
-      }, stepMs)
-      const barTimer = setInterval(() => {
-        setBarWidth(w => { if (w >= 98) { clearInterval(barTimer); return 98 } return w + 0.17 })
-      }, 50)
-      const doneTimer = setTimeout(() => {
+    const { score: queryScore, answers: queryAnswers } = router.query
+    if (!queryScore || !queryAnswers) { router.push('/'); return }
+
+    async function fetchAIReport() {
+      try {
+        const answers = JSON.parse(queryAnswers)
+        
+        // 1. Kick off loading timers for UX
+        const totalMs = 15000 // Shortened for better UX with AI
+        const stepMs = totalMs / LOADING_STEPS.length
+        let step = 0
+        const stepTimer = setInterval(() => {
+          step += 1
+          if (step < LOADING_STEPS.length) setStepIndex(step)
+          else clearInterval(stepTimer)
+        }, stepMs)
+
+        const barTimer = setInterval(() => {
+          setBarWidth(w => { if (w >= 95) { clearInterval(barTimer); return 95 }; return w + 0.3 })
+        }, 50)
+
+        // 2. CALL THE MASTER AI PIPELINE
+        const res = await fetch('/api/calculate-readiness', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ answers })
+        })
+        const aiData = await res.json()
+
+        // 3. Finalize
         setBarWidth(100)
-        setTimeout(() => { setGenerating(false); setData(parsed) }, 300)
-      }, totalMs)
-      return () => { clearInterval(stepTimer); clearInterval(barTimer); clearTimeout(doneTimer) }
-    } catch { router.push('/') }
+        setTimeout(() => {
+          setGenerating(false)
+          setData({ 
+            score: aiData.overall || parseInt(queryScore), 
+            answers: answers,
+            ai: aiData 
+          })
+        }, 500)
+
+        return () => { clearInterval(stepTimer); clearInterval(barTimer) }
+      } catch (err) {
+        console.error('Failed to load AI report', err)
+        // Fallback to static if AI fails
+        setData({ score: parseInt(queryScore), answers: JSON.parse(queryAnswers) })
+        setGenerating(false)
+      }
+    }
+
+    fetchAIReport()
   }, [router.isReady])
 
   /* ── Loading screen ── */
@@ -267,11 +296,20 @@ export default function Report() {
 
   if (!data) return null
 
-  const { score, answers } = data
-  const flag = getScoreFlag(score)
+  const { score, answers, ai } = data
+  const flag = ai?.flag || getScoreFlag(score)
   const recommendation = getRecommendation(answers.destination, normaliseSegment(answers.segment), answers)
-  const breakdown = getScoreBreakdown(answers)
-  const { strengths, gaps } = getStrengthsAndGaps(breakdown)
+  
+  // Use AI dimensions if available, otherwise fallback to legacy breakdown
+  const aiBreakdown = ai?.dimensions ? [
+    { label: 'Financial Readiness', score: ai.dimensions.financial, max: 100, note: 'Based on current visa proof of funds requirements' },
+    { label: 'Language Readiness', score: ai.dimensions.language, max: 100, note: 'Based on destination country score thresholds' },
+    { label: 'Documentation', score: ai.dimensions.documentation, max: 100, note: 'Status of your passport and qualifications' },
+    { label: 'Professional Recognition', score: ai.dimensions.professional, max: 100, note: 'Likelihood of your professional recognition' },
+    { label: 'Process Knowledge', score: ai.dimensions.knowledge, max: 100, note: 'Understanding of the migration steps' }
+  ] : getScoreBreakdown(answers)
+
+  const { strengths = [], gaps = [] } = ai ? { strengths: ai.topStrengths || [], gaps: ai.topGaps || [] } : getStrengthsAndGaps(aiBreakdown)
   const nextSteps = getNextSteps(answers, score)
 
   const scoreColor = flag === 'green' ? '#22C55E' : flag === 'yellow' ? '#3b75ff' : '#3b75ff'
@@ -280,9 +318,9 @@ export default function Report() {
   const flagText = flag === 'green' ? '#15803d' : PRIMARY
 
   const eligibilityRows = [
-    ['Language', answers.language && answers.language !== 'Not taken' ? answers.language : 'IELTS 6.5+ minimum (CLB 7 for Canada)'],
+    ['Visa Route', ai?.recommendedRoute || recommendation.route],
     ['Education', answers.education || "Bachelor's degree or equivalent (ECA required)"],
-    ['Docs', '8 documents required'],
+    ['Timeline', `${ai?.estimatedTimelineMonths || 12} Months Project`],
   ]
 
   return (
@@ -390,8 +428,10 @@ export default function Report() {
                     icon: MapPin, label: 'Estimated Cost',
                     content: (
                       <>
-                        <p style={{ fontSize: '28px', fontWeight: 700, color: PRIMARY, marginBottom: '8px', fontFamily: 'DM Sans, sans-serif' }}>{recommendation.cost}</p>
-                        <p style={{ fontSize: '12px', color: '#5f6776', lineHeight: '18px' }}>Includes visa fees, proof of funds, and first-year living costs.</p>
+                        <p style={{ fontSize: '28px', fontWeight: 700, color: PRIMARY, marginBottom: '8px', fontFamily: 'DM Sans, sans-serif' }}>{ai?.estimatedCost || recommendation.cost}</p>
+                        <p style={{ fontSize: '12px', color: '#5f6776', lineHeight: '18px' }}>
+                          {ai?.costExplanation || 'Includes visa fees, proof of funds, and living costs.'}
+                        </p>
                       </>
                     ),
                   },
@@ -399,7 +439,7 @@ export default function Report() {
                     icon: BookOpen, label: 'Timeline',
                     content: (
                       <div className="space-y-2">
-                        {recommendation.timeline.map(([phase, period]) => (
+                        {(ai?.relocationPhases || recommendation.timeline).map(([phase, period]) => (
                           <div key={phase} className="flex justify-between items-center">
                             <span style={{ fontSize: '13px', color: '#0f1720' }}>{phase}</span>
                             <span style={{ fontSize: '12px', color: '#5f6776' }}>{period}</span>
@@ -425,7 +465,7 @@ export default function Report() {
               <div className="bg-white rounded-2xl p-6 mb-4" style={{ border: '1px solid #e3e9f3', boxShadow: '0 2px 8px rgba(59,117,255,0.04)' }}>
                 <h3 style={{ fontWeight: 700, fontSize: '18px', color: '#0f1720', marginBottom: '20px', fontFamily: 'DM Sans, sans-serif' }}>Full Score Breakdown</h3>
                 <div className="space-y-5">
-                  {breakdown.map(item => {
+                  {aiBreakdown.map(item => {
                     const pct = Math.round((item.score / item.max) * 100)
                     return (
                       <div key={item.label}>
