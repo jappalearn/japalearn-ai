@@ -1491,7 +1491,7 @@ function RoadmapTab({ answers, score, quizResult, router }) {
   const isMobile = useIsMobile()
 
   // Load checked actions from localStorage on mount
-  React.useEffect(() => {
+  useEffect(() => {
     try {
       const saved = localStorage.getItem('japalearn_roadmap_checked')
       if (saved) setCheckedActions(JSON.parse(saved))
