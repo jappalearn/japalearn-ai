@@ -490,10 +490,11 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
     }
   }) : []
 
-  // Priority actions — evolve based on real user state
+  // Priority actions — always exactly 4, ordered by urgency
+  // Skills rule: always show 4 actions, evolve based on real user state
   const hasStartedLessons = recentProgress.length > 0
-  const actions = [
-    // No quiz → take assessment first
+  const allActions = [
+    // No quiz → take assessment (urgent)
     !quizResult && {
       icon: TrendingUp, title: 'Take Migration Assessment', desc: 'Understand your readiness score',
       color: '#EF4369', bg: '#FDECEC', urgent: true, onClick: () => router.push('/quiz'),
@@ -503,17 +504,17 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
       icon: Globe2, title: 'Register for Language Test', desc: 'IELTS / OET required for most visas',
       color: '#EF4369', bg: '#FDECEC', urgent: true, onClick: () => setActiveTab('resources'),
     },
-    // Has curriculum and has started lessons → continue
+    // Has curriculum and started lessons → continue
     quizResult && curriculum && hasStartedLessons && {
       icon: BookOpen, title: 'Continue your module', desc: 'Pick up where you left off',
       color: '#1E4DD7', bg: '#EBF1FF', urgent: false, onClick: () => setActiveTab('learning'),
     },
-    // Has quiz but no curriculum yet, or curriculum exists but no lessons started → start
+    // Quiz done, no curriculum yet OR curriculum exists but no lessons started → start
     quizResult && !(curriculum && hasStartedLessons) && {
       icon: BookOpen, title: 'Start Your Curriculum', desc: `Personalised for ${answers.destination || 'your destination'}`,
       color: '#1E4DD7', bg: '#EBF1FF', urgent: false, onClick: () => setActiveTab('learning'),
     },
-    // Low readiness → improve IELTS
+    // Low readiness → improve language score
     quizResult && score < 40 && {
       icon: Globe2, title: 'Improve your IELTS preparation', desc: 'Your language score needs a boost',
       color: '#F59A0A', bg: '#FFF7E6', urgent: false, onClick: () => setActiveTab('resources'),
@@ -523,17 +524,43 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
       icon: FolderOpen, title: 'Prepare your documents', desc: "You're almost ready — get your docs in order",
       color: '#21C474', bg: '#E8F9EE', urgent: false, onClick: () => setActiveTab('resources'),
     },
-    // Mid readiness → documents
+    // Mid readiness → core documents
     quizResult && score >= 40 && score < 70 && {
       icon: FolderOpen, title: 'Prepare Core Documents', desc: 'Passport, certificates & more',
       color: '#F59A0A', bg: '#FFF7E6', urgent: false, onClick: () => setActiveTab('resources'),
     },
-    // Always show roadmap if quiz done
+    // Always shown post-quiz: roadmap
     quizResult && {
-      icon: Map, title: 'Review Your Roadmap', desc: 'See your 12-month migration plan',
+      icon: Map, title: 'Review Your Roadmap', desc: 'Track your migration milestones',
       color: '#21C474', bg: '#E8F9EE', urgent: false, onClick: () => setActiveTab('roadmap'),
     },
-  ].filter(Boolean).slice(0, 4)
+    // Always shown post-quiz: resources (fills to 4 when other slots are empty)
+    quizResult && {
+      icon: FolderOpen, title: 'Explore Resources', desc: `Tools & guides for ${answers.destination || 'your journey'}`,
+      color: '#9B59B6', bg: '#F5EEFF', urgent: false, onClick: () => setActiveTab('resources'),
+    },
+    // Always shown pre-quiz: explore what's possible (fills slots 2–4)
+    !quizResult && {
+      icon: Map, title: 'See How It Works', desc: 'Your roadmap unlocks after the quiz',
+      color: '#1E4DD7', bg: '#EBF1FF', urgent: false, onClick: () => router.push('/quiz'),
+    },
+    !quizResult && {
+      icon: Globe2, title: 'Understand Visa Routes', desc: 'Canada, UK, Australia & more',
+      color: '#F59A0A', bg: '#FFF7E6', urgent: false, onClick: () => router.push('/quiz'),
+    },
+    !quizResult && {
+      icon: FolderOpen, title: 'Check Your Documents', desc: 'Know what you'll need before you apply',
+      color: '#21C474', bg: '#E8F9EE', urgent: false, onClick: () => router.push('/quiz'),
+    },
+  ].filter(Boolean)
+
+  // Deduplicate by title then take first 4 — skills rule: always show exactly 4
+  const seen = new Set()
+  const actions = allActions.filter(a => {
+    if (seen.has(a.title)) return false
+    seen.add(a.title)
+    return true
+  }).slice(0, 4)
 
   const scoreLabel = score >= 70 ? 'Strong' : score >= 45 ? 'Moderate' : 'Developing'
   const isMobile = useIsMobile()
