@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { getScoreFlag, calculateScoreBreakdown, normaliseSegment } from '../lib/quizData'
+import { getRecommendedRoute } from '../lib/visaRoutes'
 import Logo from '../lib/Logo'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn, formatNaira } from '@/lib/utils'
@@ -53,7 +54,8 @@ const scoreLabelMap = {
   'Language': 'Language Proficiency',
   'Age': 'Demographics',
   'Savings': 'Financial Readiness',
-  'Profile': 'Professional Profile',
+  'Profile': 'Skills & Certs',
+  'Academic': 'Academic Strength',
 }
 
 
@@ -453,7 +455,10 @@ function QuizRequiredState({ icon: Icon, title, description, router }) {
 
 // ── OVERVIEW TAB ─────────────────────────────────────────────────────────────
 function OverviewTab({ answers, score, flag, displayName, isNewUser, router, quizResult, setActiveTab, curriculum, recentProgress, recentModuleQuizResults, isAiCalculating }) {
-  const visaRoute = quizResult?.ai_data?.recommendedRoute || null
+  const logicRoute = answers.destination ? getRecommendedRoute(answers.destination, answers.segment, answers) : null
+  const visaRoute = quizResult?.ai_data?.recommendedRoute || logicRoute
+  const expertNote = quizResult?.ai_data?.expertNote || null
+  const feasibilityStatus = quizResult?.ai_data?.feasibilityStatus || null
   const today = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
   const greetingHour = new Date().getHours()
   const greeting = greetingHour < 12 ? 'Good morning' : greetingHour < 17 ? 'Good afternoon' : 'Good evening'
@@ -468,25 +473,10 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
     { label: 'Savings',      status: areaStatus(Math.round(((scoreBreakdown.find(s=>s.label==='Savings')?.score||0) / 10)*100)) },
   ] : []
 
-  // Score categories for breakdown section
-  // Priority: Use AI-grounded dimensions if available, otherwise fallback to static
+  // Score categories — always derived from quiz answers via calculateScoreBreakdown
+  // (not from AI dimensions, which use a different 0-100 percentage scale)
   const aiData = quizResult?.ai_data
-  const scoreCategories = aiData?.dimensions ? [
-    { label: 'Financial Readiness', score: aiData.dimensions.financial, rawScore: aiData.dimensions.financial, max: 100 },
-    { label: 'Language Skills',      score: aiData.dimensions.language, rawScore: aiData.dimensions.language, max: 100 },
-    { label: 'Documentation',       score: aiData.dimensions.documentation, rawScore: aiData.dimensions.documentation, max: 100 },
-    { label: 'Professional Profile', score: aiData.dimensions.professional, rawScore: aiData.dimensions.professional, max: 100 },
-    { label: 'Migration Knowledge',  score: aiData.dimensions.knowledge, rawScore: aiData.dimensions.knowledge, max: 100 },
-  ].map(item => {
-    const pct = item.score
-    const st = areaStatus(pct)
-    return {
-      ...item,
-      color: st === 'ok' ? '#21C474' : st === 'warn' ? '#F59A0A' : '#EF4369',
-      bg:    st === 'ok' ? '#E8F9EE' : st === 'warn' ? '#FFF7E6' : '#FDECEC',
-      status: st,
-    }
-  }) : (quizResult ? scoreBreakdown.map(item => {
+  const scoreCategories = quizResult ? scoreBreakdown.map(item => {
     const pct = Math.round((item.score / item.max) * 100)
     const st = areaStatus(pct)
     return {
@@ -498,7 +488,7 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
       bg:    st === 'ok' ? '#E8F9EE' : st === 'warn' ? '#FFF7E6' : '#FDECEC',
       status: st,
     }
-  }) : [])
+  }) : []
 
   // Derive next lesson from most recently completed lesson
   const hasStartedLessons = recentProgress.length > 0
@@ -779,6 +769,31 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
                 )
               })}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Immigration Officer Note (AI disclaimer) ── */}
+      {expertNote && (
+        <div className="rounded-[16px] p-4 flex items-start gap-3" style={{
+          background: feasibilityStatus === 'Unrealistic' ? '#fef2f2' : feasibilityStatus === 'High Risk' ? '#fffbeb' : '#f0f5ff',
+          border: `1px solid ${feasibilityStatus === 'Unrealistic' ? '#fecaca' : feasibilityStatus === 'High Risk' ? '#fde68a' : '#c8d9ff'}`,
+        }}>
+          <div className="shrink-0 mt-0.5 w-8 h-8 rounded-full flex items-center justify-center" style={{
+            background: feasibilityStatus === 'Unrealistic' ? '#fee2e2' : feasibilityStatus === 'High Risk' ? '#fef3c7' : '#e6efff',
+          }}>
+            <AlertTriangle size={15} style={{ color: feasibilityStatus === 'Unrealistic' ? '#dc2626' : feasibilityStatus === 'High Risk' ? '#d97706' : '#3b75ff' }} />
+          </div>
+          <div className="flex-1">
+            <p className="text-[11px] font-bold uppercase tracking-wider mb-1" style={{ color: feasibilityStatus === 'Unrealistic' ? '#991b1b' : feasibilityStatus === 'High Risk' ? '#92400e' : '#1e4dd7' }}>
+              Immigration Officer Note
+            </p>
+            <p className="text-[13px] leading-relaxed" style={{ color: feasibilityStatus === 'Unrealistic' ? '#b91c1c' : feasibilityStatus === 'High Risk' ? '#a16207' : '#374151' }}>
+              {expertNote}
+            </p>
+            <p className="text-[11px] mt-1.5" style={{ color: '#9ca3af' }}>
+              This is an AI-generated assessment. Not legal advice · Not a visa agency.
+            </p>
           </div>
         </div>
       )}
@@ -1846,7 +1861,7 @@ function RoadmapTab({ answers, score, quizResult, router }) {
     )
   }
 
-  const { milestones: rawMilestones, totalWeeks, visaRoute, destLabel, phases, timelinePlan } = generateMilestones(answers, score, quizResult?.ai_data)
+  const { milestones: rawMilestones, totalWeeks, visaRoute, destLabel, phases, timelinePlan } = generateMilestones(answers, score, quizResult?.ai_data?.recommendedRoute, quizResult?.ai_data?.estimatedTimelineMonths)
 
   // All done/current state is manual — driven entirely by checkedActions
   const milestones = rawMilestones
