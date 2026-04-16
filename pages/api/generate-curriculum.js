@@ -40,7 +40,6 @@ function buildProfileDescription(answers) {
   if (a.hrmkt_certs)               lines.push(`HR/MARKETING CERTIFICATIONS: ${a.hrmkt_certs}`)
   if (a.hrmkt_seniority)           lines.push(`SENIORITY: ${a.hrmkt_seniority}`)
   if (a.freelance_field)           lines.push(`FREELANCE FIELD: ${a.freelance_field}`)
-  if (a.freelance_income)          lines.push(`MONTHLY FREELANCE INCOME (USD): ${a.freelance_income}`)
   if (a.international_clients)     lines.push(`INTERNATIONAL CLIENTS: ${a.international_clients}`)
   if (a.business_registration)     lines.push(`BUSINESS REGISTRATION: ${a.business_registration}`)
   if (a.nomad_route)               lines.push(`PREFERRED RELOCATION MODEL: ${a.nomad_route}`)
@@ -62,88 +61,18 @@ function buildProfileDescription(answers) {
   return lines.join('\n')
 }
 
-function buildGapInstructions(answers) {
-  const gaps = []
-  const a = answers
-  if (!a.language || a.language === 'Not taken')
-    gaps.push('- URGENT: Language test not taken. A dedicated language preparation module is essential.')
-  if (a.savings === 'Less than ₦1M' || a.savings === '< ₦1M')
-    gaps.push('- URGENT: Savings below ₦1M. Financial preparation module is urgent.')
-  if (a.licensing_progress === 'Not started at all' || a.licensing_progress === 'Not started')
-    gaps.push('- URGENT: Overseas licensing not started. This is the critical blocker and must be addressed early.')
-  if (a.job_offer === 'No' || a.job_offer === 'No — still searching' || a.job_offer === 'Not at this stage yet')
-    gaps.push('- High priority: No job offer yet. Include a dedicated module on securing employment or sponsorship.')
-  return gaps.length > 0 ? `\nGAPS TO ADDRESS:\n${gaps.join('\n')}` : ''
-}
-
-function buildRoleSpecificInstructions(answers) {
-  const segment = answers.segment || ''
-  const destination = answers.destination || ''
-
-  if (segment === 'Medical Doctor') return `
-ROLE-SPECIFIC REQUIREMENTS — NIGERIAN MEDICAL DOCTOR GOING TO ${destination}:
-- Everything must be written from a doctor's perspective, not a generic migrant.
-- UK: Cover PLAB 1, PLAB 2, GMC registration, OET vs IELTS for doctors, NHS Certificate of Sponsorship, Health & Care Worker Visa.
-- Canada: Cover MCCQE Part 1, NAC OSCE, provincial licensing (CPSO etc.), CaRMS if applicable.
-- Australia: Cover AMC Part 1 (MCQ), AMC Part 2 (clinical), AHPRA registration, Area of Need positions.
-- USA: Cover USMLE Step 1, Step 2 CK, Step 3, ECFMG certification, residency matching.
-- MDCN certificate verification letter is required for all international licensing — include in documents module.
-- Specialty (${answers.doctor_specialty || 'general'}) should shape which pathways and fellowships are discussed.`
-
-  if (segment === 'Nurse / Midwife') return `
-ROLE-SPECIFIC REQUIREMENTS — NIGERIAN NURSE/MIDWIFE GOING TO ${destination}:
-- UK: NMC registration — CBT, OSCE, IELTS 7.0 or OET B, NHS trust sponsorship, Health & Care Worker Visa.
-- Canada: NCLEX-RN, provincial nursing bodies (CNO, CRNBC), CELBAN or IELTS.
-- Australia: AHPRA registration, NCLEX or local competency assessment.
-- NMCN verification letter required — must be in documents module.
-- Nursing environment (${answers.nursing_environment || 'general'}) affects competitiveness — address this.`
-
-  if (segment === 'Pharmacist') return `
-ROLE-SPECIFIC REQUIREMENTS — NIGERIAN PHARMACIST GOING TO ${destination}:
-- UK: GPhC registration, overseas pharmacist assessment, pre-registration intern year.
-- Canada: PEBC Evaluating Exam and Qualifying Exam Parts 1 and 2.
-- Australia: AHPRA registration, OCPAS, intern year requirements.
-- PCN verification and transcript required — in documents module.
-- Their sector (${answers.pharmacy_sector || 'general'}) affects recognition pathway.`
-
-  if (segment === 'Software Engineer / Developer') return `
-ROLE-SPECIFIC REQUIREMENTS — NIGERIAN SOFTWARE ENGINEER GOING TO ${destination}:
-- Specialisation: ${answers.dev_specialisation || 'software development'}.
-- Cover tech-specific visa routes: UK Global Talent Visa, Canada Global Talent Stream, Germany ICT Card.
-- Cover international job hunting: LinkedIn, remote-first companies, tech company sponsorship.
-- If no certifications: include a module on building cloud credentials.
-- Cover GitHub/portfolio optimisation for international applications.`
-
-  if (segment === 'Finance / Accounting Professional') return `
-ROLE-SPECIFIC REQUIREMENTS — NIGERIAN FINANCE PROFESSIONAL GOING TO ${destination}:
-- Qualifications: ${answers.finance_quals || 'finance qualifications'}, Seniority: ${answers.finance_seniority || 'professional level'}.
-- Cover mutual recognition of ICAN, ACCA, CFA, CIMA in target country.
-- Cover finance-specific job portals, recruitment agencies, and networks in ${destination}.
-- Cover Skilled Worker Visa for finance professionals — role codes and salary thresholds.`
-
-  if (segment === 'Legal Professional') return `
-ROLE-SPECIFIC REQUIREMENTS — NIGERIAN LEGAL PROFESSIONAL GOING TO ${destination}:
-- Area of law: ${answers.legal_area || 'law'}.
-- UK: SQE, QLTS (legacy), Bar Transfer Test for barristers, SRA/Bar Standards Board.
-- Cover Nigerian law degree attestation and Law School certificate verification.`
-
-  if (segment === 'Freelancer / Remote Worker') return `
-ROLE-SPECIFIC REQUIREMENTS — NIGERIAN FREELANCER GOING TO ${destination}:
-- Freelance field: ${answers.freelance_field || 'freelance work'}.
-- Cover Digital Nomad Visa for ${destination} or most suitable self-employment route.
-- Cover proof of income: bank statements, PayPal/Payoneer/Wise history, contracts, invoices.
-- Cover tax implications, double taxation agreements, VAT.
-- Do NOT frame this as an employment visa journey.`
-
-  if (segment === 'Student (seeking to study abroad)') return `
-ROLE-SPECIFIC REQUIREMENTS — NIGERIAN STUDENT GOING TO ${destination}:
-- Study level: ${answers.study_level || 'degree'}, Field: ${answers.study_field || 'their field'}.
-- Cover university application process for ${destination}.
-- Cover scholarships: Chevening, Commonwealth, DAAD, etc.
-- Cover Student Visa: maintenance funds, CAS, bank statement, tuition evidence.
-- Cover post-study work rights: UK Graduate Route, Canadian PGWP, German Job Seeker Visa.`
-
-  return ''
+// Map the quiz categories to the new Persona system
+function getPersona(category) {
+  const map = {
+    'Student / Graduate': 'Student / Graduate',
+    'Tech Professional': 'Tech Professional',
+    'Medical Professional': 'Medical Professional',
+    'Skilled Worker': 'Skilled Worker',
+    'Business Owner': 'Business Owner',
+    'Freelancer / Remote Worker': 'Freelancer / Remote Worker',
+    'Parent / Family': 'Parent / Family'
+  }
+  return map[category] || 'Others'
 }
 
 export default async function handler(req, res) {
@@ -154,67 +83,73 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing destination or segment' })
   }
 
+  const persona = getPersona(answers.category || answers.segment)
   const profileDescription = buildProfileDescription(answers)
-  const gapInstructions = buildGapInstructions(answers)
-  const roleInstructions = buildRoleSpecificInstructions(answers)
+  const readiness = ai_data?.overall >= 70 ? 'advanced' : ai_data?.overall >= 40 ? 'intermediate' : 'beginner'
 
   try {
     const responseText = await generateAIResponse(
       [
         {
           role: 'user',
-          content: `Design a complete, deeply personalised migration curriculum for this specific person.
+          content: `Build a persona-specific migration curriculum following these exact instructions.
 
 ═══════════════════════════════════════════
-FULL PROFILE:
+USER PROFILE:
+Persona: ${persona}
+Destination: ${answers.destination}
+Readiness Level: ${readiness}
+Current Overall Score: ${ai_data?.overall || 'N/A'}
+Recommended Route: ${ai_data?.recommendedRoute || 'N/A'}
+
+FULL CONTEXT:
 ${profileDescription}
+
+GAPS IDENTIFIED:
+${ai_data?.topGaps?.join(', ') || 'N/A'}
 ═══════════════════════════════════════════
-${gapInstructions}
-${roleInstructions}
 
-${ai_data ? `═══════════════════════════════════════════
-PHASE 1 AI ANALYSIS RESULTS:
-- Recommended Route: ${ai_data.recommendedRoute}
-- Estimated Timeline: ${ai_data.estimatedTimelineMonths} months
-- Key Strengths: ${ai_data.topStrengths?.join(', ') || 'N/A'}
-- Critical Gaps: ${ai_data.topGaps?.join(', ') || 'N/A'}
-- Expert Note: ${ai_data.expertNote}
-═══════════════════════════════════════════` : ''}
+GENERATION RULES:
+1. RULE 1 (IDENTITY): Use the ${persona} module structure as your base.
+2. RULE 2 (OBJECTIVE): Prioritise the user's professional objective (${answers.segment}).
+3. RULE 3 (BLOCKER): Solve the biggest gap first. If gaps include "Financial" or "Savings", prioritize funding modules.
+4. RULE 4 (DEPTH): Match complexity to ${readiness} readiness.
+5. RULE 5 (OUTCOME): Every lesson must help the user decide, prepare, compare, or apply.
 
-CURRICULUM RULES:
-1. ROLE FIRST — build entirely around who this person IS professionally and their exact visa route
-2. START WHERE THEY ARE — address their current blockers and gaps first, not from zero
-3. PROGRESSIVE ORDER — understanding → eligibility → preparation → application → pre-departure → arrival
-4. FLAG CRITICAL BLOCKERS — urgent=true for any module addressing a critical gap or blocker
-5. HYPER-SPECIFIC TITLES — every module and lesson title must be concrete, role-specific, and actionable. Never vague.
-6. NO REDUNDANCY — each lesson covers unique ground. No overlaps between modules.
-7. EXACTLY 5–8 MODULES, 3–5 LESSONS EACH
-8. LESSON SUMMARY — each lesson summary must say exactly what it teaches AND why it matters to this specific person (1 sentence)
-9. OUTCOME FOCUS — every module links to a real migration milestone
-
-Return ONLY valid JSON:
+REQUIRED JSON OUTPUT FORMAT:
 {
-  "title": "Specific curriculum title mentioning their role, destination, and intended outcome",
+  "persona": "${persona}",
+  "goal": "Clarify their specific migration goal based on their profile",
+  "route": "${ai_data?.recommendedRoute || 'Search for best fit'}",
+  "readiness_level": "${readiness}",
+  "curriculum_title": "Actionable, role-specific title",
+  "module_order_reason": "Explanation of why this sequence solves their blockers",
   "modules": [
     {
-      "title": "Module title — role-specific, outcome-linked, never generic",
-      "urgent": false,
+      "module_id": "m1",
+      "title": "Module Title",
+      "purpose": "What this stage accomplishes",
+      "priority": 1,
       "lessons": [
         {
-          "title": "Lesson title — concrete, specific, never vague",
-          "summary": "One sentence: what this teaches and exactly why it matters to THIS person's migration journey."
+          "title": "Specific Lesson Title",
+          "goal": "One sentence outcome",
+          "difficulty": "beginner|advanced",
+          "estimated_time_minutes": number
         }
       ]
     }
-  ]
+  ],
+  "gaps": ["List critical gaps seen in profile"],
+  "next_best_action": "The single most important next step"
 }`,
         },
       ],
       SKILLS.CURRICULUM_BUILDER,
-      { enrich: true } // 🚀 This triggers RAG + Search grounding
+      { enrich: true } // Trigger RAG + Search for verified current facts
     )
 
-    const curriculum = JSON.parse(responseText.replace(/```json/g, '').replace(/```/g, ''))
+    const curriculum = JSON.parse(responseText.replace(/```json/g, '').replace(/```/g, '').trim())
     return res.status(200).json({ curriculum })
   } catch (error) {
     console.error('AI CURRICULUM ERROR:', error.message)

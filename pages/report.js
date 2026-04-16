@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { FileText, MapPin, BookOpen, CheckCircle, AlertTriangle, ArrowRight } from 'lucide-react'
 import Logo from '../lib/Logo'
 import { getScoreFlag, normaliseSegment, calculateScoreBreakdown } from '../lib/quizData'
+import { formatNaira } from '../lib/utils'
 
 const PRIMARY = '#3b75ff'
 const PRIMARY_DARK = '#2452cc'
@@ -428,7 +429,7 @@ export default function Report() {
                     icon: MapPin, label: 'Estimated Cost',
                     content: (
                       <>
-                        <p style={{ fontSize: '28px', fontWeight: 700, color: PRIMARY, marginBottom: '8px', fontFamily: 'DM Sans, sans-serif' }}>{ai?.estimatedCost || recommendation.cost}</p>
+                        <p style={{ fontSize: '28px', fontWeight: 700, color: PRIMARY, marginBottom: '8px', fontFamily: 'DM Sans, sans-serif' }}>{formatNaira(ai?.estimatedCost || recommendation.cost)}</p>
                         <p style={{ fontSize: '12px', color: '#5f6776', lineHeight: '18px' }}>
                           {ai?.costExplanation || 'Includes visa fees, proof of funds, and living costs.'}
                         </p>
