@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import Link from 'next/link'
@@ -313,7 +313,47 @@ export default function AuthCard({ defaultView = 'signup' }) {
   // Done state (loading screen before redirect)
   const [done, setDone] = useState(false)
 
-  function goToLogin() { setView('login'); setLoginError(''); setSignupError('') }
+  useEffect(() => {
+    let cancelled = false
+
+    const forwardIfSignedIn = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!cancelled && session) {
+        if (session.user.email === 'jappalearn@gmail.com') {
+          window.location.href = 'https://admin.japalearnai.com'
+          return
+        }
+        window.location.href = getAppUrl('/dashboard')
+      }
+    }
+
+    forwardIfSignedIn()
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!cancelled && session) {
+        if (session.user.email === 'jappalearn@gmail.com') {
+          window.location.href = 'https://admin.japalearnai.com'
+          return
+        }
+        window.location.href = getAppUrl('/dashboard')
+      }
+    })
+
+    return () => {
+      cancelled = true
+      authListener.subscription.unsubscribe()
+    }
+  }, [])
+
+  function goToLogin() {
+    if (router.pathname === '/signup') {
+      router.push('/login')
+      return
+    }
+    setView('login')
+    setLoginError('')
+    setSignupError('')
+  }
   function goToSignup() {
     if (!answers || !score) {
       window.location.href = getMainUrl('/quiz')
@@ -332,7 +372,7 @@ export default function AuthCard({ defaultView = 'signup' }) {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: getAppUrl('/dashboard'),
+        redirectTo: getAppUrl('/login'),
         queryParams: { prompt: 'select_account' },
       },
     })
@@ -363,8 +403,12 @@ export default function AuthCard({ defaultView = 'signup' }) {
     e.preventDefault()
     if (!loginEmail || !loginPassword) { setLoginError('Please enter your email and password'); return }
     setLoginError(''); setLoading(true)
-    const { error } = await supabase.auth.signInWithPassword({ email: loginEmail, password: loginPassword })
+    const { data, error } = await supabase.auth.signInWithPassword({ email: loginEmail, password: loginPassword })
     if (error) { setLoginError(error.message); setLoading(false); return }
+    if (data?.user?.email === 'jappalearn@gmail.com') {
+      window.location.href = 'https://admin.japalearnai.com'
+      return
+    }
     setLoading(false)
     setDone(true)
     setTimeout(() => { window.location.href = getAppUrl('/dashboard') }, 2800)
