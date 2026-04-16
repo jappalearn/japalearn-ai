@@ -45,7 +45,7 @@ export default async function handler(req, res) {
       );
       await serviceClient
         .from('quiz_results')
-        .update({ ai_data: result, score: result.overall })
+        .update({ ai_data: result })
         .eq('id', resultId)
         .eq('user_id', user.id);
     }

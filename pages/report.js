@@ -3,157 +3,27 @@ import { useRouter } from 'next/router'
 import Head from 'next/head'
 import Link from 'next/link'
 import { getAppUrl } from '../lib/urls'
-import { FileText, MapPin, BookOpen, CheckCircle, AlertTriangle, ArrowRight } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import Logo from '../lib/Logo'
-import { getScoreFlag, normaliseSegment, calculateScoreBreakdown } from '../lib/quizData'
-import { formatNaira } from '../lib/utils'
+import { getScoreFlag, calculateScoreBreakdown } from '../lib/quizData'
 
 const PRIMARY = '#3b75ff'
-const PRIMARY_DARK = '#2452cc'
 
-function getRecommendation(destination, segment, answers = {}) {
-  const hasOffer = answers.job_offer === 'Yes — confirmed offer' || answers.job_offer === 'Yes — confirmed'
-  const inInterviews = answers.job_offer?.startsWith('In active')
-  const isSenior = ['7 – 10 years', '10+ years'].includes(answers.experience)
-  const isStudent = segment === 'Student or Post-Grad'
-  const isFreelancer = segment === 'Freelancer or Remote Worker'
-  const isHealthcare = segment === 'Healthcare Worker'
-  const isTech = segment === 'Tech Professional'
-  const isFamily = answers.segment === 'Moving to join family abroad'
-
-  const R = (route, cost, timeline) => ({ route, cost, timeline })
-  const tl18 = [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–12'],['Settlement','Month 12–18']]
-  const tl12 = [['Preparation','Month 1–3'],['Testing & Docs','Month 3–6'],['Application','Month 6–9'],['Settlement','Month 9–12']]
-  const tl9  = [['Preparation','Month 1–2'],['Testing & Docs','Month 2–4'],['Application','Month 4–6'],['Settlement','Month 6–9']]
-
-  switch (destination) {
-    case 'UK':
-      if (isStudent)                                  return R('UK Student Visa',              '₦4M – ₦12M', tl18)
-      if (isHealthcare)                               return R('Health & Care Worker Visa',    '₦4M – ₦8M',  tl12)
-      if (isFamily)                                   return R('UK Family Visa',               '₦3M – ₦7M',  tl12)
-      if (isTech && isSenior && !hasOffer && !inInterviews) return R('Global Talent Visa',    '₦5M – ₦10M', tl12)
-      if (isFreelancer && isSenior)                   return R('Global Talent Visa',           '₦5M – ₦10M', tl12)
-      return R('Skilled Worker Visa', '₦5M – ₦10M', tl12)
-
-    case 'Canada':
-      if (isStudent)    return R('Study Permit → Post-Graduation Work Permit → PR', '₦12M – ₦25M', tl18)
-      if (isFamily)     return R('Spousal & Family Sponsorship',                    '₦5M – ₦10M',  tl18)
-      if (isHealthcare) return R('Express Entry — Federal Skilled Worker',          '₦9M – ₦16M',  tl18)
-      return R('Express Entry — Federal Skilled Worker', '₦8M – ₦14M', tl18)
-
-    case 'Germany':
-      if (isStudent)    return R('German Student Visa',        '₦8M – ₦15M', tl18)
-      if (isFreelancer) return R('Germany Freelance Visa',     '₦5M – ₦9M',  tl12)
-      if (isFamily)     return R('German Family Reunion Visa', '₦4M – ₦8M',  tl12)
-      if (hasOffer || inInterviews) return R('EU Blue Card',   '₦7M – ₦12M', tl18)
-      return R('Germany Job Seeker Visa', '₦5M – ₦9M', tl12)
-
-    case 'Australia':
-      if (isStudent)              return R('Student Visa (Subclass 500)',            '₦12M – ₦22M', tl18)
-      if (isHealthcare)           return R('Skilled — Employer Sponsored (Subclass 482)', '₦10M – ₦18M', tl18)
-      if (hasOffer || inInterviews) return R('Employer Sponsored Visa (Subclass 482)', '₦10M – ₦18M', tl18)
-      return R('Skilled Nominated Visa (Subclass 190)', '₦10M – ₦18M', tl18)
-
-    case 'Ireland':
-      if (isStudent) return R('Irish Study Visa → 2-Year Graduate Stay Back', '₦10M – ₦18M', tl18)
-      if (isFamily)  return R('Irish Family Reunification Visa',               '₦4M – ₦8M',  tl12)
-      return R('Critical Skills Employment Permit', '₦6M – ₦11M', tl12)
-
-    case 'USA':
-      if (isStudent)                          return R('F-1 Student Visa',                 '₦8M – ₦20M', tl18)
-      if (isFamily)                           return R('Family-Based Immigrant Visa',       '₦4M – ₦10M', tl18)
-      if (isHealthcare)                       return R('EB-3 Immigrant Worker Visa',        '₦8M – ₦18M', tl18)
-      if (isTech && isSenior && !hasOffer)    return R('O-1A Extraordinary Ability Visa',  '₦6M – ₦15M', tl18)
-      return R('H-1B Specialty Occupation Visa', '₦6M – ₦14M', tl18)
-
-    case 'Netherlands':
-      if (isStudent)    return R('Dutch Study Visa (MVV)',                '₦8M – ₦16M', tl18)
-      if (isFreelancer) return R('Dutch Self-Employment Visa (Zelfstandige)', '₦5M – ₦10M', tl12)
-      if (isFamily)     return R('Dutch Family Reunification Visa',       '₦4M – ₦8M',  tl12)
-      return R('Highly Skilled Migrant Visa (Kennismigrant)', '₦7M – ₦13M', tl12)
-
-    case 'Portugal':
-      if (isFreelancer) return R('D8 Digital Nomad Visa',         '₦3M – ₦6M',  tl9)
-      if (isStudent)    return R('Portuguese Student Visa (D4)',   '₦7M – ₦14M', tl18)
-      if (isFamily)     return R('Portuguese Family Reunification Visa', '₦4M – ₦8M', tl12)
-      return R('D3 Highly Qualified Activity Visa', '₦4M – ₦8M', tl12)
-
-    case 'France':
-      if (isStudent)    return R('French Long-Stay Student Visa (VLS-TS)',   '₦7M – ₦14M', tl18)
-      if (isFreelancer) return R('French Talent Passport — Innovative Project', '₦5M – ₦10M', tl12)
-      if (isFamily)     return R('French Family Reunification Visa',         '₦4M – ₦8M',  tl12)
-      return R('Passeport Talent (Highly Skilled Professionals)', '₦6M – ₦12M', tl18)
-
-    case 'New Zealand':
-      if (isStudent)    return R('New Zealand Student Visa',             '₦10M – ₦20M', tl18)
-      if (isFamily)     return R('New Zealand Partnership / Family Visa','₦5M – ₦10M',  tl12)
-      if (hasOffer || inInterviews) return R('Accredited Employer Work Visa (AEWV)', '₦9M – ₦16M', tl12)
-      return R('Skilled Migrant Category Visa', '₦10M – ₦18M', tl18)
-
-    case 'Sweden':
-      if (isStudent)    return R('Swedish Student Residence Permit', '₦8M – ₦15M', tl18)
-      if (isFreelancer) return R('Swedish Self-Employment Permit',   '₦5M – ₦10M', tl12)
-      if (isFamily)     return R('Swedish Family Reunification Permit', '₦4M – ₦8M', tl12)
-      return R('Swedish Work Permit (Employer Sponsored)', '₦6M – ₦12M', tl12)
-
-    case 'Norway':
-      if (isStudent)    return R('Norwegian Student Residence Permit', '₦8M – ₦16M', tl18)
-      if (isFreelancer) return R('Norwegian Self-Employed Permit',     '₦5M – ₦10M', tl12)
-      if (isFamily)     return R('Norwegian Family Immigration Permit','₦4M – ₦8M',  tl12)
-      return R('Norwegian Skilled Worker Permit', '₦7M – ₦13M', tl12)
-
-    case 'UAE':
-      if (isStudent)                 return R('UAE Student Visa',                         '₦2M – ₦5M', tl9)
-      if (isFreelancer)              return R('UAE Freelance Permit',                     '₦2M – ₦4M', tl9)
-      if (isTech && isSenior)        return R('UAE Golden Visa (Talent Category)',        '₦3M – ₦7M', tl12)
-      if (isHealthcare)              return R('UAE Employment Visa (Healthcare Stream)',  '₦2M – ₦5M', tl9)
-      if (isFamily)                  return R('UAE Residence Visa (Family Sponsorship)',  '₦2M – ₦4M', tl9)
-      return R('UAE Employment Visa', '₦2M – ₦5M', tl9)
-
-    case 'Singapore':
-      if (isStudent)              return R("Singapore Student's Pass",                '₦8M – ₦18M', tl18)
-      if (isFamily)               return R('Singapore Dependant\'s Pass',             '₦3M – ₦7M',  tl12)
-      if (isTech && isSenior)     return R('Singapore Tech.Pass',                    '₦6M – ₦14M', tl12)
-      return R('Singapore Employment Pass (EP)', '₦5M – ₦12M', tl12)
-
-    default:
-      return R('Skilled Worker Employment Visa', '₦5M – ₦12M', tl18)
-  }
+const REPORT_LABEL_MAP = {
+  Experience: 'Work Experience',
+  Language: 'Language Test',
+  Age: 'Age Factor',
+  Savings: 'Financial Readiness',
+  Profile: 'Skills & Certs',
+  Education: 'Education',
+  Academic: 'Academic Strength',
 }
 
-const REPORT_LABEL_MAP = { Experience: 'Work Experience', Language: 'Language Test', Age: 'Age Factor', Savings: 'Financial Readiness', Profile: 'Skills & Certs', Education: 'Education', Academic: 'Academic Strength' }
-const REPORT_NOTES = { Experience: 'Limited experience means you may benefit more from a study pathway first.', Education: 'Higher education levels unlock more immigration pathways.', Language: 'IELTS 6.0–6.5 meets minimum thresholds but improving to 7.0+ significantly boosts eligibility.', Age: 'Age factor is fixed based on your profile.', Savings: '₦5M–10M covers some routes but you may need more depending on your destination.', Profile: 'Certifications, job offers, and licensing progress add valuable points.' }
-
-function getScoreBreakdown(answers) {
-  return calculateScoreBreakdown(answers).map(item => ({
-    label: REPORT_LABEL_MAP[item.label] || item.label,
-    score: item.score,
-    max: item.max,
-    note: REPORT_NOTES[item.label] || '',
-  }))
-}
-
-function getStrengthsAndGaps(breakdown) {
-  const strengths = breakdown.filter(b => b.score >= b.max * 0.6).map(b => b.label)
-  const gaps = breakdown.filter(b => b.score < b.max * 0.4).map(b => b.label)
-  return { strengths, gaps }
-}
-
-function getNextSteps(answers, score) {
-  const steps = []
-  const flag = getScoreFlag(score)
-  if (!answers.language || answers.language === 'Not taken')
-    steps.push('Book your IELTS test at an approved British Council centre — aim for 7.0+')
-  if (answers.savings === '< ₦1M' || answers.savings === 'Less than ₦1M')
-    steps.push('Start a dedicated migration savings plan. Most routes require minimum ₦3M–₦8M proof of funds.')
-  steps.push('Request reference letters from current and past employers')
-  steps.push('Gather all required documents: passport, transcripts, certificates')
-  if (flag === 'green')
-    steps.push('Your profile is strong. Start your application process now.')
-  else
-    steps.push('Create your JapaLearn account to access your personalised curriculum')
-  return steps.slice(0, 4)
-}
+const LOADING_STEPS = [
+  { text: 'Analysing your profile…',          sub: 'Reviewing your experience, education and background' },
+  { text: 'Calculating your readiness score…', sub: 'Weighing language, savings, age and qualification factors' },
+  { text: 'Finalising your report…',           sub: 'Almost ready — pulling it all together for you' },
+]
 
 function DonutChart({ score, color }) {
   const radius = 60
@@ -179,18 +49,10 @@ function DonutChart({ score, color }) {
   )
 }
 
-const LOADING_STEPS = [
-  { text: 'Analysing your profile…',            sub: 'Reviewing your experience, education and background' },
-  { text: 'Matching you with the best pathway…', sub: 'Comparing your profile against 40+ immigration routes' },
-  { text: 'Calculating your readiness score…',   sub: 'Weighing language, savings, age and qualification factors' },
-  { text: 'Building your action plan…',          sub: 'Identifying your strongest gaps and quick wins' },
-  { text: 'Finalising your report…',             sub: 'Almost ready — pulling it all together for you' },
-]
-
 export default function Report() {
   const router = useRouter()
   const [data, setData] = useState(null)
-  const [generating, setGenerating] = useState(true)
+  const [loading, setLoading] = useState(true)
   const [stepIndex, setStepIndex] = useState(0)
   const [barWidth, setBarWidth] = useState(0)
 
@@ -199,57 +61,33 @@ export default function Report() {
     const { score: queryScore, answers: queryAnswers } = router.query
     if (!queryScore || !queryAnswers) { router.push('/'); return }
 
-    async function fetchAIReport() {
-      try {
-        const answers = JSON.parse(queryAnswers)
-        
-        // 1. Kick off loading timers for UX
-        const totalMs = 15000 // Shortened for better UX with AI
-        const stepMs = totalMs / LOADING_STEPS.length
-        let step = 0
-        const stepTimer = setInterval(() => {
-          step += 1
-          if (step < LOADING_STEPS.length) setStepIndex(step)
-          else clearInterval(stepTimer)
-        }, stepMs)
+    const stepMs = 1200
+    let step = 0
+    const stepTimer = setInterval(() => {
+      step += 1
+      if (step < LOADING_STEPS.length) setStepIndex(step)
+      else clearInterval(stepTimer)
+    }, stepMs)
 
-        const barTimer = setInterval(() => {
-          setBarWidth(w => { if (w >= 95) { clearInterval(barTimer); return 95 }; return w + 0.3 })
-        }, 50)
+    const barTimer = setInterval(() => {
+      setBarWidth(w => { if (w >= 95) { clearInterval(barTimer); return 95 }; return w + 1.2 })
+    }, 50)
 
-        // 2. CALL THE MASTER AI PIPELINE
-        const res = await fetch('/api/calculate-readiness', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ answers })
+    setTimeout(() => {
+      setBarWidth(100)
+      setTimeout(() => {
+        setData({
+          score: parseInt(queryScore),
+          answers: JSON.parse(queryAnswers),
         })
-        const aiData = await res.json()
+        setLoading(false)
+      }, 300)
+    }, LOADING_STEPS.length * stepMs)
 
-        // 3. Finalize
-        setBarWidth(100)
-        setTimeout(() => {
-          setGenerating(false)
-          setData({ 
-            score: aiData.overall || parseInt(queryScore), 
-            answers: answers,
-            ai: aiData 
-          })
-        }, 500)
-
-        return () => { clearInterval(stepTimer); clearInterval(barTimer) }
-      } catch (err) {
-        console.error('Failed to load AI report', err)
-        // Fallback to static if AI fails
-        setData({ score: parseInt(queryScore), answers: JSON.parse(queryAnswers) })
-        setGenerating(false)
-      }
-    }
-
-    fetchAIReport()
+    return () => { clearInterval(stepTimer); clearInterval(barTimer) }
   }, [router.isReady])
 
-  /* ── Loading screen ── */
-  if (generating) {
+  if (loading) {
     const step = LOADING_STEPS[stepIndex]
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center px-5" style={{ fontFamily: 'Inter, sans-serif' }}>
@@ -279,7 +117,7 @@ export default function Report() {
             <div className="h-1.5 rounded-full transition-all duration-300" style={{ width: `${barWidth}%`, background: PRIMARY }} />
           </div>
           <div className="flex justify-between text-xs text-[#5f6776]">
-            <span>Personalising your report</span>
+            <span>Calculating your score</span>
             <span>{Math.round(barWidth)}%</span>
           </div>
         </div>
@@ -298,32 +136,18 @@ export default function Report() {
 
   if (!data) return null
 
-  const { score, answers, ai } = data
-  const flag = ai?.flag || getScoreFlag(score)
-  const recommendation = getRecommendation(answers.destination, normaliseSegment(answers.segment), answers)
-  
-  // Use AI dimensions if available, otherwise fallback to legacy breakdown
-  const aiBreakdown = ai?.dimensions ? [
-    { label: 'Financial Readiness', score: ai.dimensions.financial, max: 100, note: 'Based on current visa proof of funds requirements' },
-    { label: 'Language Readiness', score: ai.dimensions.language, max: 100, note: 'Based on destination country score thresholds' },
-    { label: 'Documentation', score: ai.dimensions.documentation, max: 100, note: 'Status of your passport and qualifications' },
-    { label: 'Professional Recognition', score: ai.dimensions.professional, max: 100, note: 'Likelihood of your professional recognition' },
-    { label: 'Process Knowledge', score: ai.dimensions.knowledge, max: 100, note: 'Understanding of the migration steps' }
-  ] : getScoreBreakdown(answers)
-
-  const { strengths = [], gaps = [] } = ai ? { strengths: ai.topStrengths || [], gaps: ai.topGaps || [] } : getStrengthsAndGaps(aiBreakdown)
-  const nextSteps = getNextSteps(answers, score)
-
-  const scoreColor = flag === 'green' ? '#22C55E' : flag === 'yellow' ? '#3b75ff' : '#3b75ff'
+  const { score, answers } = data
+  const flag = getScoreFlag(score)
+  const scoreColor = flag === 'green' ? '#22C55E' : PRIMARY
   const candidateLabel = flag === 'green' ? 'Strong Candidate' : flag === 'yellow' ? 'Moderate Candidate' : 'Early Stage Candidate'
   const flagBg = flag === 'green' ? '#dcfce7' : '#e6efff'
   const flagText = flag === 'green' ? '#15803d' : PRIMARY
 
-  const eligibilityRows = [
-    ['Visa Route', ai?.recommendedRoute || recommendation.route],
-    ['Education', answers.education || "Bachelor's degree or equivalent (ECA required)"],
-    ['Timeline', `${ai?.estimatedTimelineMonths || 12} Months Project`],
-  ]
+  const breakdown = calculateScoreBreakdown(answers).map(item => ({
+    label: REPORT_LABEL_MAP[item.label] || item.label,
+    score: item.score,
+    max: item.max,
+  }))
 
   return (
     <>
@@ -339,17 +163,14 @@ export default function Report() {
                 JapaLearn <span style={{ color: PRIMARY }}>AI</span>
               </span>
             </Link>
-            
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => { window.location.href = getAppUrl('/signup') + `?answers=${encodeURIComponent(JSON.stringify(answers))}&score=${score}` }}
-                className="inline-flex px-4 sm:px-6 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95 shadow-[0_4px_12px_rgba(59,117,255,0.25)]"
-                style={{ background: PRIMARY }}
-              >
-                <span className="sm:hidden">Sign up free</span>
-                <span className="hidden sm:inline">Create your free account</span>
-              </button>
-            </div>
+            <button
+              onClick={() => { window.location.href = getAppUrl('/signup') + `?answers=${encodeURIComponent(JSON.stringify(answers))}&score=${score}` }}
+              className="inline-flex px-4 sm:px-6 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95 shadow-[0_4px_12px_rgba(59,117,255,0.25)]"
+              style={{ background: PRIMARY }}
+            >
+              <span className="sm:hidden">Sign up free</span>
+              <span className="hidden sm:inline">Create your free account</span>
+            </button>
           </nav>
         </div>
 
@@ -360,28 +181,8 @@ export default function Report() {
             <h1 style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 700, fontSize: 'clamp(28px, 4vw, 44px)', color: '#0f1720', marginBottom: '8px', letterSpacing: '-0.5px' }}>
               Your Migration Report Is Ready
             </h1>
-            <p style={{ color: '#5f6776', fontSize: '16px' }}>Here&apos;s what our AI assessment found about your profile</p>
+            <p style={{ color: '#5f6776', fontSize: '16px' }}>Here&apos;s your readiness score based on your profile</p>
           </div>
-
-          {/* Feasibility Warning Banner */}
-          {(ai?.feasibilityStatus === 'Unrealistic' || ai?.feasibilityStatus === 'High Risk' || ai?.mismatchFound) && (
-            <div className="mb-8 p-5 rounded-2xl border flex items-start gap-4" style={{ 
-              background: ai.feasibilityStatus === 'Unrealistic' ? '#fef2f2' : '#fffbeb',
-              borderColor: ai.feasibilityStatus === 'Unrealistic' ? '#fecaca' : '#fef3c7'
-            }}>
-              <div className="shrink-0 mt-1">
-                <AlertTriangle size={20} color={ai.feasibilityStatus === 'Unrealistic' ? '#dc2626' : '#d97706'} />
-              </div>
-              <div className="flex-1">
-                <h4 className="font-bold text-sm mb-1" style={{ color: ai.feasibilityStatus === 'Unrealistic' ? '#991b1b' : '#92400e' }}>
-                  {ai.feasibilityStatus === 'Unrealistic' ? 'Critical Feasibility Warning' : 'Profile Risk Detected'}
-                </h4>
-                <p className="text-sm leading-relaxed" style={{ color: ai.feasibilityStatus === 'Unrealistic' ? '#b91c1c' : '#a16207' }}>
-                  {ai.expertNote || `Our AI has identified that your current ${ai.mismatchFound ? 'goals mismatch your profile' : 'budget or timeline'} might be unrealistic for this route. Review the breakdown below for specific gaps.`}
-                </p>
-              </div>
-            </div>
-          )}
 
           {/* Score card */}
           <div className="bg-white rounded-2xl p-5 sm:p-8 mb-4" style={{ border: '1px solid #e3e9f3', boxShadow: '0 2px 16px rgba(59,117,255,0.06)' }}>
@@ -393,144 +194,47 @@ export default function Report() {
                 <div className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 mb-3 text-xs font-semibold" style={{ background: flagBg, color: flagText }}>
                   {candidateLabel}
                 </div>
-                <h2 style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 700, fontSize: 'clamp(20px, 3vw, 30px)', color: '#0f1720', marginBottom: '8px', letterSpacing: '-0.3px' }}>
-                  {answers.destination} — {recommendation.route}
+                <h2 style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 700, fontSize: 'clamp(20px, 3vw, 28px)', color: '#0f1720', marginBottom: '8px', letterSpacing: '-0.3px' }}>
+                  {answers.destination} Migration Readiness
                 </h2>
                 <p style={{ color: '#5f6776', fontSize: '14px', lineHeight: '22px' }}>
-                  Based on your quiz profile, this is your best-fit migration pathway.
+                  Sign up to get your full AI analysis — personalised visa route, cost estimate, gaps, and step-by-step curriculum.
                 </p>
-              </div>
-            </div>
-
-            <div className="mt-6 pt-6 flex flex-col sm:flex-row gap-8" style={{ borderTop: '1px solid #e3e9f3' }}>
-              <div>
-                <p style={{ fontSize: '11px', fontWeight: 600, color: '#5f6776', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '10px' }}>STRENGTHS</p>
-                <div className="flex flex-wrap gap-2">
-                  {strengths.length > 0 ? strengths.map(s => (
-                    <span key={s} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium" style={{ background: '#dcfce7', color: '#15803d', border: '1px solid #bbf7d0' }}>
-                      <CheckCircle size={11} /> {s}
-                    </span>
-                  )) : (
-                    <span className="text-xs" style={{ color: '#5f6776' }}>Complete more steps to earn strengths</span>
-                  )}
-                </div>
-              </div>
-              <div>
-                <p style={{ fontSize: '11px', fontWeight: 600, color: '#5f6776', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '10px' }}>AREAS TO IMPROVE</p>
-                <div className="flex flex-wrap gap-2">
-                  {gaps.map(g => (
-                    <span key={g} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium" style={{ background: '#e6efff', color: PRIMARY, border: '1px solid #c8d9ff' }}>
-                      <AlertTriangle size={11} /> {g}
-                    </span>
-                  ))}
-                </div>
               </div>
             </div>
           </div>
 
-          {/* Eligibility + Cost + Timeline + Score Breakdown + Next Steps */}
-          <>
-              {/* Eligibility + Cost + Timeline */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                {[
-                  {
-                    icon: FileText, label: 'Eligibility',
-                    content: (
-                      <div className="space-y-3">
-                        {eligibilityRows.map(([l, v]) => (
-                          <div key={l}>
-                            <p style={{ fontSize: '11px', color: '#5f6776', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '2px' }}>{l}</p>
-                            <p style={{ fontSize: '13px', fontWeight: 600, color: '#0f1720' }}>{v}</p>
-                          </div>
-                        ))}
-                      </div>
-                    ),
-                  },
-                  {
-                    icon: MapPin, label: 'Estimated Cost',
-                    content: (
-                      <>
-                        <p style={{ fontSize: '28px', fontWeight: 700, color: PRIMARY, marginBottom: '8px', fontFamily: 'DM Sans, sans-serif' }}>{formatNaira(ai?.estimatedCost || recommendation.cost)}</p>
-                        <p style={{ fontSize: '12px', color: '#5f6776', lineHeight: '18px' }}>
-                          {ai?.costExplanation || 'Includes visa fees, proof of funds, and living costs.'}
-                        </p>
-                      </>
-                    ),
-                  },
-                  {
-                    icon: BookOpen, label: 'Timeline',
-                    content: (
-                      <div className="space-y-2">
-                        {(ai?.relocationPhases || recommendation.timeline).map(([phase, period]) => (
-                          <div key={phase} className="flex justify-between items-center">
-                            <span style={{ fontSize: '13px', color: '#0f1720' }}>{phase}</span>
-                            <span style={{ fontSize: '12px', color: '#5f6776' }}>{period}</span>
-                          </div>
-                        ))}
-                      </div>
-                    ),
-                  },
-                ].map(({ icon: Icon, label, content }) => (
-                  <div key={label} className="bg-white rounded-2xl p-5" style={{ border: '1px solid #e3e9f3', boxShadow: '0 2px 8px rgba(59,117,255,0.04)' }}>
-                    <div className="flex items-center gap-2 mb-4">
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: '#e6efff' }}>
-                        <Icon size={15} style={{ color: PRIMARY }} />
-                      </div>
-                      <span style={{ fontWeight: 600, fontSize: '15px', color: '#0f1720' }}>{label}</span>
+          {/* Score Breakdown */}
+          <div className="bg-white rounded-2xl p-6 mb-6" style={{ border: '1px solid #e3e9f3', boxShadow: '0 2px 8px rgba(59,117,255,0.04)' }}>
+            <h3 style={{ fontWeight: 700, fontSize: '18px', color: '#0f1720', marginBottom: '20px', fontFamily: 'DM Sans, sans-serif' }}>Score Breakdown</h3>
+            <div className="space-y-5">
+              {breakdown.map(item => {
+                const pct = Math.round((item.score / item.max) * 100)
+                return (
+                  <div key={item.label}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span style={{ fontWeight: 600, fontSize: '14px', color: '#0f1720' }}>{item.label}</span>
+                      <span style={{ fontSize: '13px', color: '#5f6776' }}>{item.score}/{item.max}</span>
                     </div>
-                    {content}
+                    <div className="w-full rounded-full h-2" style={{ background: '#e3e9f3' }}>
+                      <div className="h-2 rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: pct >= 70 ? '#22c55e' : PRIMARY }} />
+                    </div>
                   </div>
-                ))}
-              </div>
+                )
+              })}
+            </div>
+          </div>
 
-              {/* Full Score Breakdown */}
-              <div className="bg-white rounded-2xl p-6 mb-4" style={{ border: '1px solid #e3e9f3', boxShadow: '0 2px 8px rgba(59,117,255,0.04)' }}>
-                <h3 style={{ fontWeight: 700, fontSize: '18px', color: '#0f1720', marginBottom: '20px', fontFamily: 'DM Sans, sans-serif' }}>Full Score Breakdown</h3>
-                <div className="space-y-5">
-                  {aiBreakdown.map(item => {
-                    const pct = Math.round((item.score / item.max) * 100)
-                    return (
-                      <div key={item.label}>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <span style={{ fontWeight: 600, fontSize: '14px', color: '#0f1720' }}>{item.label}</span>
-                          <span style={{ fontSize: '13px', color: '#5f6776' }}>{item.score}/{item.max}</span>
-                        </div>
-                        <div className="w-full rounded-full h-2 mb-1.5" style={{ background: '#e3e9f3' }}>
-                          <div className="h-2 rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: pct >= 70 ? '#22c55e' : PRIMARY }} />
-                        </div>
-                        <p style={{ fontSize: '12px', color: '#5f6776' }}>{item.note}</p>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Next Steps */}
-              <div className="bg-white rounded-2xl p-6 mb-6" style={{ border: '1px solid #e3e9f3', boxShadow: '0 2px 8px rgba(59,117,255,0.04)' }}>
-                <h3 style={{ fontWeight: 700, fontSize: '18px', color: '#0f1720', marginBottom: '20px', fontFamily: 'DM Sans, sans-serif' }}>Your Next Steps</h3>
-                <div className="space-y-4">
-                  {nextSteps.map((step, i) => (
-                    <div key={i} className="flex items-start gap-4">
-                      <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5" style={{ background: PRIMARY }}>
-                        <span style={{ fontSize: '13px', fontWeight: 700, color: '#FFFFFF' }}>{i + 1}</span>
-                      </div>
-                      <p style={{ fontSize: '14px', color: '#0f1720', lineHeight: '22px', paddingTop: '2px' }}>{step}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Bottom CTA */}
-              <div className="flex justify-center">
-                <button
-                  onClick={() => { window.location.href = getAppUrl('/signup') + `?answers=${encodeURIComponent(JSON.stringify(answers))}&score=${score}` }}
-                  className="transition-all hover:opacity-90 flex items-center justify-center gap-2"
-                  style={{ padding: '16px 48px', borderRadius: '99px', background: PRIMARY, color: '#FFFFFF', fontSize: '16px', fontWeight: 600, fontFamily: 'DM Sans, sans-serif' }}
-                >
-                  Create my free account <ArrowRight size={16} />
-                </button>
-              </div>
-            </>
+          {/* CTA */}
+          <div className="flex justify-center">
+            <button
+              onClick={() => { window.location.href = getAppUrl('/signup') + `?answers=${encodeURIComponent(JSON.stringify(answers))}&score=${score}` }}
+              className="transition-all hover:opacity-90 flex items-center justify-center gap-2"
+              style={{ padding: '16px 48px', borderRadius: '99px', background: PRIMARY, color: '#FFFFFF', fontSize: '16px', fontWeight: 600, fontFamily: 'DM Sans, sans-serif' }}
+            >
+              See my full AI analysis <ArrowRight size={16} />
+            </button>
+          </div>
 
           <p className="text-center text-xs mt-8 pb-4" style={{ color: '#5f6776' }}>
             Not legal advice · Not a visa agency · JapaLearn AI is an educational tool

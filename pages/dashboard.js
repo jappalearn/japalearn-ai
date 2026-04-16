@@ -13,7 +13,7 @@ import {
   FileText, File, Download, Filter, FilesIcon, Upload, Flame,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
-import { getScoreFlag, calculateScoreBreakdown } from '../lib/quizData'
+import { getScoreFlag, calculateScoreBreakdown, normaliseSegment } from '../lib/quizData'
 import Logo from '../lib/Logo'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn, formatNaira } from '@/lib/utils'
@@ -38,21 +38,6 @@ function generateReferralCode(fullName) {
   return `${firstName}-${suffix}`
 }
 
-// ── Visa route lookup ─────────────────────────────────────────────────────────
-const VISA_ROUTES = {
-  Canada:    { 'Tech Professional': 'Express Entry — Federal Skilled Worker', 'Healthcare Worker': 'Express Entry + Healthcare Streams', 'Student or Post-Grad': 'Study Permit → PGWP → PR', default: 'Express Entry — Federal Skilled Worker' },
-  UK:        { 'Tech Professional': 'Global Talent Visa / Skilled Worker', 'Healthcare Worker': 'Health & Care Worker Visa', 'Student or Post-Grad': 'UK Student Visa (Tier 4)', default: 'Skilled Worker Visa' },
-  Germany:   { 'Tech Professional': 'EU Blue Card / Skilled Immigration Act', 'Freelancer or Remote Worker': 'Germany Freelance Visa', default: 'EU Blue Card' },
-  Australia: { 'Student or Post-Grad': 'Student Visa → Graduate Visa (485)', default: 'Skilled Nominated Visa (190)' },
-  Ireland:   { 'Student or Post-Grad': 'Study → 2-Year Stay Back', default: 'Critical Skills Employment Permit' },
-  Portugal:  { 'Freelancer or Remote Worker': 'D8 Digital Nomad Visa', default: 'Job Seeker Visa' },
-  UAE:       { default: 'Employment Visa / Freelance Permit' },
-}
-function getVisaRoute(destination, segment) {
-  const r = VISA_ROUTES[destination]
-  if (!r) return 'Skilled Worker / Employment Visa'
-  return r[segment] || r['default'] || 'Skilled Worker / Employment Visa'
-}
 
 // ── Country flags ──────────────────────────────────────────────────────────────
 const COUNTRY_FLAGS = {
@@ -468,7 +453,7 @@ function QuizRequiredState({ icon: Icon, title, description, router }) {
 
 // ── OVERVIEW TAB ─────────────────────────────────────────────────────────────
 function OverviewTab({ answers, score, flag, displayName, isNewUser, router, quizResult, setActiveTab, curriculum, recentProgress, recentModuleQuizResults, isAiCalculating }) {
-  const visaRoute = answers.destination ? getVisaRoute(answers.destination, answers.segment) : null
+  const visaRoute = quizResult?.ai_data?.recommendedRoute || null
   const today = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
   const greetingHour = new Date().getHours()
   const greeting = greetingHour < 12 ? 'Good morning' : greetingHour < 17 ? 'Good afternoon' : 'Good evening'
@@ -1399,21 +1384,122 @@ function getMilestoneWeeks(totalWeeks) {
   ]
 }
 
-function generateMilestones(answers, score) {
-  const dest = answers.destination || ''
-  const seg  = answers.segment || ''
-  const lang = answers.language || 'Not taken'
-  const visaRoute = getVisaRoute(dest || 'your destination', seg)
-  const destLabel = dest || 'your destination'
+function uniqueList(items) {
+  return [...new Set(items.filter(Boolean))]
+}
 
-  const hasLangScore = lang !== 'Not taken' && lang !== 'Registered / scheduled'
-  const hasGoodLang  = lang.includes('7.') || lang.includes('8.') ||
-    lang.startsWith('OET') || lang.startsWith('CELPIP')
+function includesAny(source, patterns) {
+  const text = String(source || '').toLowerCase()
+  return patterns.some(pattern => text.includes(pattern))
+}
+
+function buildRoadmapProfile(answers, score, aiData = {}) {
+  const dest = answers.destination || ''
+  const destLabel = dest || 'your destination'
+  const segment = answers.segment || ''
+  const segmentLower = segment.toLowerCase()
+  const category = answers.category || ''
+  const readinessScore = aiData?.overall || score || 0
+  const readinessFlag = getScoreFlag(readinessScore)
+  const readinessLevel = readinessFlag === 'green' ? 'advanced' : readinessFlag === 'yellow' ? 'intermediate' : 'early'
+  const route = aiData?.recommendedRoute || destLabel
+  const timelineMonths = aiData?.estimatedTimelineMonths || null
+  const topGaps = Array.isArray(aiData?.topGaps) ? aiData.topGaps : []
+  const topStrengths = Array.isArray(aiData?.topStrengths) ? aiData.topStrengths : []
+  const professionalRoute = normaliseSegment(segment || category || '')
+
+  const isStudent = includesAny(segment, ['student']) || includesAny(answers.study_goal, ['degree', 'phd', 'scholarship'])
+  const isHealthcare = includesAny(segment, ['doctor', 'nurse', 'midwife', 'pharmacist', 'healthcare', 'medical']) || professionalRoute === 'Healthcare Worker'
+  const isTech = includesAny(segment, ['software', 'developer', 'data', 'ai', 'product manager', 'designer', 'tech']) || professionalRoute === 'Tech Professional'
+  const isFreelance = includesAny(segment, ['freelance', 'remote', 'creator', 'writer', 'designer', 'consultant']) || professionalRoute === 'Freelancer or Remote Worker'
+  const isFamily = includesAny(segment, ['family']) || includesAny(answers.sponsor_relation, ['spouse', 'parent', 'child', 'sibling'])
+  const isCareer = !isStudent && !isHealthcare && !isTech && !isFreelance && !isFamily
+
+  const hasOffer = includesAny(answers.job_offer, ['confirmed offer', 'confirmed'])
+  const inInterviews = includesAny(answers.job_offer, ['interview', 'active negotiation', 'active interviews'])
+  const hasGoodLanguage = includesAny(answers.language, ['7.0', '7.5', '8.0', '8.']) || includesAny(answers.language, ['oet', 'celpip'])
+  const languageInProgress = includesAny(answers.language, ['registered', 'scheduled', '6.0', '6.5', 'toefl'])
+  const lowSavings = includesAny(answers.savings, ['less than', '₦1m', '₦1m – ₦5m'])
+  const rushTimeline = includesAny(answers.timeline, ['0–3 months', '0-3 months'])
+  const hasLicensingProgress = !includesAny(answers.licensing_progress, ['not started', 'researching']) && !!answers.licensing_progress
+  const hasStrongPortfolio = includesAny(answers.portfolio_status, ['strong portfolio']) || includesAny(answers.pmm_portfolio, ['strong'])
+  const hasInternationalClients = includesAny(answers.international_clients, ['multiple active', 'one or two'])
+  const hasBusinessRegistration = includesAny(answers.business_registration, ['registered', 'in progress'])
+  const scholarshipTrack = includesAny(answers.study_goal, ['scholarship', 'funding', 'phd'])
+  const fundingSecured = includesAny(answers.funding_status, ['fully funded', 'confirmed'])
+  const studyStageAdvanced = includesAny(answers.study_stage, ['applications submitted', 'conditional offer', 'unconditional offer', 'enrolled'])
+
+  return {
+    dest,
+    destLabel,
+    segment,
+    segmentLower,
+    route,
+    readinessScore,
+    readinessLevel,
+    timelineMonths,
+    topGaps,
+    topStrengths,
+    isStudent,
+    isHealthcare,
+    isTech,
+    isFreelance,
+    isFamily,
+    isCareer,
+    hasOffer,
+    inInterviews,
+    hasGoodLanguage,
+    languageInProgress,
+    lowSavings,
+    rushTimeline,
+    hasLicensingProgress,
+    hasStrongPortfolio,
+    hasInternationalClients,
+    hasBusinessRegistration,
+    scholarshipTrack,
+    fundingSecured,
+    studyStageAdvanced,
+  }
+}
+
+function generateMilestones(answers, score, aiData = {}) {
+  const profile = buildRoadmapProfile(answers, score, aiData)
+  const {
+    dest,
+    destLabel,
+    segment,
+    route: visaRoute,
+    readinessLevel,
+    timelineMonths,
+    topGaps,
+    topStrengths,
+    isStudent,
+    isHealthcare,
+    isTech,
+    isFreelance,
+    isFamily,
+    isCareer,
+    hasOffer,
+    inInterviews,
+    hasGoodLanguage,
+    languageInProgress,
+    lowSavings,
+    rushTimeline,
+    hasLicensingProgress,
+    hasStrongPortfolio,
+    hasInternationalClients,
+    hasBusinessRegistration,
+    scholarshipTrack,
+    fundingSecured,
+    studyStageAdvanced,
+  } = profile
 
   const m1Done = true
   const m2Done = false
   const m3Done = false
-  const m4Done = false; const m5Done = false; const m6Done = false
+  const m4Done = false
+  const m5Done = false
+  const m6Done = false
 
   const currentIdx = m1Done && m2Done && m3Done && m4Done && m5Done ? 5
     : m1Done && m2Done && m3Done && m4Done ? 4
@@ -1421,179 +1507,246 @@ function generateMilestones(answers, score) {
     : m1Done && m2Done ? 2
     : m1Done ? 1 : 0
 
-  // Timeline drives duration — score is the fallback for older quiz results
   const TIMELINE_WEEKS = {
-    '0–3 months — I need to move very soon':    13,
+    '0–3 months — I need to move very soon': 13,
     '3–6 months — I have some time to prepare': 26,
-    '6–12 months — I\'m planning well ahead':   52,
-    '12–24 months — I\'m in the early stages':  96,
+    '6–12 months — I\'m planning well ahead': 52,
+    '12–24 months — I\'m in the early stages': 96,
   }
-  const totalWeeks = TIMELINE_WEEKS[answers.timeline]
-    ?? (score >= 70 ? 16 : score >= 40 ? 20 : 24)
-
+  const aiWeeks = timelineMonths ? Math.round(timelineMonths * 4.33) : null
+  const totalWeeks = aiWeeks ?? TIMELINE_WEEKS[answers.timeline] ?? (score >= 70 ? 16 : score >= 40 ? 20 : 24)
   const mWeeks = getMilestoneWeeks(totalWeeks)
 
-  const completedCount = 0
-  const pct = 0
+  const langTestName =
+    isHealthcare ? 'OET / IELTS Academic' :
+    dest === 'Canada' ? 'IELTS General / CELPIP' :
+    dest === 'Australia' || dest === 'Ireland' ? 'IELTS Academic' :
+    'IELTS Academic / General'
 
-  // Destination-specific content
   const docEvalText =
-    dest === 'Canada'    ? 'Get degree evaluation from WES (World Education Services)' :
-    dest === 'UK'        ? 'Get degree evaluated by NARIC / ENIC UK' :
-    dest === 'Australia' ? 'Get skills assessed (ACS for tech, AHPRA for healthcare)' :
-    dest === 'Germany'   ? 'Get qualification recognised via anabin / KMK database' :
-    dest === 'Ireland'   ? 'Get qualifications assessed by Quality and Qualifications Ireland' :
-                           `Research qualification recognition requirements for ${destLabel}`
+    dest === 'Canada' ? 'Start your Educational Credential Assessment with WES or another IRCC-approved body' :
+    dest === 'UK' ? 'Confirm whether your degree needs UK ENIC recognition for your route or employer' :
+    dest === 'Australia' ? 'Book the skills assessment relevant to your profession, such as ACS or AHPRA' :
+    dest === 'Germany' ? 'Verify qualification recognition via anabin or the relevant recognition authority' :
+    dest === 'Ireland' ? 'Check qualification comparability with QQI or the relevant regulator' :
+    `Research qualification recognition requirements for ${destLabel}`
 
   const portalText =
-    dest === 'Canada'    ? 'Create your Express Entry profile on the IRCC portal' :
-    dest === 'UK'        ? 'Submit your application on the UK Visas & Immigration online portal' :
-    dest === 'Australia' ? 'Lodge an Expression of Interest on SkillSelect' :
-    dest === 'Germany'   ? 'Apply through the German Federal Employment Agency (BA) portal' :
-    dest === 'Ireland'   ? 'Apply via the Employment Permits Online System (EPOS)' :
-    dest === 'UAE'       ? 'Apply through the UAE GDRFA or ICP online portal' :
-                           `Submit your visa application via the ${destLabel} immigration portal`
+    dest === 'Canada' ? 'Create or complete your IRCC account and Express Entry profile' :
+    dest === 'UK' ? 'Prepare your application flow on the UKVI online portal' :
+    dest === 'Australia' ? 'Create your SkillSelect and visa application accounts' :
+    dest === 'Germany' ? 'Confirm the embassy, consulate, or immigration portal process for your route' :
+    dest === 'Ireland' ? 'Prepare your Employment Permits Online System (EPOS) process' :
+    dest === 'UAE' ? 'Prepare the ICP or GDRFA process required for your permit type' :
+    `Prepare the official immigration portal workflow for ${destLabel}`
 
   const jobText =
-    seg.includes('Tech')       ? `Apply to 10+ tech employers in ${destLabel} that offer visa sponsorship` :
-    seg.includes('Healthcare') ? `Apply to hospitals / health trusts in ${destLabel} that sponsor overseas workers` :
-    seg.includes('Student')    ? `Apply to accredited universities or colleges in ${destLabel}` :
-    seg.includes('Freelance')  ? `Build a client base or remote work portfolio for ${destLabel}` :
-                                  `Apply to sponsored roles on LinkedIn and ${destLabel}-specific job boards`
+    isTech ? `Apply to highly relevant ${destLabel} tech roles and track sponsorship-friendly employers each week` :
+    isHealthcare ? `Shortlist hospitals, trusts, or clinics in ${destLabel} that actively hire overseas professionals` :
+    isStudent ? `Build and submit a shortlist of accredited schools or programmes in ${destLabel}` :
+    isFreelance ? `Build a relocation-ready portfolio, client proof, and recurring income story for ${destLabel}` :
+    isFamily ? `Document your sponsor relationship, immigration status, and evidence of support for ${destLabel}` :
+    `Target employers, institutions, or sponsors aligned with your ${destLabel} migration route`
 
-  const m4Phase =
-    dest === 'UK'     ? 'Employment' :
-    dest === 'Canada' ? 'Express Entry' :
-                        'Preparation'
+  const roleSpecificPriority =
+    isHealthcare ? 'Licensing and professional registration are your highest-risk blockers, so handle them early.' :
+    isStudent ? 'Offers, scholarship funding, and proof of funds drive the rest of your roadmap.' :
+    isFreelance ? 'Income proof, client evidence, and business legitimacy are the foundation of your case.' :
+    isTech ? 'Employer fit, CV quality, and route-specific competitiveness matter more than generic prep.' :
+    isFamily ? 'Sponsor status and relationship evidence are more important than broad job-market prep.' :
+    'Your roadmap focuses on strengthening the weakest profile areas before formal application.'
 
-  const m4Title =
-    dest === 'UK'     ? 'Obtain job offer & Certificate of Sponsorship' :
-    dest === 'Canada' ? 'Build CRS score & receive Invitation to Apply' :
-                        'Build your professional profile'
+  const readinessNote =
+    readinessLevel === 'advanced'
+      ? `Your profile already has momentum${topStrengths.length ? `, especially around ${topStrengths.slice(0, 2).join(' and ')}` : ''}. This roadmap leans toward execution.`
+      : readinessLevel === 'intermediate'
+        ? `You have a workable base profile, but a few blockers still need deliberate attention before you submit.`
+        : `Your roadmap starts with core foundations because moving too early would likely create delays, refusals, or unnecessary spending.`
 
-  const m4Desc =
-    dest === 'UK'     ? 'Secure a licensed UK employer to sponsor your Skilled Worker Visa.' :
-    dest === 'Canada' ? 'Improve your CRS score and wait for an ITA from the Express Entry pool.' :
-                        'Strengthen your profile to meet destination-specific requirements.'
+  const priorityGapLine = topGaps.length
+    ? `Focus first on ${topGaps.slice(0, 3).join(', ')} because those are your biggest readiness gaps right now.`
+    : roleSpecificPriority
 
-  const m4Actions =
-    dest === 'UK' ? [
-      docEvalText,
-      'Search the GOV.UK licensed sponsor register for your sector',
-      jobText,
-      `Prepare a UK-format CV and Statement of Purpose (SOP)`,
-    ] : dest === 'Canada' ? [
-      docEvalText,
-      'Complete your Provincial Nominee Programme (PNP) application if applicable',
-      jobText,
-      'Boost CRS score — additional language scores, provincial nomination, or job offer',
-    ] : [
-      docEvalText,
-      jobText,
-      seg.includes('Tech') ? 'Obtain a cloud certification (AWS / GCP / Azure)' :
-      seg.includes('Healthcare') ? `Register with the relevant professional body in ${destLabel}` :
-      'Update your LinkedIn and CV to international format',
-      'Build savings to meet proof-of-funds threshold',
-    ]
+  const foundationActions = uniqueList([
+    `Review your AI readiness result for ${destLabel} and confirm that ${visaRoute} is still your best-fit route`,
+    priorityGapLine,
+    readinessNote,
+    rushTimeline ? `Reset your move date against the AI timeline so your ${answers.timeline || 'original target'} plan does not force poor decisions` : null,
+    lowSavings ? 'Create a dedicated migration budget with separate targets for tests, document processing, visa fees, and settlement costs' : 'Map the exact money you still need for fees, proof of funds, and first-month settlement',
+    isStudent ? (scholarshipTrack ? 'Decide whether you are pursuing scholarship-first or self-funded admission so your application list is realistic' : 'Lock your programme type, intake, and budget model before sending applications') : null,
+    isFamily ? `Confirm your sponsor's exact immigration status, legal relationship evidence, and whether your route permits work on arrival` : null,
+    isFreelance ? `Define the income story you will prove to ${destLabel}: client retainers, contracts, invoices, and bank inflows` : null,
+  ])
 
-  const langTestName =
-    seg.includes('Healthcare')                ? 'OET / IELTS Academic' :
-    dest === 'Canada'                          ? 'IELTS General / CELPIP' :
-    dest === 'Australia' || dest === 'Ireland' ? 'IELTS Academic' :
-                                                 'IELTS Academic / General'
+  const documentActions = uniqueList([
+    'Renew your international passport if it will expire within 6 to 12 months of your intended move',
+    'Request degree certificate, official transcript, and any name-change or affidavit documents you may need',
+    'Collect NYSC discharge certificate or exemption evidence and store clean digital copies',
+    'Request signed employer reference letters that match your real duties, dates, and seniority',
+    docEvalText,
+    isHealthcare ? `Collect active council registration evidence and every licensing document tied to ${segment}` : null,
+    isStudent ? 'Prepare academic transcripts, recommendation letters, CV, statement of purpose, and school-specific requirements' : null,
+    isFamily ? 'Gather relationship evidence, sponsor documents, financial support evidence, and proof of accommodation' : null,
+    isFreelance ? 'Assemble contracts, invoices, CAC records, portfolio links, and bank statements that prove recurring work' : null,
+  ])
+
+  const languageActions = hasGoodLanguage
+    ? uniqueList([
+        `Archive your official ${langTestName} result and note the expiry date before application stage`,
+        `Check whether ${visaRoute} or your target employer requires direct score reporting from the test body`,
+        isHealthcare ? 'Confirm whether your destination regulator accepts your current OET or IELTS result format and validity window' : null,
+        dest === 'Canada' ? 'Check whether your current score is competitive enough for CRS, not just minimum eligibility' : null,
+      ])
+    : uniqueList([
+        `Book ${langTestName} and work backward from your realistic ${timelineMonths ? `${timelineMonths}-month` : planLabel(totalWeeks).toLowerCase()} timeline`,
+        languageInProgress ? `Turn your current ${answers.language} progress into a score-improvement plan with weekly mock tests and weak-skill review` : `Start a structured 6- to 8-week ${langTestName} prep plan with a fixed weekly study timetable`,
+        isHealthcare ? 'Target the exact OET or IELTS standard required by the regulator, employer, and visa route you are using' : 'Target a score that is not only passable but competitive for your chosen route',
+        dest === 'Canada' ? 'Compare IELTS General versus CELPIP and choose the one that gives you the best score advantage' : null,
+        'Reserve exam dates early enough to allow time for a retake if your first result is not strong enough',
+      ])
+
+  const competitivenessPhase = isStudent ? 'Admissions' : isFamily ? 'Sponsor Pack' : hasOffer || inInterviews ? 'Conversion' : 'Competitiveness'
+  const competitivenessTitle =
+    isStudent ? (studyStageAdvanced ? 'Convert shortlist into offers and funding decisions' : 'Build a realistic admissions pipeline') :
+    isFamily ? 'Build a sponsor-ready family application pack' :
+    hasOffer ? 'Turn your offer into a visa-ready application pack' :
+    inInterviews ? 'Convert interviews into a formal offer or sponsorship' :
+    isFreelance ? 'Build a stronger proof-of-work and income case' :
+    dest === 'Canada' ? 'Increase your competitiveness for Express Entry or PNP' :
+    'Strengthen your profile before formal application'
+
+  const competitivenessDesc =
+    isStudent ? `Your next win is a credible school, offer, and funding strategy aligned with ${visaRoute}.` :
+    isFamily ? `Use this phase to remove doubt around sponsor eligibility, relationship evidence, and settlement readiness.` :
+    hasOffer ? `Your focus now is reducing friction between offer, documents, and visa filing.` :
+    inInterviews ? `You are close enough that interview quality, employer follow-up, and documentation speed matter.` :
+    `This phase turns your profile into something more competitive for ${destLabel}.`
+
+  const competitivenessActions = uniqueList([
+    jobText,
+    hasOffer ? 'Request the final employment documents, role details, salary evidence, and sponsorship paperwork from your employer' : null,
+    inInterviews ? 'Track interview stages weekly, tailor each application, and close every documentation gap before final rounds' : null,
+    dest === 'Canada' ? 'Estimate your CRS score, identify the fastest way to raise it, and check PNP options relevant to your background' : null,
+    dest === 'UK' ? 'Shortlist licensed sponsors in your field and filter out employers that cannot issue sponsorship' : null,
+    isTech ? (hasStrongPortfolio ? 'Use your existing portfolio to target stronger roles and document measurable impact in each project' : 'Build 2 to 3 internationally credible case studies, GitHub projects, or portfolio pieces tied to the roles you want') : null,
+    isHealthcare ? (hasLicensingProgress ? `Push your current licensing progress from "${answers.licensing_progress}" to the next formal checkpoint` : `Open the licensing pathway for ${segment} and book the next exam, assessment, or registration step`) : null,
+    isStudent ? (fundingSecured ? 'Use your confirmed funding to prioritise schools with the best visa and employability outcomes' : scholarshipTrack ? 'Build a scholarship calendar with essays, referees, transcripts, and deadlines mapped per school' : 'Shortlist schools you can actually fund and match them to your profile strength') : null,
+    isFreelance ? (hasInternationalClients ? 'Package your international client proof into a clean income narrative with contracts, invoices, and bank evidence' : 'Win 1 to 2 stronger foreign clients or longer contracts to make your relocation case more credible') : null,
+    isFreelance && !hasBusinessRegistration ? 'Formalise your business or freelancer records so your income story is easier to prove' : null,
+    isFamily ? 'Collect sponsor payslips, residence status, accommodation evidence, and relationship history in one organised pack' : null,
+    isCareer ? 'Upgrade your CV, LinkedIn, and interview story to match the standards of employers in your target country' : null,
+  ])
+
+  const applicationActions = uniqueList([
+    portalText,
+    `Create a final checklist for every document required by ${visaRoute}, including expiry dates, certified copies, and translations where needed`,
+    dest === 'UK' ? 'Budget for visa fees and Immigration Health Surcharge, then verify the exact current amount on GOV.UK before payment' :
+    dest === 'Canada' ? 'Budget for IRCC fees, biometrics, medicals if needed, and proof-of-funds evidence before submission' :
+    'Budget for visa fees, biometrics, medicals, travel insurance, and any route-specific government charges',
+    isStudent ? 'Tie admission documents, tuition deposit timeline, and visa paperwork into one sequence so nothing expires between stages' : null,
+    isHealthcare ? 'Cross-check that your regulator documents, employer documents, and visa documents all use matching names and dates' : null,
+    'Book biometrics, medicals, police clearance, or embassy appointments as early as your route allows',
+    readinessLevel === 'early' ? 'Get a final application review before submission because weaker profiles are more exposed to avoidable mistakes' : 'Run a final quality-control pass on forms, documents, and supporting statements before you submit',
+  ])
+
+  const relocationActions = uniqueList([
+    `Prepare your first 30 days in ${destLabel}: accommodation, SIM, transport, banking, and emergency budget`,
+    `Research the city, neighbourhoods, and realistic cost of living for the specific location you are targeting in ${destLabel}`,
+    isStudent ? 'Plan school onboarding, tuition deadlines, accommodation deposit, and proof of funds you may still need on arrival' : null,
+    isHealthcare ? 'Prepare for induction, licence activation, workplace compliance, and any documents your employer may re-check after arrival' : null,
+    isFreelance ? 'Set up banking, payment platforms, tax records, and a work routine that protects your client income after relocation' : null,
+    `Join Nigerian and professional communities in ${destLabel} before you travel so you land with practical support`,
+    'Create a pre-departure checklist for flight booking, document backups, currency access, and key institutions you must notify in Nigeria',
+  ])
 
   const phases = [
     'Foundation',
+    'Documents',
     'Language',
-    m4Phase,
+    competitivenessPhase,
     'Application',
     'Relocation',
   ]
 
   const milestones = [
     {
-      id: 'mi1', week: mWeeks[0], phase: 'Foundation',
-      title: 'Complete eligibility assessment',
-      desc: `Understand exactly where you stand against ${visaRoute} criteria.`,
-      actions: [
-        `Reviewed your JapaLearn readiness score for ${destLabel}`,
-        `Identified key requirements for the ${visaRoute}`,
-        'Profile gaps and priorities documented',
-      ],
-      done: m1Done, current: currentIdx === 0,
+      id: 'mi1',
+      week: mWeeks[0],
+      phase: 'Foundation',
+      title: `Align your plan with your ${visaRoute} route`,
+      desc: `${readinessNote} ${roleSpecificPriority}`,
+      actions: foundationActions,
+      done: m1Done,
+      current: currentIdx === 0,
     },
     {
-      id: 'mi2', week: mWeeks[1], phase: 'Foundation',
-      title: 'Gather your core documents',
-      desc: 'Collect and organise the primary documents needed for your application.',
-      actions: [
-        'Obtain / renew your international passport (must be valid 6+ months beyond travel)',
-        'Request degree certificate & certified transcripts from your institution',
-        'Collect NYSC discharge certificate or exemption letter',
-        'Gather employment reference letters (on letterhead, signed)',
-      ],
-      done: m2Done, current: currentIdx === 1,
+      id: 'mi2',
+      week: mWeeks[1],
+      phase: 'Documents',
+      title: 'Build a complete evidence and documents folder',
+      desc: `This phase prepares the exact documents and proof you will need for ${destLabel} without last-minute scrambling.`,
+      actions: documentActions,
+      done: m2Done,
+      current: currentIdx === 1,
     },
     {
-      id: 'mi3', week: mWeeks[2], phase: 'Language',
-      title: hasGoodLang
-        ? `Language requirement met — ${lang.split('—')[0].trim()}`
-        : hasLangScore
-          ? `Improve your ${langTestName} score`
-          : `Book ${langTestName} & begin preparation`,
-      desc: hasGoodLang
-        ? 'Your language score meets the requirement. Keep your certificate ready.'
-        : `English language is your most time-sensitive requirement for ${destLabel} — start now.`,
-      actions: hasGoodLang
-        ? [
-            'Request your official score report from the test body',
-            `Send results directly to your ${destLabel} employer or visa body`,
-            'Keep a copy certified for your visa application file',
-          ]
-        : [
-            `Register with British Council, IDP, or CELPIP (for Canada)`,
-            `Follow a 6-week ${langTestName} structured study plan`,
-            'Target Band 7.0+ in all four skills (or OET Grade B for healthcare)',
-            'Book your exam slot at least 4–6 weeks in advance',
-          ],
-      done: m3Done, current: currentIdx === 2,
+      id: 'mi3',
+      week: mWeeks[2],
+      phase: 'Language',
+      title: hasGoodLanguage
+        ? `Secure and protect your language result`
+        : languageInProgress
+          ? `Raise your ${langTestName} result to a competitive level`
+          : `Start and complete your ${langTestName} plan`,
+      desc: hasGoodLanguage
+        ? `Your language result is already a strength; now make sure it supports ${visaRoute} cleanly.`
+        : `Language remains one of the biggest timing and eligibility levers for your ${destLabel} plan.`,
+      actions: languageActions,
+      done: m3Done,
+      current: currentIdx === 2,
     },
     {
-      id: 'mi4', week: mWeeks[3], phase: m4Phase,
-      title: m4Title,
-      desc: m4Desc,
-      actions: m4Actions,
-      done: m4Done, current: currentIdx === 3,
+      id: 'mi4',
+      week: mWeeks[3],
+      phase: competitivenessPhase,
+      title: competitivenessTitle,
+      desc: competitivenessDesc,
+      actions: competitivenessActions,
+      done: m4Done,
+      current: currentIdx === 3,
     },
     {
-      id: 'mi5', week: mWeeks[4], phase: 'Application',
-      title: `Submit your ${visaRoute} application`,
-      desc: `Compile every document and submit your formal application to ${dest || 'the immigration authority'}.`,
-      actions: [
-        portalText,
-        dest === 'UK' ? 'Pay the Immigration Health Surcharge (IHS) — required for most UK visas' :
-        dest === 'Canada' ? 'Pay IRCC application and biometrics fees' :
-        'Pay the required application and processing fees',
-        'Book and attend your biometrics appointment at a UKVCAS / VFS centre',
-        'Engage a verified immigration consultant for a final application review',
-      ],
-      done: m5Done, current: currentIdx === 4,
+      id: 'mi5',
+      week: mWeeks[4],
+      phase: 'Application',
+      title: `Submit a clean ${visaRoute} application`,
+      desc: `This stage is about converting all your preparation into a strong, accurate filing for ${destLabel}.`,
+      actions: applicationActions,
+      done: m5Done,
+      current: currentIdx === 4,
     },
     {
-      id: 'mi6', week: mWeeks[5], phase: 'Relocation',
-      title: 'Await visa decision & prepare your move',
-      desc: `Use this window to plan your arrival, accommodation, and first weeks in ${destLabel}.`,
-      actions: [
-        `Research housing and neighbourhoods in your target city in ${destLabel}`,
-        'Open an international bank account (Wise, Monzo, or Revolut) before you travel',
-        `Connect with Nigerian diaspora communities in ${destLabel} for on-ground support`,
-        'Notify your Nigerian bank, FRSC, and relevant institutions of your move',
-      ],
-      done: m6Done, current: currentIdx === 5,
+      id: 'mi6',
+      week: mWeeks[5],
+      phase: 'Relocation',
+      title: `Prepare for landing and settling in ${destLabel}`,
+      desc: `Use the decision window to reduce arrival stress and make your first month abroad more stable.`,
+      actions: relocationActions,
+      done: m6Done,
+      current: currentIdx === 5,
     },
   ]
 
-  return { milestones, totalWeeks, completedCount, pct, visaRoute, destLabel, phases, timelinePlan: planLabel(totalWeeks) }
+  return {
+    milestones,
+    totalWeeks,
+    completedCount: 0,
+    pct: 0,
+    visaRoute,
+    destLabel,
+    phases,
+    timelinePlan: planLabel(totalWeeks),
+  }
 }
 
 function RoadmapTab({ answers, score, quizResult, router }) {
@@ -1693,7 +1846,7 @@ function RoadmapTab({ answers, score, quizResult, router }) {
     )
   }
 
-  const { milestones: rawMilestones, totalWeeks, visaRoute, destLabel, phases, timelinePlan } = generateMilestones(answers, score)
+  const { milestones: rawMilestones, totalWeeks, visaRoute, destLabel, phases, timelinePlan } = generateMilestones(answers, score, quizResult?.ai_data)
 
   // All done/current state is manual — driven entirely by checkedActions
   const milestones = rawMilestones
@@ -2237,10 +2390,10 @@ function ResourcesTab({ answers, userId }) {
 
 // ── DOCUMENTS TAB ─────────────────────────────────────────────────────────────
 // ── CONVERSATIONS TAB ──────────────────────────────────────────────────────────
-function ConversationsTab({ user, profile, answers }) {
+function ConversationsTab({ user, profile, answers, quizResult }) {
   const firstName = (profile?.full_name || user?.user_metadata?.full_name || 'there').split(' ')[0]
   const dest = answers.destination || 'your destination'
-  const visaRoute = getVisaRoute(dest, answers.segment || '')
+  const visaRoute = quizResult?.ai_data?.recommendedRoute || 'your visa route'
 
   const messages = [
     { id: 1, role: 'ai', text: `Hi ${firstName}! I'm your JapaLearn AI assistant. Ask me anything about your ${dest} migration journey — visa requirements, language tests, costs, documents and more.`, time: '9:01 AM' },
@@ -2498,11 +2651,11 @@ function StarRating({ rating }) {
   )
 }
 
-function MarketplaceTab({ answers }) {
+function MarketplaceTab({ answers, quizResult }) {
   const [activeCategory, setActiveCategory] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const dest = answers.destination || 'your destination'
-  const visaRoute = getVisaRoute(dest, answers.segment || '')
+  const visaRoute = quizResult?.ai_data?.recommendedRoute || 'your visa route'
 
   const filtered = CONSULTANTS_DATA.filter(c => {
     const matchSearch = searchQuery === '' || c.name.toLowerCase().includes(searchQuery.toLowerCase()) || c.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -2808,7 +2961,7 @@ function ProfileTab({ user, profile, answers, score, quizResult, onSignOut, rout
 
   const initials    = (name || email).charAt(0).toUpperCase()
   const dest        = answers.destination || '—'
-  const visaRoute   = getVisaRoute(dest, answers.segment || '')
+  const visaRoute   = quizResult?.ai_data?.recommendedRoute || '—'
   const flag        = COUNTRY_FLAGS[dest] || '🌍'
   const scoreCategories = score ? buildScoreCategories(answers, score) : null
   const timelineDisplay = answers.timeline
@@ -3114,9 +3267,12 @@ export default function Dashboard() {
   const [isAiCalculating, setIsAiCalculating] = useState(false)
 
   useEffect(() => {
-    const load = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) { router.push('/'); return }
+    let cancelled = false
+    let hasResolvedSession = false
+
+    const load = async (session) => {
+      if (!session || cancelled || hasResolvedSession) return
+      hasResolvedSession = true
       setUser(session.user)
 
       // Check if this is a fresh signup — validate against account creation time to avoid false Welcome messages
@@ -3213,10 +3369,9 @@ export default function Dashboard() {
           })
         }).then(res => res.json()).then(resData => {
           if (resData.overall) {
-            setQuizResult(prev => ({ 
-              ...prev, 
-              ai_data: resData, 
-              score: resData.overall 
+            setQuizResult(prev => ({
+              ...prev,
+              ai_data: resData,
             }))
           }
           setIsAiCalculating(false)
@@ -3257,9 +3412,32 @@ export default function Dashboard() {
         }
       }
 
-      setLoading(false)
+      if (!cancelled) setLoading(false)
     }
-    load()
+
+    const redirectTimer = setTimeout(() => {
+      if (!hasResolvedSession && !cancelled) router.push('/')
+    }, 2500)
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        clearTimeout(redirectTimer)
+        load(session)
+      }
+    })
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        clearTimeout(redirectTimer)
+        load(session)
+      }
+    })
+
+    return () => {
+      cancelled = true
+      clearTimeout(redirectTimer)
+      authListener.subscription.unsubscribe()
+    }
   }, [])
 
   // Real-time activity feed — subscribes to lesson + module quiz changes for this user
@@ -3355,10 +3533,10 @@ export default function Dashboard() {
               {activeTab === 'learning'       && <LearningTab answers={answers} userId={user?.id} quizResult={quizResult} router={router} />}
               {activeTab === 'roadmap'        && <RoadmapTab answers={answers} score={score} quizResult={quizResult} router={router} />}
               {activeTab === 'resources'      && <ResourcesTab answers={answers} userId={user?.id} />}
-              {activeTab === 'conversations'  && <ConversationsTab user={user} profile={profile} answers={answers} />}
+              {activeTab === 'conversations'  && <ConversationsTab user={user} profile={profile} answers={answers} quizResult={quizResult} />}
               {activeTab === 'documents'      && <DocumentsTab />}
               {activeTab === 'peers'          && <PeersTab answers={answers} />}
-              {activeTab === 'marketplace'    && <MarketplaceTab answers={answers} />}
+              {activeTab === 'marketplace'    && <MarketplaceTab answers={answers} quizResult={quizResult} />}
               {activeTab === 'profile'        && <ProfileTab user={user} profile={profile} answers={answers} score={score} quizResult={quizResult} onSignOut={handleSignOut} router={router} />}
               {activeTab === 'credit'         && <CreditScoreTab score={score} quizResult={quizResult} answers={answers} />}
             </motion.div>
