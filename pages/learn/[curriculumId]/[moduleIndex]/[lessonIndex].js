@@ -248,14 +248,34 @@ export default function LessonPage() {
           {/* ── Protected content box ── */}
           <div style={{ background: '#F9FAFB', border: '1px solid #E8ECFF', borderRadius: 24, padding: '32px 32px 24px', boxShadow: '0 1px 16px rgba(30,77,215,0.05)', marginBottom: 32 }}>
 
-            {/* AI Key Points */}
-            <div style={{ background: 'linear-gradient(135deg, #EBF1FF 0%, #E4EEFF 100%)', borderRadius: 16, padding: 24, border: '1px solid #CDDAFF', marginBottom: 28 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: summary || summarising ? 14 : 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {/* What you'll learn — shown immediately from stored key_takeaways */}
+            {takeaways?.length > 0 && (
+              <div style={{ background: 'linear-gradient(135deg, #EBF1FF 0%, #E4EEFF 100%)', borderRadius: 16, padding: 24, border: '1px solid #CDDAFF', marginBottom: 28 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
                   <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <Sparkles size={13} color="#fff" />
+                    <Target size={13} color="#fff" />
                   </div>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: '#1E4DD7', fontFamily: '"DM Sans", sans-serif' }}>AI Key Points</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: '#1E4DD7', fontFamily: '"DM Sans", sans-serif' }}>What you&apos;ll learn in this lesson</span>
+                </div>
+                <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {takeaways.slice(0, 5).map((point, i) => (
+                    <li key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                      <span style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(30,77,215,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1, fontSize: 11, fontWeight: 700, color: '#1E4DD7' }}>{i + 1}</span>
+                      <span style={{ fontSize: 14, color: '#2D3A6B', lineHeight: 1.6 }}>{point}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* AI Deep Summary — on demand, more detailed than the header points */}
+            <div style={{ background: '#FFFFFF', borderRadius: 16, padding: 20, border: '1px solid #E8ECFF', marginBottom: 28 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: 26, height: 26, borderRadius: 8, background: '#EBF1FF', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Sparkles size={12} color="#1E4DD7" />
+                  </div>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#1E4DD7', fontFamily: '"DM Sans", sans-serif' }}>Quick lesson summary</span>
                 </div>
                 {!summary && (
                   <button
@@ -272,7 +292,7 @@ export default function LessonPage() {
                       setSummarising(false)
                     }}
                     disabled={summarising}
-                    style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: summarising ? 'not-allowed' : 'pointer', opacity: summarising ? 0.6 : 1, fontFamily: '"Inter", sans-serif' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: summarising ? 'not-allowed' : 'pointer', opacity: summarising ? 0.6 : 1, fontFamily: '"Inter", sans-serif' }}
                   >
                     {summarising
                       ? <><span style={{ width: 11, height: 11, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', animation: 'spin 0.8s linear infinite', display: 'inline-block' }} /> Generating…</>
@@ -281,20 +301,20 @@ export default function LessonPage() {
                 )}
               </div>
               {!summary && !summarising && (
-                <p style={{ margin: 0, fontSize: 13, color: '#4D5EA8', lineHeight: 1.55 }}>Generate a quick AI summary of the key points in this lesson.</p>
+                <p style={{ margin: '10px 0 0', fontSize: 13, color: '#82858A', lineHeight: 1.5 }}>Get a concise summary with the key facts — useful if you&apos;re short on time.</p>
               )}
               {summarising && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#4D5EA8', fontSize: 13 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#4D5EA8', fontSize: 13, marginTop: 12 }}>
                   <div style={{ width: 12, height: 12, borderRadius: '50%', border: '2px solid #9BB3FF', borderTopColor: '#1E4DD7', animation: 'spin 0.8s linear infinite' }} />
                   Analysing lesson…
                 </div>
               )}
               {summary && summary.length > 0 && (
-                <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <ul style={{ margin: '14px 0 0', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {summary.map((point, i) => (
                     <li key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                      <span style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(30,77,215,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1, fontSize: 11, fontWeight: 700, color: '#1E4DD7' }}>{i + 1}</span>
-                      <span style={{ fontSize: 14, color: '#2D3A6B', lineHeight: 1.6 }}>{point}</span>
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#1E4DD7', flexShrink: 0, marginTop: 7 }} />
+                      <span style={{ fontSize: 14, color: '#2D3A6B', lineHeight: 1.65 }}>{point}</span>
                     </li>
                   ))}
                 </ul>
@@ -339,25 +359,6 @@ export default function LessonPage() {
               </ReactMarkdown>
             </div>
 
-            {/* Key Takeaways */}
-            {takeaways?.length > 0 && (
-              <div style={{ background: '#FFFFFF', borderRadius: 16, padding: 24, border: '1px solid #ECEEFF', marginBottom: 20 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                  <CheckCircle2 size={18} color="#21C474" />
-                  <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#18181B', fontFamily: '"DM Sans", sans-serif' }}>Key Takeaways</h3>
-                </div>
-                <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  {takeaways.map((t, i) => (
-                    <li key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '10px 14px', background: '#F8FFF9', borderRadius: 10, border: '1px solid #D8F5E6' }}>
-                      <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#E8F9EE', border: '2px solid #A7F3C5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
-                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#21C474' }} />
-                      </div>
-                      <span style={{ fontSize: 14, color: '#2D2D35', lineHeight: 1.6 }}>{t}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
 
             {/* Action Step */}
             {lesson.action_step && (

@@ -16,6 +16,9 @@ export default async function handler(req, res) {
     const { lessonTitle, moduleTitle, curriculumTitle, destination, segment, curriculumId, moduleIndex, lessonIndex } = req.body
 
     // Step 1 — Generate rich, structured lesson content following the persona rules
+    // Build a targeted search query instead of using the full prompt as the search string
+    const lessonSearchQuery = `${lessonTitle} ${destination} ${segment} requirements 2025`
+
     const content = await generateAIResponse(
       [
         {
@@ -39,13 +42,14 @@ Exactly follow the SKILLS.LESSON_WRITER framework:
 9. **Next Action** (Immediate next step)
 
 REAL DATA REQUIREMENTS:
-- Use RAG for official document names and procedural rules.
-- Use SEARCH for current fees (NGN and foreign currency), timelines, and verified URLs.
-- NIGERIAN CONTEXT: NYSC, NIN, document notarisation in Lagos/Abuja, etc.`
+- Use the KNOWLEDGE BASE CONTEXT for official document names, licensing bodies, and procedural rules.
+- Use the REAL-TIME SEARCH RESULTS for current fees (NGN and foreign currency), timelines, salary thresholds, and verified URLs.
+- NIGERIAN CONTEXT: NYSC, NIN, document notarisation in Lagos/Abuja, etc.
+- If a fee or deadline is not in the search results, say "verify the current amount at [official site]" — never guess.`
         }
       ],
       SKILLS.LESSON_WRITER,
-      { enrich: true }
+      { enrich: true, searchQuery: lessonSearchQuery }
     )
 
     // Step 2 — Generate metadata for the UI components
@@ -55,15 +59,24 @@ REAL DATA REQUIREMENTS:
           role: 'user',
           content: `Extract structured metadata from this lesson about "${lessonTitle}".
 
-Return ONLY a JSON object:
+LESSON CONTENT:
+${content}
+
+Return ONLY a JSON object with these exact fields:
 {
-  "key_takeaways": ["Concise point 1", "Concise point 2", "Concise point 3"],
-  "action_step": "The single most important next step",
-  "sources": [{"label": "Official Source Name", "url": "https://..."}]
-}`
+  "key_takeaways": [
+    "3 to 5 points — each must be 1-2 sentences with a specific fact, requirement, exam name, fee, timeline, or body name from the lesson. Someone who reads ONLY these points must understand what to do and what it involves. Never vague. Start each with an action word or clear fact.",
+    "...",
+    "..."
+  ],
+  "action_step": "The single most important next step — be specific. Include where to go, what to submit, or what to book.",
+  "sources": [{"label": "Official body or website name", "url": "https://..."}]
+}
+
+IMPORTANT: key_takeaways must contain real specifics from the lesson (names, numbers, timelines). Do not write generic advice.`
         }
       ],
-      'Return ONLY a valid JSON object.',
+      'Return ONLY a valid JSON object. No markdown, no extra text.',
       { enrich: false }
     )
 

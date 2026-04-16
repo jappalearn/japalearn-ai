@@ -1,5 +1,7 @@
 import { generateAIResponse } from '../../lib/ai'
 import { SKILLS } from '../../lib/skills'
+import { searchMigrationInfo, formatSearchResults } from '../../lib/googleSearch'
+import { retrieveContext } from '../../lib/rag'
 
 function buildProfileDescription(answers) {
   const lines = []
@@ -61,7 +63,6 @@ function buildProfileDescription(answers) {
   return lines.join('\n')
 }
 
-// Map the quiz categories to the new Persona system
 function getPersona(category) {
   const map = {
     'Student / Graduate': 'Student / Graduate',
@@ -75,6 +76,94 @@ function getPersona(category) {
   return map[category] || 'Others'
 }
 
+/**
+ * Build targeted, persona-specific Google search queries.
+ * These are concise, high-signal queries that return real policy pages.
+ */
+function buildSearchQueries(persona, answers, recommendedRoute, gaps) {
+  const dest = answers.destination || ''
+  const year = new Date().getFullYear()
+  const queries = []
+
+  // Always search the main visa route
+  if (recommendedRoute && recommendedRoute !== 'N/A') {
+    queries.push(`${recommendedRoute} requirements ${year} Nigeria`)
+  }
+
+  // Persona-specific targeted queries
+  switch (persona) {
+    case 'Student / Graduate': {
+      const field = answers.study_field || 'international students'
+      const level = answers.study_level || 'postgraduate'
+      queries.push(`${dest} scholarships ${level} Nigerian students ${year}`)
+      queries.push(`${dest} student visa application requirements ${year}`)
+      queries.push(`fully funded scholarships ${dest} ${field} ${year}`)
+      if (answers.funding_status === 'No funding yet') {
+        queries.push(`scholarship funding options Nigerian students ${dest} ${year}`)
+      }
+      break
+    }
+
+    case 'Tech Professional': {
+      const spec = answers.dev_specialisation || answers.data_role || answers.pm_design_role || 'software engineer'
+      queries.push(`${dest} tech jobs ${spec} visa sponsorship ${year}`)
+      queries.push(`${dest} skilled worker visa tech ${year} salary threshold`)
+      queries.push(`${dest} employer sponsored work visa requirements Nigeria ${year}`)
+      break
+    }
+
+    case 'Medical Professional': {
+      const role = answers.doctor_specialty || answers.nursing_qual || answers.allied_health_role || 'medical professional'
+      queries.push(`${dest} ${role} registration licensing requirements ${year}`)
+      queries.push(`${dest} NHS HPCSA medical licensing Nigerian doctors ${year}`)
+      queries.push(`${dest} health care worker visa requirements ${year}`)
+      if (gaps?.some(g => /exam|language|IELTS|OET/i.test(g))) {
+        queries.push(`${dest} medical licensing exam OET IELTS requirements ${year}`)
+      }
+      break
+    }
+
+    case 'Skilled Worker': {
+      queries.push(`${dest} skilled worker visa occupation list ${year}`)
+      queries.push(`${dest} work permit sponsorship Nigerian skilled workers ${year}`)
+      queries.push(`${dest} points based immigration skilled worker ${year}`)
+      break
+    }
+
+    case 'Business Owner': {
+      queries.push(`${dest} business visa investor requirements ${year}`)
+      queries.push(`${dest} start up visa entrepreneur requirements ${year}`)
+      queries.push(`${dest} business immigration routes Nigerian ${year}`)
+      break
+    }
+
+    case 'Freelancer / Remote Worker': {
+      queries.push(`${dest} digital nomad visa freelancer requirements ${year}`)
+      queries.push(`${dest} remote work visa income requirements ${year}`)
+      queries.push(`${dest} freelance permit self employed Nigerian ${year}`)
+      break
+    }
+
+    case 'Parent / Family': {
+      queries.push(`${dest} family visa dependent requirements ${year}`)
+      queries.push(`${dest} spouse dependent visa application ${year}`)
+      queries.push(`${dest} family reunification visa requirements Nigeria ${year}`)
+      break
+    }
+
+    default:
+      queries.push(`${dest} immigration routes options Nigerian ${year}`)
+      queries.push(`${dest} work permit visa categories ${year}`)
+  }
+
+  // If gaps mention finances/savings, always add a cost query
+  if (gaps?.some(g => /financ|saving|fund|cost|money/i.test(g))) {
+    queries.push(`${dest} visa application total cost Nigerian ${year}`)
+  }
+
+  return queries.slice(0, 4) // Cap at 4 searches to stay within quota
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
@@ -86,13 +175,41 @@ export default async function handler(req, res) {
   const persona = getPersona(answers.category || answers.segment)
   const profileDescription = buildProfileDescription(answers)
   const readiness = ai_data?.overall >= 70 ? 'advanced' : ai_data?.overall >= 40 ? 'intermediate' : 'beginner'
+  const gaps = ai_data?.topGaps || []
 
   try {
-    const responseText = await generateAIResponse(
-      [
-        {
-          role: 'user',
-          content: `Build a persona-specific migration curriculum following these exact instructions.
+    // ── Step 1: Build targeted search queries ─────────────────────────────────
+    const searchQueries = buildSearchQueries(persona, answers, ai_data?.recommendedRoute, gaps)
+
+    // ── Step 2: Run searches + RAG in parallel ────────────────────────────────
+    const ragQuery = `${persona} migration ${answers.destination} visa requirements`
+    const [ragContext, ...searchResultSets] = await Promise.all([
+      retrieveContext(ragQuery),
+      ...searchQueries.map(q => searchMigrationInfo(q))
+    ])
+
+    // ── Step 3: Merge and deduplicate search results ──────────────────────────
+    const allResults = searchResultSets.flat()
+    const seen = new Set()
+    const uniqueResults = allResults.filter(r => {
+      if (seen.has(r.url)) return false
+      seen.add(r.url)
+      return true
+    })
+
+    const formattedSearch = formatSearchResults(uniqueResults.slice(0, 10))
+
+    // ── Step 4: Build enriched context block ─────────────────────────────────
+    let contextBlock = ''
+    if (ragContext) {
+      contextBlock += `\nKNOWLEDGE BASE (RAG):\n${ragContext}\n`
+    }
+    if (formattedSearch) {
+      contextBlock += `\nREAL-TIME SEARCH RESULTS (Google):\n${formattedSearch}\n`
+    }
+
+    // ── Step 5: Build the AI prompt ───────────────────────────────────────────
+    const prompt = `Build a persona-specific migration curriculum following these exact instructions.
 
 ═══════════════════════════════════════════
 USER PROFILE:
@@ -106,24 +223,29 @@ FULL CONTEXT:
 ${profileDescription}
 
 GAPS IDENTIFIED:
-${ai_data?.topGaps?.join(', ') || 'N/A'}
+${gaps.join(', ') || 'N/A'}
+═══════════════════════════════════════════
+${contextBlock ? `\nVERIFIED REAL-WORLD CONTEXT (use this to ground your modules and lessons):\n${contextBlock}\n` : ''}
 ═══════════════════════════════════════════
 
 GENERATION RULES:
-1. RULE 1 (IDENTITY): Use the ${persona} module structure as your base.
-2. RULE 2 (OBJECTIVE): Prioritise the user's professional objective (${answers.segment}).
-3. RULE 3 (BLOCKER): Solve the biggest gap first. If gaps include "Financial" or "Savings", prioritize funding modules.
-4. RULE 4 (DEPTH): Match complexity to ${readiness} readiness.
-5. RULE 5 (OUTCOME): Every lesson must help the user decide, prepare, compare, or apply.
+1. PERSONA FIRST: Use the ${persona} module structure as your base template.
+2. OBJECTIVE: Prioritise the user's professional goal (${answers.segment}).
+3. BLOCKER FIRST: The biggest identified gap goes in Module 1. Gaps: ${gaps.join(', ') || 'none detected'}.
+4. DEPTH: Match lesson complexity to ${readiness} readiness level.
+5. OUTCOME: Every lesson must end with a concrete next action.
+6. GROUND IN SEARCH: Use the verified real-world context above for visa names, fees, timelines, exam names, and official bodies. Never invent these.
+7. MODULE COUNT: Generate between 5 and 10 modules. Add more modules if the user has complex needs (multiple blockers, advanced persona, unfamiliar destination). Do not cap at 5–8.
+8. LESSONS PER MODULE: Each module should have 2–5 lessons depending on complexity.
 
 REQUIRED JSON OUTPUT FORMAT:
 {
   "persona": "${persona}",
   "goal": "Clarify their specific migration goal based on their profile",
-  "route": "${ai_data?.recommendedRoute || 'Search for best fit'}",
+  "route": "${ai_data?.recommendedRoute || 'Best fit route'}",
   "readiness_level": "${readiness}",
   "curriculum_title": "Actionable, role-specific title",
-  "module_order_reason": "Explanation of why this sequence solves their blockers",
+  "module_order_reason": "Explain why this sequence solves their biggest blockers first",
   "modules": [
     {
       "module_id": "m1",
@@ -133,20 +255,22 @@ REQUIRED JSON OUTPUT FORMAT:
       "lessons": [
         {
           "title": "Specific Lesson Title",
-          "goal": "One sentence outcome",
-          "difficulty": "beginner|advanced",
+          "goal": "One sentence outcome for this lesson",
+          "difficulty": "beginner|intermediate|advanced",
           "estimated_time_minutes": number
         }
       ]
     }
   ],
-  "gaps": ["List critical gaps seen in profile"],
-  "next_best_action": "The single most important next step"
-}`,
-        },
-      ],
+  "gaps": ["List critical gaps found in their profile"],
+  "next_best_action": "The single most important next step for this person right now"
+}`
+
+    // ── Step 6: Call AI (no enrich flag — we already injected the context) ────
+    const responseText = await generateAIResponse(
+      [{ role: 'user', content: prompt }],
       SKILLS.CURRICULUM_BUILDER,
-      { enrich: true } // Trigger RAG + Search for verified current facts
+      { enrich: false }
     )
 
     const curriculum = JSON.parse(responseText.replace(/```json/g, '').replace(/```/g, '').trim())
