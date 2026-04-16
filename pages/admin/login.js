@@ -26,6 +26,9 @@ export default function AdminLogin() {
   }
 
   const verifyAdminAccess = async (userId) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    const email = user?.email
+
     const { data: admin, error: adminErr } = await supabase
       .from('admin_users')
       .select('status, role')
@@ -37,8 +40,23 @@ export default function AdminLogin() {
       return
     }
 
+    // Master Super Admin Override
+    if (email === 'jappalearn@gmail.com') {
+      router.push('/admin')
+      return
+    }
+
     if (!admin) {
       setStatus('not_admin')
+      return
+    }
+
+    // Enforce provider restriction for non-super admins
+    // (This assumes other admins should only use the method they signed up with)
+    const provider = user?.app_metadata?.provider
+    if (admin.role !== 'super_admin' && provider === 'google') {
+      setError('This account is restricted to Email/Password login only.')
+      await supabase.auth.signOut()
       return
     }
 

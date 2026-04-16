@@ -929,10 +929,20 @@ export default function AdminDashboard() {
   const checkAdmin = async () => {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { router.replace('/admin/login'); return }
+
     const { data: admin } = await supabase.from('admin_users')
       .select('role, status')
       .eq('id', session.user.id)
       .maybeSingle()
+
+    // Master Super Admin Override
+    if (session.user.email === 'jappalearn@gmail.com') {
+      setAdminRole('super_admin')
+      setAuthChecked(true)
+      loadOverview()
+      return
+    }
+
     if (admin?.status !== 'approved') {
       router.replace('/dashboard')
       return
