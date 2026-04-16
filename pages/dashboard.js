@@ -945,6 +945,72 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
   )
 }
 
+// ── Generate "What you'll learn" bullets from quiz profile ────────────────────
+function buildLearningBullets(answers, quizResult) {
+  const dest = answers.destination || 'your destination'
+  const seg = (answers.segment || 'professional')
+    .replace('Student or Post-Grad', 'student')
+    .replace('Freelancer or Remote Worker', 'freelancer')
+    .replace(/\s*\(.*?\)/g, '')
+  const exp = answers.experience || null
+  const route = quizResult?.ai_data?.recommendedRoute || null
+  const gaps = quizResult?.ai_data?.topGaps || []
+  const bullets = []
+
+  // 1. Always: personalisation line
+  const expPart = exp ? ` with ${exp} experience` : ''
+  bullets.push(`Personalised for a ${seg}${expPart} planning to relocate to ${dest}`)
+
+  // 2. Visa route
+  if (route) {
+    bullets.push(`How to navigate the ${route} — eligibility, documents, and timeline`)
+  } else {
+    bullets.push(`Which visa route fits your profile and how to qualify for it`)
+  }
+
+  // 3. Persona-specific bullet
+  const segLower = (answers.segment || '').toLowerCase()
+  if (segLower.includes('student')) {
+    bullets.push(`Scholarship and funding options available for ${dest} — what to apply for first`)
+    bullets.push(`How to write a strong Statement of Purpose and what ${dest} universities look for`)
+  } else if (segLower.includes('tech') || segLower.includes('engineer') || segLower.includes('data') || segLower.includes('product')) {
+    bullets.push(`How to find ${dest} employers who sponsor work visas and what they look for in Nigerian candidates`)
+    bullets.push(`CV and portfolio positioning for the ${dest} job market in your specific role`)
+  } else if (segLower.includes('medical') || segLower.includes('doctor') || segLower.includes('nurs') || segLower.includes('pharm')) {
+    bullets.push(`Credential recognition and licensing steps required to practise in ${dest}`)
+    bullets.push(`Which exams or registrations you need to complete before you can apply for jobs`)
+  } else if (segLower.includes('business')) {
+    bullets.push(`Business visa routes for ${dest} — investment thresholds, documents, and realistic timelines`)
+    bullets.push(`What financial evidence ${dest} immigration requires from business owners`)
+  } else if (segLower.includes('freelan') || segLower.includes('remote')) {
+    bullets.push(`Digital nomad and freelance visa options for ${dest} and how to prove stable income`)
+    bullets.push(`Tax and compliance basics for Nigerian freelancers living abroad`)
+  } else if (segLower.includes('parent') || segLower.includes('family')) {
+    bullets.push(`Family and dependent visa rules for ${dest} — who qualifies and what they need`)
+    bullets.push(`School options, accommodation planning, and child-specific requirements`)
+  } else {
+    bullets.push(`Step-by-step action plan built around your profession and destination`)
+    bullets.push(`Key documents you need to prepare before you can apply`)
+  }
+
+  // 4. Documents
+  bullets.push(`Exact document checklist for a Nigerian applicant at your stage — what to prepare first`)
+
+  // 5. Gap-specific bullet
+  if (gaps.some(g => /financ|saving|fund|cost|money/i.test(g))) {
+    bullets.push(`Full cost breakdown for relocating to ${dest} — and strategies to bridge funding gaps`)
+  } else if (gaps.some(g => /language|IELTS|OET|english/i.test(g))) {
+    bullets.push(`Language test requirements for ${dest} — which test, minimum scores, and how to prepare`)
+  } else {
+    bullets.push(`Financial planning — what relocating to ${dest} actually costs and how to prepare`)
+  }
+
+  // 6. Timeline
+  bullets.push(`Realistic timeline from where you are now to landing in ${dest} — month by month`)
+
+  return bullets.slice(0, 8)
+}
+
 // ── LEARNING TAB ───────────────────────────────────────────────────────────────
 function LearningTab({ answers, userId, quizResult, router }) {
   const [curriculum, setCurriculum] = useState(null)
@@ -1059,7 +1125,7 @@ function LearningTab({ answers, userId, quizResult, router }) {
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-7">
             {[
-              { icon: BookOpen,     title: '5–8 modules',       desc: 'Covering visa, language, docs & finance' },
+              { icon: BookOpen,     title: 'Up to 10 modules',  desc: 'Covering visa, language, docs & finance' },
               { icon: TrendingUp,   title: 'Matches your gaps',  desc: 'Focused on what your profile needs most' },
               { icon: Sparkles,     title: 'Ready in seconds',   desc: 'Built instantly after your quiz' },
               { icon: CheckCircle2, title: 'Fully unlocked',     desc: 'Every lesson available to you' },
@@ -1093,22 +1159,20 @@ function LearningTab({ answers, userId, quizResult, router }) {
           {genError && <p className="text-rose-200 text-xs mt-4">{genError}</p>}
         </div>
 
-        {/* Profile tags — only show post-quiz */}
+        {/* What you'll learn — only show post-quiz */}
         {answers.destination && (
           <div className="bg-white rounded-[18px] p-5 sm:p-6" style={{ border: '1px solid #F0F2FF', boxShadow: '0px 2px 12px rgba(30,77,215,0.05)' }}>
-            <h3 className="text-[14px] font-bold text-[#18181B] mb-3" style={{ fontFamily: 'DM Sans, sans-serif' }}>Your curriculum will be based on</h3>
-            <div className="flex flex-wrap gap-2">
-              {[
-                answers.destination,
-                answers.segment,
-                answers.language && answers.language !== 'Not taken' ? answers.language : 'Language Test Pending',
-                answers.experience ? `${answers.experience} Experience` : null,
-                answers.education || null,
-              ].filter(Boolean).map(tag => (
-                <span key={tag} className="px-3.5 py-1.5 rounded-full text-[13px] font-medium" style={{ background: '#F4F6FF', border: '1px solid #E0E8FF', color: '#1E4DD7' }}>{tag}</span>
+            <h3 className="text-[14px] font-bold text-[#18181B] mb-4" style={{ fontFamily: 'DM Sans, sans-serif' }}>What you&apos;ll learn in this curriculum</h3>
+            <ul className="flex flex-col gap-3">
+              {buildLearningBullets(answers, quizResult).map((bullet, i) => (
+                <li key={i} className="flex items-start gap-3">
+                  <span className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center mt-0.5" style={{ background: 'linear-gradient(135deg, #1E4DD7, #3B75FF)' }}>
+                    <span className="text-white font-bold" style={{ fontSize: 10 }}>{i + 1}</span>
+                  </span>
+                  <span className="text-[13.5px] text-[#2D2D35] leading-relaxed">{bullet}</span>
+                </li>
               ))}
-            </div>
-            {!answers.destination && <p className="text-[#9E9E9E] text-xs mt-2">Complete the quiz first to generate a learning path.</p>}
+            </ul>
           </div>
         )}
       </div>
@@ -1672,8 +1736,11 @@ function RoadmapTab({ answers, score, quizResult, router }) {
 
               {/* Milestone card */}
               <div className="flex-1 pl-3" style={{ paddingBottom: idx < milestones.length - 1 ? '14px' : '0' }}>
-                <button
+                <div
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setExpandedMilestone(isOpen ? null : milestone.id)}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setExpandedMilestone(isOpen ? null : milestone.id) }}
                   className="w-full text-left rounded-xl transition-all"
                   style={{
                     position: 'relative',
@@ -1681,6 +1748,7 @@ function RoadmapTab({ answers, score, quizResult, router }) {
                     background: milestone.done ? '#F8FFF9' : isOpen ? (milestone.current ? 'linear-gradient(135deg, #EBF1FF, #E4EEFF)' : '#FAFBFF') : 'transparent',
                     border: milestone.done ? '1.5px solid #D8F5E6' : isOpen ? '1.5px solid #D4DCFF' : '1.5px solid transparent',
                     opacity: milestone.done ? 0.8 : 1,
+                    cursor: 'pointer',
                   }}
                 >
                   {milestone.done && (
@@ -1768,7 +1836,7 @@ function RoadmapTab({ answers, score, quizResult, router }) {
                       )}
                     </div>
                   )}
-                </button>
+                </div>
               </div>
             </div>
           )
