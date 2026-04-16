@@ -120,7 +120,7 @@ function getRecommendation(destination, segment, answers = {}) {
   }
 }
 
-const REPORT_LABEL_MAP = { Experience: 'Work Experience', Language: 'Language Test', Age: 'Age Factor', Savings: 'Financial Readiness', Profile: 'Skills & Certs', Education: 'Education' }
+const REPORT_LABEL_MAP = { Experience: 'Work Experience', Language: 'Language Test', Age: 'Age Factor', Savings: 'Financial Readiness', Profile: 'Skills & Certs', Education: 'Education', Academic: 'Academic Strength' }
 const REPORT_NOTES = { Experience: 'Limited experience means you may benefit more from a study pathway first.', Education: 'Higher education levels unlock more immigration pathways.', Language: 'IELTS 6.0–6.5 meets minimum thresholds but improving to 7.0+ significantly boosts eligibility.', Age: 'Age factor is fixed based on your profile.', Savings: '₦5M–10M covers some routes but you may need more depending on your destination.', Profile: 'Certifications, job offers, and licensing progress add valuable points.' }
 
 function getScoreBreakdown(answers) {
@@ -361,6 +361,26 @@ export default function Report() {
             </h1>
             <p style={{ color: '#5f6776', fontSize: '16px' }}>Here&apos;s what our AI assessment found about your profile</p>
           </div>
+
+          {/* Feasibility Warning Banner */}
+          {(ai?.feasibilityStatus === 'Unrealistic' || ai?.feasibilityStatus === 'High Risk' || ai?.mismatchFound) && (
+            <div className="mb-8 p-5 rounded-2xl border flex items-start gap-4" style={{ 
+              background: ai.feasibilityStatus === 'Unrealistic' ? '#fef2f2' : '#fffbeb',
+              borderColor: ai.feasibilityStatus === 'Unrealistic' ? '#fecaca' : '#fef3c7'
+            }}>
+              <div className="shrink-0 mt-1">
+                <AlertTriangle size={20} color={ai.feasibilityStatus === 'Unrealistic' ? '#dc2626' : '#d97706'} />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-bold text-sm mb-1" style={{ color: ai.feasibilityStatus === 'Unrealistic' ? '#991b1b' : '#92400e' }}>
+                  {ai.feasibilityStatus === 'Unrealistic' ? 'Critical Feasibility Warning' : 'Profile Risk Detected'}
+                </h4>
+                <p className="text-sm leading-relaxed" style={{ color: ai.feasibilityStatus === 'Unrealistic' ? '#b91c1c' : '#a16207' }}>
+                  {ai.expertNote || `Our AI has identified that your current ${ai.mismatchFound ? 'goals mismatch your profile' : 'budget or timeline'} might be unrealistic for this route. Review the breakdown below for specific gaps.`}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Score card */}
           <div className="bg-white rounded-2xl p-5 sm:p-8 mb-4" style={{ border: '1px solid #e3e9f3', boxShadow: '0 2px 16px rgba(59,117,255,0.06)' }}>

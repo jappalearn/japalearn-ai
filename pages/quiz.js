@@ -92,7 +92,12 @@ export default function Quiz() {
     if (phase === 'subcategory') {
       const segment = selected === 'Others' ? 'Explorer / Not sure yet' : selected
       const segSpecific = segmentSpecificQuestions[segment] || []
-      const fullQuestions = [destinationQuestion, ...segSpecific, ...universalFollowUps]
+      
+      // Merge with universal — but SKIP 'education' if it's a student (redundant with study_goal)
+      const isStudent = segment.includes('Student')
+      const filteredUniversal = universalFollowUps.filter(q => isStudent ? q.id !== 'education' : true)
+      
+      const fullQuestions = [destinationQuestion, ...segSpecific, ...filteredUniversal]
       advance(() => {
         setAnswers(prev => ({ ...prev, segment }))
         setQuestions(fullQuestions)
