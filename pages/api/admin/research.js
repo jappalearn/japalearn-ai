@@ -68,8 +68,8 @@ async function fetchGenericContent(url) {
   
   // Strip script and style tags
   const cleanHtml = html
-    .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gmb, '')
-    .replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gmb, '')
+    .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gm, '')
+    .replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gm, '')
     .replace(/<[^>]*>?/gm, ' ') // Strip remaining tags
     .replace(/\s+/g, ' ') // Collapse whitespace
     .trim()
