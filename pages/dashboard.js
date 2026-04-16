@@ -699,8 +699,8 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
             {[
               { icon: TrendingUp, val: quizResult ? (isAiCalculating ? '...' : `${score}%`) : '0', label: 'Readiness Score', color: '#F59A0A', bg: '#FFF7E6' },
               { icon: BookOpen,   val: curriculum ? String(Math.max(1, new Set(recentProgress.map(p => p.module_index)).size)) : '—', label: 'Modules Active', color: '#3B75FF', bg: '#EBF1FF' },
-              { icon: Wallet,     val: aiData ? formatNaira(aiData.estimatedCost) : (isAiCalculating ? 'Thinking...' : '—'), label: 'Est. Migration Cost', color: '#21C474', bg: '#E8F9EE' },
-              { icon: Clock,      val: aiData ? `${aiData.estimatedTimelineMonths} Months` : (isAiCalculating ? 'Thinking...' : '—'), label: 'Est. Timeline', color: '#EF4369', bg: '#FDECEC' },
+              { icon: Wallet,     val: aiData?.estimatedCost ? formatNaira(aiData.estimatedCost) : (isAiCalculating ? 'Thinking...' : '—'), label: 'Est. Migration Cost', color: '#21C474', bg: '#E8F9EE' },
+              { icon: Clock,      val: aiData?.estimatedTimelineMonths ? `${aiData.estimatedTimelineMonths} Months` : (isAiCalculating ? 'Thinking...' : '—'), label: 'Est. Timeline', color: '#EF4369', bg: '#FDECEC' },
             ].map(card => {
               const Icon = card.icon
               return (
@@ -779,8 +779,8 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
               {[
                 { icon: TrendingUp, val: quizResult ? (isAiCalculating ? '...' : `${score}%`) : '0', label: 'Readiness Score', color: '#F59A0A' },
                 { icon: BookOpen,   val: curriculum ? String(Math.max(1, new Set(recentProgress.map(p => p.module_index)).size)) : '—', label: 'Modules Active', color: '#3B75FF' },
-                { icon: Wallet,     val: aiData ? formatNaira(aiData.estimatedCost) : (isAiCalculating ? 'Thinking...' : '—'), label: 'Estimated Cost', color: '#21C474' },
-                { icon: Clock,      val: aiData ? `${aiData.estimatedTimelineMonths} Months` : (isAiCalculating ? 'Thinking...' : '—'), label: 'Timeline', color: '#EF4369' },
+                { icon: Wallet,     val: aiData?.estimatedCost ? formatNaira(aiData.estimatedCost) : (isAiCalculating ? 'Thinking...' : '—'), label: 'Estimated Cost', color: '#21C474' },
+                { icon: Clock,      val: aiData?.estimatedTimelineMonths ? `${aiData.estimatedTimelineMonths} Months` : (isAiCalculating ? 'Thinking...' : '—'), label: 'Timeline', color: '#EF4369' },
               ].map(s => {
                 const Icon = s.icon
                 return (
