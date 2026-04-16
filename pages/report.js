@@ -6,6 +6,7 @@ import { getAppUrl } from '../lib/urls'
 import { ArrowRight } from 'lucide-react'
 import Logo from '../lib/Logo'
 import { getScoreFlag, calculateScoreBreakdown } from '../lib/quizData'
+import { getRecommendedRoute } from '../lib/visaRoutes'
 
 const PRIMARY = '#3b75ff'
 
@@ -142,6 +143,7 @@ export default function Report() {
   const candidateLabel = flag === 'green' ? 'Strong Candidate' : flag === 'yellow' ? 'Moderate Candidate' : 'Early Stage Candidate'
   const flagBg = flag === 'green' ? '#dcfce7' : '#e6efff'
   const flagText = flag === 'green' ? '#15803d' : PRIMARY
+  const recommendedRoute = getRecommendedRoute(answers.destination, answers.segment, answers)
 
   const breakdown = calculateScoreBreakdown(answers).map(item => ({
     label: REPORT_LABEL_MAP[item.label] || item.label,
@@ -191,14 +193,19 @@ export default function Report() {
                 <DonutChart score={score} color={scoreColor} />
               </div>
               <div className="flex-1">
-                <div className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 mb-3 text-xs font-semibold" style={{ background: flagBg, color: flagText }}>
-                  {candidateLabel}
+                <div className="flex items-center gap-2 flex-wrap mb-3">
+                  <div className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold" style={{ background: flagBg, color: flagText }}>
+                    {candidateLabel}
+                  </div>
+                  <div className="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold" style={{ background: '#f0f4ff', color: '#5f6776' }}>
+                    {answers.destination} Pathway
+                  </div>
                 </div>
-                <h2 style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 700, fontSize: 'clamp(20px, 3vw, 28px)', color: '#0f1720', marginBottom: '8px', letterSpacing: '-0.3px' }}>
-                  {answers.destination} Migration Readiness
+                <h2 style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 700, fontSize: 'clamp(18px, 3vw, 26px)', color: '#0f1720', marginBottom: '10px', letterSpacing: '-0.3px' }}>
+                  {recommendedRoute}
                 </h2>
                 <p style={{ color: '#5f6776', fontSize: '14px', lineHeight: '22px' }}>
-                  Sign up to get your full AI analysis — personalised visa route, cost estimate, gaps, and step-by-step curriculum.
+                  Sign up to get your full AI immigration officer assessment — cost estimate, gap analysis, and step-by-step curriculum.
                 </p>
               </div>
             </div>
