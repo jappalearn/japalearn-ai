@@ -8,7 +8,7 @@ import {
   File, Table, X, Plus, Eye, EyeOff, Loader2,
   ChevronDown, ChevronUp, ExternalLink, LogOut,
   TrendingUp, Globe, BookMarked, UserPlus, Shield,
-  Copy, Check, UserX, UserCheck,
+  Copy, Check, UserX, UserCheck, Search
 } from 'lucide-react'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -451,6 +451,8 @@ function KnowledgeSection() {
   const [toast, setToast] = useState(null)
   const [expandedId, setExpandedId] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
+  const [researchUrl, setResearchUrl] = useState('')
+  const [researching, setResearching] = useState(false)
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type })
@@ -487,6 +489,29 @@ function KnowledgeSection() {
     finally { setLoading(false) }
   }
 
+  const handleResearch = async () => {
+    if (!researchUrl.trim()) return
+    setResearching(true)
+    try {
+      const res = await authFetch('/api/admin/research', {
+        method: 'POST',
+        body: JSON.stringify({ url: researchUrl.trim() }),
+      })
+      const data = await res.json()
+      if (!data.success) throw new Error(data.error)
+      setForm({
+        country: data.draft.country || '',
+        category: data.draft.category || '',
+        content: data.draft.content || '',
+        source_url: data.draft.source_url || researchUrl,
+        last_updated: data.draft.last_updated || new Date().toISOString()
+      })
+      showToast('Research complete! Form auto-filled.')
+      setResearchUrl('')
+    } catch (err) { showToast(err.message || 'Research failed', 'error') }
+    finally { setResearching(false) }
+  }
+
   const handleDelete = async id => {
     if (!confirm('Delete this document from the knowledge base?')) return
     setDeletingId(id)
@@ -506,7 +531,24 @@ function KnowledgeSection() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
       <div>
-        <h2 className="text-base font-bold text-slate-900 mb-5">Add New Document</h2>
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-base font-bold text-slate-900">Research & Ingest</h2>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <input type="url" value={researchUrl} onChange={e => setResearchUrl(e.target.value)}
+                placeholder="Paste official URL (e.g. gov.uk)"
+                className="w-64 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-900 outline-none focus:border-blue-500 transition-all shadow-sm" />
+              <Search size={12} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            </div>
+            <button onClick={handleResearch} disabled={researching || !researchUrl}
+              className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-[10px] font-bold px-3 py-2 rounded-lg transition-all flex items-center gap-1.5">
+              {researching ? <Loader2 size={10} className="animate-spin" /> : <Globe size={11} />} {researching ? 'Researching...' : 'Research'}
+            </button>
+          </div>
+        </div>
+        <h2 className="text-sm font-semibold text-slate-500 mb-3 flex items-center gap-2">
+          <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div> Manual Entry / Edit Draft
+        </h2>
         {toast && (
           <div className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium mb-4 ${
             toast.type === 'error' ? 'bg-rose-50 border border-rose-100 text-rose-600' : 'bg-emerald-50 border border-emerald-100 text-emerald-700'
@@ -698,8 +740,8 @@ function TeamSection() {
     finally { setActionId(null) }
   }
 
-  const pending = members.filter(m => m.admin_status === 'pending')
-  const active = members.filter(m => m.admin_status === 'approved')
+  const pending = members.filter(m => m.status === 'pending')
+  const active = members.filter(m => m.status === 'approved')
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -786,7 +828,7 @@ function TeamSection() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-slate-900">{m.full_name || 'Unknown'}</p>
-                    <RoleBadge role={m.admin_role} />
+                    <RoleBadge role={m.role} />
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -851,10 +893,10 @@ function TeamSection() {
                     </div>
                     <div>
                       <p className="text-sm font-medium text-slate-900">{m.full_name || 'Unknown'}</p>
-                      <RoleBadge role={m.admin_role} />
+                      <RoleBadge role={m.role} />
                     </div>
                   </div>
-                  {m.admin_role !== 'super_admin' && (
+                  {m.role !== 'super_admin' && (
                     <button onClick={() => doAction('remove', m.id)} disabled={actionId === m.id}
                       className="text-xs text-slate-400 hover:text-rose-500 px-3 py-1.5 rounded-lg hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-colors disabled:opacity-50">
                       {actionId === m.id ? <Loader2 size={11} className="animate-spin" /> : 'Remove'}
@@ -886,16 +928,16 @@ export default function AdminDashboard() {
 
   const checkAdmin = async () => {
     const { data: { session } } = await supabase.auth.getSession()
-    if (!session) { router.replace('/login'); return }
-    const { data: profile } = await supabase.from('profiles')
-      .select('is_admin, admin_role, admin_status')
+    if (!session) { router.replace('/admin/login'); return }
+    const { data: admin } = await supabase.from('admin_users')
+      .select('role, status')
       .eq('id', session.user.id)
       .maybeSingle()
-    if (!profile?.is_admin || profile.admin_status !== 'approved') {
+    if (admin?.status !== 'approved') {
       router.replace('/dashboard')
       return
     }
-    setAdminRole(profile.admin_role)
+    setAdminRole(admin.role)
     setAuthChecked(true)
     loadOverview()
   }

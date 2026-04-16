@@ -53,13 +53,19 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: createErr.message })
     }
 
-    // Update profile with pending admin status
+    // Create admin_users entry with pending status
+    await client.from('admin_users').insert({
+      id: user.id,
+      email: invite.email,
+      full_name: fullName,
+      role: invite.role,
+      status: 'pending'
+    })
+
+    // Also update/upsert profile for general app usage, but admin role is now independent
     await client.from('profiles').upsert({
       id: user.id,
       full_name: fullName,
-      admin_role: invite.role,
-      admin_status: 'pending',
-      is_admin: true,
     })
 
     // Mark invite as used

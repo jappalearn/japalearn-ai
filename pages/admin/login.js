@@ -1,0 +1,193 @@
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
+import Head from 'next/head'
+import { supabase } from '../../lib/supabase'
+import { BookMarked, Mail, Lock, Loader2, AlertCircle, ArrowRight, CheckCircle2 } from 'lucide-react'
+
+export default function AdminLogin() {
+  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [status, setStatus] = useState(null) // 'pending' | 'rejected' | 'not_admin'
+
+  useEffect(() => {
+    // If already logged in, check if admin and redirect
+    checkCurrentSession()
+  }, [])
+
+  const checkCurrentSession = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session) {
+      await verifyAdminAccess(session.user.id)
+    }
+  }
+
+  const verifyAdminAccess = async (userId) => {
+    const { data: admin, error: adminErr } = await supabase
+      .from('admin_users')
+      .select('status, role')
+      .eq('id', userId)
+      .maybeSingle()
+
+    if (adminErr) {
+      setError('Error checking admin status. Please try again.')
+      return
+    }
+
+    if (!admin) {
+      setStatus('not_admin')
+      return
+    }
+
+    if (admin.status === 'pending') {
+      setStatus('pending')
+      return
+    }
+
+    if (admin.status === 'approved') {
+      router.push('/admin')
+    } else {
+      setStatus('rejected')
+    }
+  }
+
+  const handleLogin = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    setStatus(null)
+
+    try {
+      const { data, error: loginErr } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (loginErr) {
+        setError(loginErr.message)
+        setLoading(false)
+        return
+      }
+
+      await verifyAdminAccess(data.user.id)
+    } catch (err) {
+      setError('An unexpected error occurred.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <>
+      <Head>
+        <title>Admin Login — JapaLearn AI</title>
+      </Head>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans">
+        <div className="max-w-md w-full">
+          
+          {/* Logo Section */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-blue-600 text-white mb-4 shadow-lg shadow-blue-200">
+              <BookMarked size={24} />
+            </div>
+            <h1 className="text-2xl font-bold text-slate-900">Admin Control</h1>
+            <p className="text-slate-500 mt-1">JapaLearn AI Management Portal</p>
+          </div>
+
+          <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm">
+            {status === 'pending' ? (
+              <div className="text-center py-4">
+                <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Loader2 className="animate-spin text-amber-500" size={32} />
+                </div>
+                <h2 className="text-xl font-bold text-slate-900 mb-2">Access Pending</h2>
+                <p className="text-slate-500 mb-8">
+                  Your account is awaiting approval from the Super Admin. You will be able to access the dashboard once activated.
+                </p>
+                <button 
+                  onClick={() => setStatus(null)}
+                  className="text-blue-600 font-semibold text-sm hover:underline"
+                >
+                  Back to Login
+                </button>
+              </div>
+            ) : status === 'not_admin' ? (
+              <div className="text-center py-4">
+                <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <AlertCircle className="text-rose-500" size={32} />
+                </div>
+                <h2 className="text-xl font-bold text-slate-900 mb-2">No Admin Access</h2>
+                <p className="text-slate-500 mb-8">
+                  You are logged into the JapaLearn app, but this account does not have admin privileges.
+                </p>
+                <button 
+                  onClick={() => { supabase.auth.signOut(); setStatus(null); }}
+                  className="w-full bg-slate-100 hover:bg-slate-200 text-slate-900 font-semibold py-3 rounded-xl text-sm transition-all"
+                >
+                  Logout & Try Another Account
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleLogin} className="space-y-5">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Admin Email</label>
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <input 
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="admin@japalearn.com"
+                      required
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-12 pr-4 text-sm text-slate-900 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Password</label>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <input 
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      required
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-12 pr-4 text-sm text-slate-900 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
+                    />
+                  </div>
+                </div>
+
+                {error && (
+                  <div className="bg-rose-50 border border-rose-100 rounded-xl p-4 flex items-center gap-3">
+                    <AlertCircle className="text-rose-500 shrink-0" size={18} />
+                    <p className="text-sm text-rose-600">{error}</p>
+                  </div>
+                )}
+
+                <button 
+                  type="submit" 
+                  disabled={loading}
+                  className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-semibold py-4 rounded-xl shadow-lg shadow-blue-200 flex items-center justify-center gap-2 group transition-all"
+                >
+                  {loading ? (
+                    <><Loader2 className="animate-spin" size={18} /> Authenticating...</>
+                  ) : (
+                    <>Sign in to Dashboard <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" /></>
+                  )}
+                </button>
+              </form>
+            )}
+          </div>
+
+          <p className="text-center text-slate-400 text-sm mt-8">
+            Return to the <a href="/" className="text-slate-600 hover:underline">Main Platform</a>
+          </p>
+        </div>
+      </div>
+    </>
+  )
+}

@@ -14,12 +14,12 @@ async function verifyAdmin(req) {
   const client = adminClient()
   const { data: { user } } = await client.auth.getUser(token)
   if (!user) return false
-  const { data: profile } = await client
-    .from('profiles')
-    .select('is_admin, admin_status, admin_role')
+  const { data: admin } = await client
+    .from('admin_users')
+    .select('role, status')
     .eq('id', user.id)
     .maybeSingle()
-  return profile?.is_admin === true && profile?.admin_status === 'approved'
+  return admin?.status === 'approved'
 }
 
 export default async function handler(req, res) {

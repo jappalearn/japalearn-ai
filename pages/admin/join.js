@@ -105,7 +105,7 @@ export default function AdminJoin() {
                 <p className="text-sm text-slate-500 mb-6">
                   Your account is pending approval. The super admin will review and activate your access shortly.
                 </p>
-                <button onClick={() => router.push('/login')}
+                <button onClick={() => router.push('/admin/login')}
                   className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl text-sm transition-colors">
                   Go to Login
                 </button>
@@ -189,7 +189,7 @@ export default function AdminJoin() {
           </div>
 
           <p className="text-center text-xs text-slate-400 mt-6">
-            Already have an account? <a href="/login" className="text-blue-500 hover:underline">Sign in</a>
+            Already have an account? <a href="/admin/login" className="text-blue-500 hover:underline">Sign in</a>
           </p>
         </div>
       </div>

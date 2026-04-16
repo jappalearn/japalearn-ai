@@ -13,13 +13,13 @@ async function getSuperAdmin(req) {
   const client = adminClient()
   const { data: { user } } = await client.auth.getUser(token)
   if (!user) return null
-  const { data: profile } = await client
-    .from('profiles')
-    .select('id, admin_role, admin_status, is_admin')
+  const { data: admin } = await client
+    .from('admin_users')
+    .select('id, role, status')
     .eq('id', user.id)
     .maybeSingle()
-  if (!profile?.is_admin || profile.admin_status !== 'approved' || profile.admin_role !== 'super_admin') return null
-  return { id: user.id, email: user.email, ...profile }
+  if (admin?.status !== 'approved' || admin?.role !== 'super_admin') return null
+  return { id: user.id, email: user.email, ...admin }
 }
 
 export default async function handler(req, res) {
@@ -31,9 +31,8 @@ export default async function handler(req, res) {
   // GET — list team members + unused invites
   if (req.method === 'GET') {
     const [{ data: members }, { data: invites }] = await Promise.all([
-      client.from('profiles')
-        .select('id, full_name, admin_role, admin_status, created_at')
-        .eq('is_admin', true)
+      client.from('admin_users')
+        .select('id, email, full_name, role, status, created_at')
         .order('created_at', { ascending: true }),
       client.from('admin_invites')
         .select('id, email, role, token, created_at')
@@ -65,8 +64,8 @@ export default async function handler(req, res) {
     if (action === 'approve') {
       const { userId } = req.body
       if (!userId) return res.status(400).json({ error: 'userId required' })
-      const { error } = await client.from('profiles')
-        .update({ admin_status: 'approved', is_admin: true })
+      const { error } = await client.from('admin_users')
+        .update({ status: 'approved' })
         .eq('id', userId)
       if (error) return res.status(500).json({ error: error.message })
       return res.json({ success: true })
@@ -76,8 +75,8 @@ export default async function handler(req, res) {
     if (action === 'reject') {
       const { userId } = req.body
       if (!userId) return res.status(400).json({ error: 'userId required' })
-      const { error } = await client.from('profiles')
-        .update({ admin_status: 'rejected', is_admin: false })
+      const { error } = await client.from('admin_users')
+        .update({ status: 'rejected' })
         .eq('id', userId)
       if (error) return res.status(500).json({ error: error.message })
       return res.json({ success: true })
@@ -87,17 +86,20 @@ export default async function handler(req, res) {
     if (action === 'remove') {
       const { userId } = req.body
       if (!userId) return res.status(400).json({ error: 'userId required' })
-      const { data: profile } = await client.from('profiles')
-        .select('admin_role').eq('id', userId).maybeSingle()
-      if (profile?.admin_role === 'super_admin') {
+      const { data: admin } = await client.from('admin_users')
+        .select('role').eq('id', userId).maybeSingle()
+      if (admin?.role === 'super_admin') {
         return res.status(400).json({ error: 'Cannot remove super admin' })
       }
-      await client.from('profiles')
-        .update({ admin_status: null, is_admin: false, admin_role: null })
+      await client.from('admin_users')
+        .delete()
         .eq('id', userId)
       return res.json({ success: true })
     }
   }
+
+  return res.status(405).json({ error: 'Method not allowed' })
+}
 
   return res.status(405).json({ error: 'Method not allowed' })
 }
