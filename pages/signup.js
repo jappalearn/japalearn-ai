@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import AuthCard from '../components/AuthCard'
+import { getMainUrl } from '../lib/urls'
 
 export default function Signup() {
   const router = useRouter()
@@ -10,7 +11,7 @@ export default function Signup() {
     if (router.isReady) {
       const { answers, score } = router.query
       if (!answers || !score) {
-        router.replace('/quiz')
+        window.location.href = getMainUrl('/quiz')
       }
     }
   }, [router.isReady, router.query, router])

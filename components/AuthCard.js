@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Logo from '../lib/Logo'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
+import { getAppUrl, getMainUrl } from '../lib/urls'
 
 // ─── BRAND TOKENS ─────────────────────────────────────────────────────────────
 const BLUE_PRIMARY = '#1E4DD7'
@@ -315,7 +316,7 @@ export default function AuthCard({ defaultView = 'signup' }) {
   function goToLogin() { setView('login'); setLoginError(''); setSignupError('') }
   function goToSignup() {
     if (!answers || !score) {
-      router.push('/quiz')
+      window.location.href = getMainUrl('/quiz')
       return
     }
     setView('signup'); setPasswordError(''); setSignupError('')
@@ -352,7 +353,7 @@ export default function AuthCard({ defaultView = 'signup' }) {
     localStorage.setItem('just_signed_up', 'true')
     setLoading(false)
     setDone(true)
-    setTimeout(() => router.replace('/dashboard'), 2800)
+    setTimeout(() => { window.location.href = getAppUrl('/dashboard') }, 2800)
   }
 
   const handleLogin = async (e) => {
@@ -363,7 +364,7 @@ export default function AuthCard({ defaultView = 'signup' }) {
     if (error) { setLoginError(error.message); setLoading(false); return }
     setLoading(false)
     setDone(true)
-    setTimeout(() => router.replace('/dashboard'), 2800)
+    setTimeout(() => { window.location.href = getAppUrl('/dashboard') }, 2800)
   }
 
   if (done) {

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import Link from 'next/link'
+import { getAppUrl } from '../lib/urls'
 import { FileText, MapPin, BookOpen, CheckCircle, AlertTriangle, ArrowRight } from 'lucide-react'
 import Logo from '../lib/Logo'
 import { getScoreFlag, normaliseSegment, calculateScoreBreakdown } from '../lib/quizData'
@@ -341,7 +342,7 @@ export default function Report() {
             
             <div className="flex items-center gap-3">
               <button
-                onClick={() => router.push(`/signup?answers=${encodeURIComponent(JSON.stringify(answers))}&score=${score}`)}
+                onClick={() => { window.location.href = getAppUrl('/signup') + `?answers=${encodeURIComponent(JSON.stringify(answers))}&score=${score}` }}
                 className="inline-flex px-4 sm:px-6 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95 shadow-[0_4px_12px_rgba(59,117,255,0.25)]"
                 style={{ background: PRIMARY }}
               >
@@ -522,7 +523,7 @@ export default function Report() {
               {/* Bottom CTA */}
               <div className="flex justify-center">
                 <button
-                  onClick={() => router.push(`/signup?answers=${encodeURIComponent(JSON.stringify(answers))}&score=${score}`)}
+                  onClick={() => { window.location.href = getAppUrl('/signup') + `?answers=${encodeURIComponent(JSON.stringify(answers))}&score=${score}` }}
                   className="transition-all hover:opacity-90 flex items-center justify-center gap-2"
                   style={{ padding: '16px 48px', borderRadius: '99px', background: PRIMARY, color: '#FFFFFF', fontSize: '16px', fontWeight: 600, fontFamily: 'DM Sans, sans-serif' }}
                 >
