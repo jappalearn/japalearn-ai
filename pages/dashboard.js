@@ -486,7 +486,7 @@ function OverviewTab({ answers, score, flag, displayName, isNewUser, router, qui
   // Score categories for breakdown section
   // Priority: Use AI-grounded dimensions if available, otherwise fallback to static
   const aiData = quizResult?.ai_data
-  const scoreCategories = aiData ? [
+  const scoreCategories = aiData?.dimensions ? [
     { label: 'Financial Readiness', score: aiData.dimensions.financial, rawScore: aiData.dimensions.financial, max: 100 },
     { label: 'Language Skills',      score: aiData.dimensions.language, rawScore: aiData.dimensions.language, max: 100 },
     { label: 'Documentation',       score: aiData.dimensions.documentation, rawScore: aiData.dimensions.documentation, max: 100 },
