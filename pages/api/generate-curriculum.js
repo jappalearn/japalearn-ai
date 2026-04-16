@@ -73,7 +73,7 @@ function getPersona(category) {
     'Freelancer / Remote Worker': 'Freelancer / Remote Worker',
     'Parent / Family': 'Parent / Family'
   }
-  return map[category] || 'Others'
+  return map[category] || null
 }
 
 /**
@@ -172,7 +172,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing destination or segment' })
   }
 
-  const persona = getPersona(answers.category || answers.segment)
+  const persona = getPersona(answers.category) || getPersona(answers.segment) || answers.segment || 'Others'
   const profileDescription = buildProfileDescription(answers)
   const readiness = ai_data?.overall >= 70 ? 'advanced' : ai_data?.overall >= 40 ? 'intermediate' : 'beginner'
   const gaps = ai_data?.topGaps || []

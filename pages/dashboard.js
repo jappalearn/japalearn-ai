@@ -1054,8 +1054,13 @@ function LearningTab({ answers, userId, quizResult, router }) {
     if (!answers.destination || !answers.segment) return
     setLoading(true); setGenError('')
     try {
+      const { data: { session } } = await supabase.auth.getSession()
       const res = await fetch('/api/generate-curriculum', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
         body: JSON.stringify({ answers, ai_data: quizResult?.ai_data }),
       })
       const data = await res.json()
@@ -3198,10 +3203,13 @@ export default function Dashboard() {
         console.log('Grounding user profile with Master AI Pipeline...')
         fetch('/api/calculate-readiness', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            answers: quizData.answers, 
-            resultId: quizData.id 
+          headers: {
+            'Content-Type': 'application/json',
+            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+          },
+          body: JSON.stringify({
+            answers: quizData.answers,
+            resultId: quizData.id
           })
         }).then(res => res.json()).then(resData => {
           if (resData.overall) {

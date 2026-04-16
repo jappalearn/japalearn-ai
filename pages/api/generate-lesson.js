@@ -7,17 +7,27 @@ export default async function handler(req, res) {
 
   try {
     const authHeader = req.headers.authorization
+    const token = authHeader?.replace('Bearer ', '')
+    if (!token) return res.status(401).end()
+
+    const anonClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    )
+    const { data: { user } } = await anonClient.auth.getUser(token)
+    if (!user) return res.status(401).end()
+
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      authHeader ? { global: { headers: { Authorization: authHeader } } } : {}
+      { global: { headers: { Authorization: authHeader } } }
     )
 
     const { lessonTitle, moduleTitle, curriculumTitle, destination, segment, curriculumId, moduleIndex, lessonIndex } = req.body
 
     // Step 1 — Generate rich, structured lesson content following the persona rules
     // Build a targeted search query instead of using the full prompt as the search string
-    const lessonSearchQuery = `${lessonTitle} ${destination} ${segment} requirements 2025`
+    const lessonSearchQuery = `${lessonTitle} ${destination} ${segment} requirements ${new Date().getFullYear()}`
 
     const content = await generateAIResponse(
       [
