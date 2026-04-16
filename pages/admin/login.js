@@ -12,10 +12,18 @@ export default function AdminLogin() {
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError] = useState('')
   const [status, setStatus] = useState(null) // 'pending' | 'rejected' | 'not_admin'
+  const [view, setView] = useState('login') // 'login' | 'forgot' | 'reset'
+  const [resetEmail, setResetEmail] = useState('')
+  const [resetPassword, setResetPassword] = useState('')
+  const [resetDone, setResetDone] = useState(false)
 
   useEffect(() => {
-    // If already logged in, check if admin and redirect
     checkCurrentSession()
+    // Detect Supabase password recovery redirect (URL contains #type=recovery)
+    const hash = window.location.hash
+    if (hash.includes('type=recovery')) {
+      setView('reset')
+    }
   }, [])
 
   const checkCurrentSession = async () => {
@@ -87,6 +95,36 @@ export default function AdminLogin() {
     }
   }
 
+  const handleForgotPassword = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    const { error: resetErr } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      redirectTo: `${window.location.origin}/admin/login`,
+    })
+    setLoading(false)
+    if (resetErr) {
+      setError(resetErr.message)
+    } else {
+      setResetDone(true)
+    }
+  }
+
+  const handleSetNewPassword = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    const { error: updateErr } = await supabase.auth.updateUser({ password: resetPassword })
+    setLoading(false)
+    if (updateErr) {
+      setError(updateErr.message)
+    } else {
+      setView('login')
+      setError('')
+      alert('Password updated successfully. Please sign in.')
+    }
+  }
+
   const handleLogin = async (e) => {
     e.preventDefault()
     setLoading(true)
@@ -131,7 +169,82 @@ export default function AdminLogin() {
           </div>
 
           <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm">
-            {status === 'pending' ? (
+            {view === 'forgot' ? (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900 mb-1">Reset your password</h2>
+                  <p className="text-sm text-slate-500">Enter your admin email and we'll send you a reset link.</p>
+                </div>
+                {resetDone ? (
+                  <div className="bg-green-50 border border-green-100 rounded-xl p-4 flex items-center gap-3">
+                    <CheckCircle2 className="text-green-500 shrink-0" size={18} />
+                    <p className="text-sm text-green-700">Reset link sent — check your email inbox.</p>
+                  </div>
+                ) : (
+                  <form onSubmit={handleForgotPassword} className="space-y-5">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Admin Email</label>
+                      <div className="relative">
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                        <input
+                          type="email"
+                          value={resetEmail}
+                          onChange={(e) => setResetEmail(e.target.value)}
+                          placeholder="admin@japalearn.com"
+                          required
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-12 pr-4 text-sm text-slate-900 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
+                        />
+                      </div>
+                    </div>
+                    {error && (
+                      <div className="bg-rose-50 border border-rose-100 rounded-xl p-4 flex items-center gap-3">
+                        <AlertCircle className="text-rose-500 shrink-0" size={18} />
+                        <p className="text-sm text-rose-600">{error}</p>
+                      </div>
+                    )}
+                    <button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-semibold py-4 rounded-xl flex items-center justify-center gap-2 transition-all">
+                      {loading ? <><Loader2 className="animate-spin" size={18} /> Sending...</> : <>Send reset link <ArrowRight size={18} /></>}
+                    </button>
+                  </form>
+                )}
+                <button onClick={() => { setView('login'); setError(''); setResetDone(false) }} className="text-blue-600 font-semibold text-sm hover:underline block text-center">
+                  Back to login
+                </button>
+              </div>
+            ) : view === 'reset' ? (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900 mb-1">Set new password</h2>
+                  <p className="text-sm text-slate-500">Choose a strong new password for your admin account.</p>
+                </div>
+                <form onSubmit={handleSetNewPassword} className="space-y-5">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">New Password</label>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                      <input
+                        type="password"
+                        value={resetPassword}
+                        onChange={(e) => setResetPassword(e.target.value)}
+                        placeholder="••••••••"
+                        required
+                        minLength={8}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-12 pr-4 text-sm text-slate-900 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
+                      />
+                    </div>
+                  </div>
+                  {error && (
+                    <div className="bg-rose-50 border border-rose-100 rounded-xl p-4 flex items-center gap-3">
+                      <AlertCircle className="text-rose-500 shrink-0" size={18} />
+                      <p className="text-sm text-rose-600">{error}</p>
+                    </div>
+                  )}
+                  <button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-semibold py-4 rounded-xl flex items-center justify-center gap-2 transition-all">
+                    {loading ? <><Loader2 className="animate-spin" size={18} /> Updating...</> : <>Update password <ArrowRight size={18} /></>}
+                  </button>
+                </form>
+              </div>
+            ) : status === 'pending' ? (
               <div className="text-center py-4">
                 <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-6">
                   <Loader2 className="animate-spin text-amber-500" size={32} />
@@ -207,10 +320,15 @@ export default function AdminLogin() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Password</label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Password</label>
+                    <button type="button" onClick={() => { setView('forgot'); setError('') }} className="text-xs text-blue-600 font-semibold hover:underline">
+                      Forgot password?
+                    </button>
+                  </div>
                   <div className="relative">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                    <input 
+                    <input
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
