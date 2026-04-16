@@ -331,7 +331,10 @@ export default function AuthCard({ defaultView = 'signup' }) {
     if (view === 'signup') localStorage.setItem('just_signed_up', 'true')
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/dashboard` },
+      options: {
+        redirectTo: getAppUrl('/dashboard'),
+        queryParams: { prompt: 'select_account' },
+      },
     })
     if (error) { setLoginError(error.message); setGoogleLoading(false) }
   }
